@@ -34,7 +34,7 @@ class ADBlock(object):
         # 更新上游规则（下载到 .cache/source）
         # Upstream manifest changes (add/remove/type/url) must trigger a rebuild.
         manifestPath = os.path.join(self.sourceDir, ".rule-manifest")
-        manifest = "\\n".join("%s|%s|%s" % (r.name, r.type, r.url) for r in ruleList)
+        manifest = "\n".join("%s|%s|%s" % (r.name, r.type, r.url) for r in ruleList)
         oldManifest = ""
         if os.path.exists(manifestPath):
             with open(manifestPath, "r", encoding="utf-8") as f:
