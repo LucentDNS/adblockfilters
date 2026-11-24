@@ -32,14 +32,25 @@ class ADBlock(object):
         ruleList = testList
         '''
         # 更新上游规则（下载到 .cache/source）
+        # Upstream manifest changes (add/remove/type/url) must trigger a rebuild.
+        manifestPath = os.path.join(self.sourceDir, ".rule-manifest")
+        manifest = "\\n".join("%s|%s|%s" % (r.name, r.type, r.url) for r in ruleList)
+        oldManifest = ""
+        if os.path.exists(manifestPath):
+            with open(manifestPath, "r", encoding="utf-8") as f:
+                oldManifest = f.read()
+
         updater = Updater(ruleList)
         update, ruleList = updater.update(self.sourceDir)
-        if not update:
+        manifestChanged = manifest != oldManifest
+        if not update and not manifestChanged:
             return
-
         # 生成新规则（读 .cache/domain，输出 .cache/out）
         filter = Filter(ruleList, self.domainDir, self.outDir, self.sourceDir)
         filter.generate(readme.getRulesNames())
+
+        with open(manifestPath, "w", encoding="utf-8") as f:
+            f.write(manifest)
 
         # 生成 readme.md
         readme.setRules(ruleList)
