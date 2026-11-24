@@ -97,14 +97,14 @@ StevenBlack 的基础 hosts 列表面向广告、恶意软件、跟踪等用途�
 
 | 来源 | 可解析拦截域名 | 父级压缩后独有覆盖候选 | 决策 |
 |---|---:|---:|---|
-| AdGuard DNS filter | 193,466 | 8,419 | 保留。官方 DNS 专用聚合源，仍有独立覆盖 |
+| AdGuard DNS filter | 193,460 | 8,414 | 保留。官方 DNS 专用聚合源，仍有独立覆盖 |
 | AdRules DNS List | 214,254 | 19,364 | 保留。与 AdGuard DNS 高度重合，但仍有明显独立覆盖 |
-| AWAvenue Ads Rule (Only.Ads) | 651 | 7 | 保留纯广告变体；其中 a0.app.xiaomi.com 已在白名单，pay.sboot.cn 本轮新增白名单，剩余约 5 个独有候选 |
+| AWAvenue Ads Rule (Only.Ads) | 651 | 7 | 保留纯广告变体；白名单后剩余 4 个父级压缩独有候选 |
 | HaGeZi DNS-Blocklists PRO mini | 98,219 | 50,764 | 保留。独立覆盖贡献最大，使用 Pro mini 单一层级 |
 | OISD Small（当前 URL 实际返回 oisd small） | 62,659 | 2,242 | 保留观察。边际覆盖较小，但该变体以广告为主，且持续维护 |
 | StevenBlack hosts | 81,675 | 20,753 | 保留基础 hosts；另有 21,882 个子域条目被本来源自身父域名覆盖，可由最终父级压缩消除 |
 
-全来源合并后的唯一拦截域名为 357,761 个；跨来源精确重复域名为 204,526 个。AdGuard DNS filter 与 AdRules DNS List 两两重合 179,653 个，但两者仍分别贡献 8,419 和 19,364 个父级压缩后独有候选，因此不能只因重合度高就删除其中之一。
+全来源合并后的唯一拦截域名为 357,756 个；跨来源精确重复域名为 204,526 个。AdGuard DNS filter 与 AdRules DNS List 两两重合 179,652 个，但两者仍分别贡献 8,414 和 19,364 个父级压缩后独有候选，因此不能只因重合度高就删除其中之一。
 
 ### AWAvenue 变体调整
 
@@ -180,11 +180,11 @@ Evidence: https://gist.github.com/abiudrn/e5c7de98fbf68958753137200e164db0 and h
 
 ## 2026-11-24 来源独有贡献：白名单后复核
 
-同一轮审计快照保持不变；本次在父级压缩后，按项目 `rules/white.txt` 与构建器相同的域名例外语法，再扣除白名单域名及其子域名。六个正式来源全部下载成功，合并域名集合 357,761 个，跨来源精确重复 204,526 个。
+本次复核更新了上游快照；按项目 `rules/white.txt` 与构建器相同的域名例外语法，再扣除白名单域名及其子域名。六个正式 DNS/Hosts 来源全部下载成功，合并域名集合 357,756 个，跨来源精确重复 204,526 个。
 
 | 正式来源 | 父级压缩后独有候选（白名单前） | 白名单后独有候选 |
 |---|---:|---:|
-| AdGuard DNS filter | 8,419 | 8,418 |
+| AdGuard DNS filter | 8,414 | 8,413 |
 | AdRules DNS List | 19,364 | 19,353 |
 | AWAvenue Ads Rule (Only.Ads) | 7 | 4 |
 | HaGeZi DNS-Blocklists PRO mini | 50,764 | 50,685 |
