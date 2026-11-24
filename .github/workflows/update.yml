@@ -60,7 +60,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py
           python -m pytest -q tests
 
       - name: Prepare domain inputs
@@ -76,6 +76,11 @@ jobs:
             test -s ".cache/domain/$name" || { echo "::error::Validated dev-domain-noble/$name is missing or empty"; exit 1; }
             printf '%s\t%s\n' "$name" "LucentDNS independent DNS validation" >> .cache/domain/input-provenance.txt
           done
+          curl -fsSL --retry 3 --retry-all-errors \\
+            -o .cache/domain/validated-dns-sources.tar.gz \\
+            "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/validated-dns-sources.tar.gz"
+          test -s .cache/domain/validated-dns-sources.tar.gz || { echo "::error::Validated DNS source archive is missing or empty"; exit 1; }
+          python scripts/validated_sources.py restore
           cp rules/white.txt .cache/domain/ || true
           cp rules/myblock.txt .cache/source/ || true
 
