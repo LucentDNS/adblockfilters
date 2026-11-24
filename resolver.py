@@ -281,7 +281,10 @@ class Resolver(object):
                     raise Exception('"%s": not include domain or ip'%(filter))
             return filter,domain
         except Exception as e:
-            logger.error("%s"%(e))
+            # Browser filter rules may be valid without yielding one DNS domain
+            # (for example CSS selectors, scriptlets, paths, and wildcard patterns).
+            # The source audit records these separately; they are not resolver errors.
+            logger.debug("%s"%(e))
             return filter,domain
 
     # dns 模式
