@@ -46,19 +46,19 @@ jobs:
 
       - name: Download DB
         run: |
-          # 三级兜底：fork 自身 release（fork 复制资产/自更新）→ 上游源仓库 → 空文件（空 sqlite 库可正常初始化）
-          curl -fsSL --retry 3 -o domain.db \
+          # 优先使用 LucentDNS 自己的状态库；仅在首次初始化时允许从上游恢复。
+          curl -fsSL --retry 3 --retry-all-errors -o domain.db \
             "https://github.com/${{ github.repository }}/releases/download/domain/domain.db" \
-            || curl -fsSL --retry 3 -o domain.db "$DB_URL" \
-            || : > domain.db
+            || curl -fsSL --retry 3 --retry-all-errors -o domain.db "$DB_URL"
+          test -s domain.db || { echo "domain.db is missing or empty"; exit 1; }
 
       - name: Download domain list
         run: |
-          curl -fsSL --retry 3 -o domain.txt \
+          curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
             "https://github.com/${{ github.repository }}/releases/download/domain/domain.txt" \
-            || curl -fsSL --retry 3 -o domain.txt \
-              "https://github.com/217heidai/adblockfilters/releases/download/domain/domain.txt" \
-            || : > domain.txt
+            || curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
+              "https://github.com/217heidai/adblockfilters/releases/download/domain/domain.txt"
+          test -s domain.txt || { echo "domain.txt is missing or empty"; exit 1; }
 
       - name: Generate Blacklist
         id: update
