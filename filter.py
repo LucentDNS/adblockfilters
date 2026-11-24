@@ -1,4 +1,5 @@
 import os
+import ipaddress
 from concurrent.futures import ThreadPoolExecutor,as_completed
 from typing import List,Dict,Set,Tuple
 
@@ -8,6 +9,21 @@ from tld import get_tld
 from app import APPBase, AdGuard, AdGuardHome, DNSMasq, Hosts, InviZible, Loon, Mihomo, MosDNS, QuantumultX, Shadowrocket, ShadowrocketModule, SingBox, SmartDNS, Surge, V2ray
 from readme import Rule
 from resolver import Resolver
+
+
+def _is_ip_literal(value: str) -> bool:
+    """Return True for IP literals, including IPv4-with-port forms."""
+    candidate = str(value).strip()
+    if candidate.startswith("[") and "]" in candidate:
+        candidate = candidate[1:candidate.index("]")]
+    elif candidate.count(":") == 1 and "." in candidate:
+        candidate = candidate.rsplit(":", 1)[0]
+    try:
+        ipaddress.ip_address(candidate)
+        return True
+    except ValueError:
+        return False
+
 
 class Filter(object):
     def __init__(self, ruleList:List[Rule], path:str, outPath:str=None, sourcePath:str=None):
@@ -175,6 +191,10 @@ class Filter(object):
         fldList = list(domainDict.keys())
         fldList.sort() # 排序
         for fld in fldList:
+            # DNS domain filters cannot block literal IP addresses. Keep any
+            # IP-based browser URL rules in filterList, but exclude IPs here.
+            if _is_ip_literal(fld):
+                continue
             subdomainList_origin = list(domainDict[fld] - whiteDict.get(fld, set())) # 去除需要保留的白名单域名
             subdomainList = repetition(subdomainList_origin) # 短域名已被拦截，则干掉所有长域名。如'a.example'、'b.example'、'example'，则只保留'example'
             removedList = set(subdomainList_origin) - set(subdomainList) # 被 repetition 干掉的子域名，每个 FLD 只算一次
@@ -234,7 +254,8 @@ class Filter(object):
                 else:
                     if domain in blockSet or fld in blockSet: # 剔除 adblockdns 已拦截
                         continue
-                domainSet_all.add(domain)
+                if not _is_ip_literal(domain):
+                    domainSet_all.add(domain)
             
             filterList_final.append(filter)
         

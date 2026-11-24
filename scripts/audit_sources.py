@@ -2,6 +2,7 @@
 """Audit upstream filter sources using the repository's current Resolver parser."""
 import asyncio
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -33,13 +34,29 @@ def write_domain_list(path, domains, empty_note):
 
 
 
+def is_ip_literal(value):
+    candidate = str(value).strip()
+    if candidate.startswith("[") and "]" in candidate:
+        candidate = candidate[1:candidate.index("]")]
+    elif candidate.count(":") == 1 and "." in candidate:
+        candidate = candidate.rsplit(":", 1)[0]
+    try:
+        ipaddress.ip_address(candidate)
+        return True
+    except ValueError:
+        return False
+
+
 def full_domain(value):
     if not value:
         return None
     if isinstance(value, tuple) and len(value) == 2:
         fld, subdomain = value
-        return (f"{subdomain}.{fld}" if subdomain else fld).lower()
-    return str(value).lower()
+        domain = (f"{subdomain}.{fld}" if subdomain else fld).lower()
+    else:
+        domain = str(value).lower()
+    # IP literals are not DNS domain names and must not inflate domain coverage.
+    return None if is_ip_literal(domain) else domain
 
 
 def ignored_line(line, source_type):
@@ -102,7 +119,7 @@ def audit_one(rule, resolver, download):
         "total_lines": 0, "nonempty_lines": 0, "comment_or_header_lines": 0,
         "candidate_lines": 0, "parsed_lines": 0, "unparsed_candidate_lines": 0,
         "block_entries": 0, "allow_entries": 0, "filter_entries": 0,
-        "filter_domain_extracted": 0, "filter_domain_unresolved": 0,
+        "filter_domain_extracted": 0, "filter_ip_extracted": 0, "filter_domain_unresolved": 0,
         "unique_block_domains": 0, "unique_allow_domains": 0,
         "unique_filter_rules": 0, "unique_extracted_domains": 0,
         "duplicate_raw_lines": 0, "download_error": download.get("error", ""),
@@ -154,8 +171,16 @@ def audit_one(rule, resolver, download):
                 result["filter_entries"] += 1
                 parsed = True
                 if filt[1]:
-                    extracted.add(filt[1].lower())
-                    result["filter_domain_extracted"] += 1
+                    extracted_domain = full_domain(filt[1])
+                    if extracted_domain:
+                        extracted.add(extracted_domain)
+                        result["filter_domain_extracted"] += 1
+                    elif is_ip_literal(filt[1]):
+                        result["filter_ip_extracted"] += 1
+                    else:
+                        result["filter_domain_unresolved"] += 1
+                        if len(result["samples_filter_domain_unresolved"]) < 20:
+                            result["samples_filter_domain_unresolved"].append(s[:240])
                 else:
                     result["filter_domain_unresolved"] += 1
                     if len(result["samples_filter_domain_unresolved"]) < 20:
@@ -193,7 +218,8 @@ def render_report(results, production_names, browser_names, candidate_names, ove
         ("internal_parent_covered_domains", "被本来源父域名压缩"),
         ("unique_allow_domains", "唯一放行域名"),
         ("unique_filter_rules", "过滤规则"),
-        ("filter_domain_unresolved", "过滤规则未提取域名")
+        ("filter_domain_unresolved", "过滤规则未提取域名"),
+        ("filter_ip_extracted", "过滤规则提取的 IP（不计域名）")
     ]
     out = [
         "# 上游规则源基线审计", "",
@@ -234,6 +260,7 @@ def render_report(results, production_names, browser_names, candidate_names, ove
         "- 解析接受：当前解析器识别为拦截、放行或过滤规则的行。",
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
         "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
+        "- IP 字面量单独计数，不纳入 DNS 域名唯一数、来源覆盖或基线域名差异。",
         "- 跨来源重复拦截域名：仅统计正式集成来源中解析为 block 的域名；不把候选来源或浏览器过滤规则提取的域名混入。",
         "- 父级压缩后独有候选（白名单前）：先排除其他正式来源的相同域名/父域名覆盖，再排除本来源内被父域名覆盖的子域名。",
         "- 白名单后独有候选：在父级压缩后独有候选基础上，进一步扣除项目 white.txt 中精确域名及其子域名；尚未扣除动态黑名单和上游 allow 规则，因此仍是来源贡献估计，不代表每条都已完成误杀验证。",
@@ -440,11 +467,16 @@ def main():
     # Explain whether baseline-only DNS block rules were extracted from browser filters.
     baseline_path = ROOT / ".cache" / "report" / "baseline-only.txt"
     baseline_blocks = set()
+    baseline_ip_literals = set()
     if baseline_path.exists():
         for raw in baseline_path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = raw.strip()
             if line.startswith("||") and line.endswith("^") and not line.startswith("@@"):
-                baseline_blocks.add(line[2:-1].lower())
+                domain = line[2:-1].lower()
+                if is_ip_literal(domain):
+                    baseline_ip_literals.add(domain)
+                else:
+                    baseline_blocks.add(domain)
 
     browser_domains = set().union(*(domain_sets.get(name, set()) for name in browser_names)) if browser_names else set()
     browser_exact = baseline_blocks & browser_domains
@@ -457,6 +489,7 @@ def main():
     browser_unexplained = baseline_blocks - browser_explained
     browser_analysis = {
         "baseline_only_block_rules": len(baseline_blocks),
+        "baseline_only_ip_literals_excluded_from_domain_audit": len(baseline_ip_literals),
         "browser_filter_extracted_unique_domains": len(browser_domains),
         "baseline_only_exact_domain_overlap_with_browser_sources": len(browser_exact),
         "baseline_only_domain_or_parent_overlap_with_browser_sources": len(browser_explained),
@@ -468,7 +501,8 @@ def main():
     }
     report += "\n## 原作者基线独有拦截规则与浏览器来源域名重合分析（非来源归因）\n\n"
     report += "- 本分析只统计原作者基线独有 DNS 拦截规则与当前浏览器补充来源的同域名/父域名重合；重合不证明原作者规则来自该浏览器来源，也不代表浏览器规则可替代 DNS 规则。\n"
-    report += f"- 原作者基线独有拦截规则：{len(baseline_blocks)} 条。\n"
+    report += f"- 原作者基线独有 DNS 域名拦截规则：{len(baseline_blocks)} 条。\n"
+    report += f"- 从域名比较中单独排除的 IP 字面量：{len(baseline_ip_literals)} 条（不属于 DNS 域名规则）。\n"
     report += f"- 浏览器来源可提取的唯一拦截域名：{len(browser_domains)} 个。\n"
     report += f"- 与浏览器来源精确匹配：{len(browser_exact)} 条；被浏览器来源父域名覆盖：{len(browser_explained)} 条；未能由浏览器来源解释：{len(browser_unexplained)} 条。\n"
     report += "\n| 浏览器来源 | 与基线独有拦截规则精确匹配数 |\n|---|---:|\n"
