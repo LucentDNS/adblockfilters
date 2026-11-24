@@ -118,7 +118,8 @@ def audit_one(rule, resolver, download):
         "bytes": download.get("bytes", 0),
         "total_lines": 0, "nonempty_lines": 0, "comment_or_header_lines": 0,
         "candidate_lines": 0, "parsed_lines": 0, "unparsed_candidate_lines": 0,
-        "block_entries": 0, "allow_entries": 0, "filter_entries": 0,
+        "block_entries": 0, "block_ip_entries": 0,
+        "allow_entries": 0, "allow_ip_entries": 0, "filter_entries": 0,
         "filter_domain_extracted": 0, "filter_ip_extracted": 0, "filter_domain_unresolved": 0,
         "unique_block_domains": 0, "unique_allow_domains": 0,
         "unique_filter_rules": 0, "unique_extracted_domains": 0,
@@ -159,12 +160,20 @@ def audit_one(rule, resolver, download):
 
             parsed = False
             if block:
-                blocks.add(full_domain(block))
-                result["block_entries"] += 1
+                domain = full_domain(block)
+                if domain:
+                    blocks.add(domain)
+                    result["block_entries"] += 1
+                else:
+                    result["block_ip_entries"] += 1
                 parsed = True
             if unblock:
-                allows.add(full_domain(unblock))
-                result["allow_entries"] += 1
+                domain = full_domain(unblock)
+                if domain:
+                    allows.add(domain)
+                    result["allow_entries"] += 1
+                else:
+                    result["allow_ip_entries"] += 1
                 parsed = True
             if filt:
                 filters.add(filt[0])
@@ -208,6 +217,7 @@ def render_report(results, production_names, browser_names, candidate_names, ove
         ("name", "来源"), ("role", "身份"), ("type", "类型"), ("total_lines", "总行数"),
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
         ("unparsed_candidate_lines", "未识别候选"),
+        ("block_ip_entries", "拦截 IP 条目"), ("allow_ip_entries", "放行 IP 条目"),
         ("unique_block_domains", "唯一拦截域名"),
         ("unique_only_domains", "精确独有域名"),
         ("shared_domains", "精确重复域名"),
