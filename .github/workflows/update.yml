@@ -72,8 +72,8 @@ jobs:
           for name in black.txt china.txt domain.txt domain-input-provenance.json; do
             curl -fsSL --retry 3 --retry-all-errors \
               -o ".cache/domain/$name" \
-              "https://github.com/${{ github.repository }}/releases/download/domain-state/$name"
-            test -s ".cache/domain/$name" || { echo "::error::Validated domain-state/$name is missing or empty"; exit 1; }
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/$name"
+            test -s ".cache/domain/$name" || { echo "::error::Validated dev-domain-noble/$name is missing or empty"; exit 1; }
             printf '%s\t%s\n' "$name" "LucentDNS independent DNS validation" >> .cache/domain/input-provenance.txt
           done
           cp rules/white.txt .cache/domain/ || true
