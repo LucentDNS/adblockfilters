@@ -374,7 +374,6 @@ class BlackList(object):
         ipList = []
         no_answer_count = 0
         saw_nxdomain = False
-        error_types = []
         for rdtype in ("A", "AAAA"):
             try:
                 query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
@@ -387,10 +386,10 @@ class BlackList(object):
             except NoAnswer:
                 # NOERROR/NODATA is a definitive negative answer for this RR type.
                 no_answer_count += 1
-            except Exception as exc:
+            except Exception:
                 # Timeout, SERVFAIL, NoNameservers and resolver-specific errors
                 # are inconclusive. Do not turn them into blacklist evidence.
-                error_types.append(type(exc).__name__)
+                continue
 
         if ipList:
             return ipList, "resolved"
@@ -398,9 +397,7 @@ class BlackList(object):
             return [], "not_found"
         if no_answer_count == 2:
             return [], "no_address"
-        logger.warning('"%s": DNS result inconclusive; resolver errors=%s' % (
-            domain, ",".join(sorted(set(error_types))) if error_types else "no usable response"
-        ))
+        # Unknown results are summarized after the batch; avoid one log line per domain.
         return [], "unknown"
 
     async def __pingx(self, dnsresolver:DNSResolver, domain:DOMAIN, semaphore):
@@ -462,7 +459,6 @@ class BlackList(object):
                 if domain.ip:
                     logger.warning('"%s": TCP check inconclusive; preserve previous state' % domain.domain)
 
-            logger.info("%s: %s (%s)" % (domain.domain, ipList, status))
             return domain
 
     def __generateBlackList(self, blackList):
@@ -513,12 +509,24 @@ class BlackList(object):
                 else:
                     if now - v.getTimeStamp() > 3110400: # 超过 36 天，重新解析
                         tasks.append(self.__pingx(dnsresolver, v, semaphore))
-            results = await asyncio.gather(*tasks)
+            results = []
+            total = len(tasks)
+            for completed, task in enumerate(asyncio.as_completed(tasks), 1):
+                domain = await task
+                results.append(domain)
+                if completed % 5000 == 0 or completed == total:
+                    logger.info("DNS validation progress: %d/%d", completed, total)
 
             for domain in results:
                 domainDict[domain.domain] = domain
 
-            logger.info("resolve domain: %d" % len(domainDict))
+            resolved = sum(1 for item in domainDict.values() if item.getIPList())
+            nxdomain = sum(1 for item in domainDict.values() if item.getBlock())
+            unresolved = len(domainDict) - resolved - nxdomain
+            logger.info(
+                "DNS validation summary: total=%d resolved=%d NXDOMAIN=%d no-address-or-inconclusive=%d",
+                len(domainDict), resolved, nxdomain, unresolved
+            )
             return domainDict
 
         return asyncio.run(_resolve_all())
