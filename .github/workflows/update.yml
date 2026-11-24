@@ -102,6 +102,10 @@ jobs:
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
 
+      - name: Audit upstream source contribution
+        run: |
+          python scripts/audit_sources.py
+
       - name: Compare with upstream published DNS baseline
         run: |
           mkdir -p .cache/baseline .cache/report
