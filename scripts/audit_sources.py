@@ -448,30 +448,30 @@ def main():
     browser_analysis = {
         "baseline_only_block_rules": len(baseline_blocks),
         "browser_filter_extracted_unique_domains": len(browser_domains),
-        "baseline_only_exactly_present_in_browser_sources": len(browser_exact),
-        "baseline_only_covered_by_browser_source_parent": len(browser_explained),
-        "baseline_only_not_explained_by_browser_sources": len(browser_unexplained),
-        "per_browser_source_exact_matches": {
+        "baseline_only_exact_domain_overlap_with_browser_sources": len(browser_exact),
+        "baseline_only_domain_or_parent_overlap_with_browser_sources": len(browser_explained),
+        "baseline_only_without_browser_domain_overlap": len(browser_unexplained),
+        "per_browser_source_exact_domain_overlap": {
             name: len(baseline_blocks & domain_sets.get(name, set()))
             for name in sorted(browser_names)
         }
     }
-    report += "\n## 原作者基线独有拦截规则与浏览器来源关系\n\n"
-    report += "- 该分析只判断原作者基线独有 DNS 拦截规则是否可在当前浏览器补充来源中找到同域名或父域名证据；不代表这些规则都应该进入 DNS 输出。\n"
+    report += "\n## 原作者基线独有拦截规则与浏览器来源域名重合分析（非来源归因）\n\n"
+    report += "- 本分析只统计原作者基线独有 DNS 拦截规则与当前浏览器补充来源的同域名/父域名重合；重合不证明原作者规则来自该浏览器来源，也不代表浏览器规则可替代 DNS 规则。\n"
     report += f"- 原作者基线独有拦截规则：{len(baseline_blocks)} 条。\n"
     report += f"- 浏览器来源可提取的唯一拦截域名：{len(browser_domains)} 个。\n"
     report += f"- 与浏览器来源精确匹配：{len(browser_exact)} 条；被浏览器来源父域名覆盖：{len(browser_explained)} 条；未能由浏览器来源解释：{len(browser_unexplained)} 条。\n"
     report += "\n| 浏览器来源 | 与基线独有拦截规则精确匹配数 |\n|---|---:|\n"
-    for name, count in sorted(browser_analysis["per_browser_source_exact_matches"].items(), key=lambda item: item[1], reverse=True):
+    for name, count in sorted(browser_analysis["per_browser_source_exact_domain_overlap"].items(), key=lambda item: item[1], reverse=True):
         report += f"| {name} | {count} |\n"
 
     (OUT_DIR / "baseline-browser-analysis.json").write_text(
         json.dumps(browser_analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    (OUT_DIR / "baseline-only-browser-explained.txt").write_text(
+    (OUT_DIR / "baseline-only-browser-overlap.txt").write_text(
         "\n".join(sorted(browser_explained)) + ("\n" if browser_explained else ""), encoding="utf-8"
     )
-    (OUT_DIR / "baseline-only-not-browser-explained.txt").write_text(
+    (OUT_DIR / "baseline-only-no-browser-overlap.txt").write_text(
         "\n".join(sorted(browser_unexplained)) + ("\n" if browser_unexplained else ""), encoding="utf-8"
     )
 
