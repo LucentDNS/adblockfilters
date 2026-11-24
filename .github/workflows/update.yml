@@ -52,17 +52,32 @@ jobs:
       - name: Prepare domain inputs
         run: |
           mkdir -p .cache/domain .cache/source
-          # 下载 black/china 作为 filter 输入。三级兜底：fork 自身 release（fork 会复制资产/跑 blacklist 后自更新）→ 上游源仓库 release → 空文件（保证流程可继续）
-          curl -fsSL --retry 3 -o .cache/domain/black.txt \
+          # black/china 是过滤阶段的关键输入。下载失败时必须停止，禁止用空文件继续生成看似成功的规则。
+          download_required() {
+            local name="$1"
+            local dest="$2"
+            local own_url="$3"
+            local upstream_url="$4"
+            local tmp="${dest}.download"
+            if curl -fsSL --retry 3 --retry-all-errors -o "$tmp" "$own_url" && [ -s "$tmp" ]; then
+              mv "$tmp" "$dest"
+              return 0
+            fi
+            rm -f "$tmp"
+            if curl -fsSL --retry 3 --retry-all-errors -o "$tmp" "$upstream_url" && [ -s "$tmp" ]; then
+              mv "$tmp" "$dest"
+              return 0
+            fi
+            rm -f "$tmp"
+            echo "::error::Required input $name could not be downloaded from either source."
+            exit 1
+          }
+          download_required "black.txt" ".cache/domain/black.txt" \
             "https://github.com/${{ github.repository }}/releases/download/domain/black.txt" \
-            || curl -fsSL --retry 3 -o .cache/domain/black.txt \
-            "https://github.com/217heidai/adblockfilters/releases/download/domain/black.txt" \
-            || : > .cache/domain/black.txt
-          curl -fsSL --retry 3 -o .cache/domain/china.txt \
+            "https://github.com/217heidai/adblockfilters/releases/download/domain/black.txt"
+          download_required "china.txt" ".cache/domain/china.txt" \
             "https://github.com/${{ github.repository }}/releases/download/domain/china.txt" \
-            || curl -fsSL --retry 3 -o .cache/domain/china.txt \
-            "https://github.com/217heidai/adblockfilters/releases/download/domain/china.txt" \
-            || : > .cache/domain/china.txt
+            "https://github.com/217heidai/adblockfilters/releases/download/domain/china.txt"
           cp rules/white.txt .cache/domain/ || true
           cp rules/myblock.txt .cache/source/ || true
 
