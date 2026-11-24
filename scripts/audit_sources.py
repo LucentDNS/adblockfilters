@@ -617,37 +617,83 @@ def main():
                 if candidate and "/" not in candidate and "*" not in candidate:
                     blacklist_domains.add(candidate)
 
+    current_source_allow_domains = set().union(
+        *(allow_sets.get(name, set()) for name in production_names)
+    ) if production_names else set()
+
+    def covered_by_source_allow(domain):
+        labels = domain.split(".")
+        return any(".".join(labels[index:]) in current_source_allow_domains
+                   for index in range(len(labels)))
+
     current_source_exact_blacklisted = current_source_exact & blacklist_domains
     current_source_exact_whitelisted = {
         domain for domain in current_source_exact
         if covered_by_whitelist(domain, project_whitelist)
     }
+    current_source_exact_upstream_allowed = {
+        domain for domain in current_source_exact
+        if covered_by_source_allow(domain)
+    }
     current_source_exact_active = (
-        current_source_exact - current_source_exact_blacklisted - current_source_exact_whitelisted
+        current_source_exact
+        - current_source_exact_blacklisted
+        - current_source_exact_whitelisted
+        - current_source_exact_upstream_allowed
     )
 
-    def covered_by_active_current_parent(domain):
+    def parent_domains(domain):
         labels = domain.split(".")
-        for index in range(1, len(labels)):
-            parent = ".".join(labels[index:])
+        return [".".join(labels[index:]) for index in range(1, len(labels))]
+
+    def covered_by_active_current_parent(domain):
+        for parent in parent_domains(domain):
             if (parent in current_dns_domains and parent not in blacklist_domains
-                    and not covered_by_whitelist(parent, project_whitelist)):
+                    and not covered_by_whitelist(parent, project_whitelist)
+                    and not covered_by_source_allow(parent)):
                 return True
         return False
 
     current_source_parent_present = {
         domain for domain in baseline_blocks - current_source_exact
-        if any(".".join(domain.split(".")[index:]) in current_dns_domains
-               for index in range(1, len(domain.split("."))))
+        if any(parent in current_dns_domains for parent in parent_domains(domain))
     }
     current_source_parent_covered = {
         domain for domain in current_source_parent_present
         if covered_by_active_current_parent(domain)
     }
-    current_effective_coverage = current_source_exact_active | current_source_parent_covered
-    source_not_effectively_covered = baseline_blocks - current_effective_coverage
+    current_source_parent_inactive = current_source_parent_present - current_source_parent_covered
+    current_source_parent_inactive_blacklisted = {
+        domain for domain in current_source_parent_inactive
+        if any(parent in blacklist_domains for parent in parent_domains(domain))
+    }
+    current_source_parent_inactive_whitelisted = {
+        domain for domain in current_source_parent_inactive
+        if any(covered_by_whitelist(parent, project_whitelist) for parent in parent_domains(domain))
+    }
+    current_source_parent_inactive_upstream_allowed = {
+        domain for domain in current_source_parent_inactive
+        if any(covered_by_source_allow(parent) for parent in parent_domains(domain))
+    }
+
+    source_presence_unexplained = {
+        domain for domain in current_source_exact_active
+        if not covered_by_active_current_parent(domain)
+    }
     source_absent = baseline_blocks - current_source_exact - current_source_parent_present
-    source_presence_unexplained = current_source_exact_active - current_source_parent_covered
+    source_unexplained = (
+        source_presence_unexplained
+        | current_source_parent_inactive
+        | source_absent
+    )
+    current_effective_coverage = (
+        (current_source_exact_active - source_presence_unexplained)
+        | current_source_parent_covered
+        | current_source_exact_blacklisted
+        | current_source_exact_whitelisted
+        | current_source_exact_upstream_allowed
+    )
+    source_not_effectively_covered = source_unexplained
     blacklist_overlap = baseline_blocks & blacklist_domains
     whitelist_covered = {
         domain for domain in baseline_blocks
