@@ -15,6 +15,7 @@ LucentDNS 维护的 DNS 与内容过滤规则聚合项目。项目定时获取�
 1. 2026-11-24：将 **AdGuard DNS filter**、**AdRules DNS List** 的来源类型由 `filter` 更正为 `dnsfilter`。这两项是 DNS 级规则源，现由 DNS 解析器解析并纳入 DNS 域名规则构建；这是类型纠正，不是新增或删除来源。
 2. 2026-11-24：普通 `filter` 类型来源与 DNS/Hosts 来源分流。AdGuard Base、AdGuard Chinese、AdGuard Mobile Ads、CJX、EasyList、EasyList China、EasyPrivacy、xinggsf mv、jiekouAD 等浏览器规则仍保留在浏览器补充过滤构建中；不再把其启发式提取的域名混入 DNS 域名订阅。
 3. 本轮未新增或删除上游来源。后续若新增、停用或删除来源，必须同步修改下方来源订阅表，并在此处记录来源名称、变更类型和理由。
+4. 2026-11-24：修正白名单解析，支持将 `||domain^$options` 形式规范化为域名白名单；路径、通配符和元素隐藏规则不会再被误当作 DNS 域名白名单。
 
 ## 订阅链接
 所有“规则订阅”均由 LucentDNS 自己的 `dist` 分支或 Releases 提供；不会把 217heidai 或其他上游作者的成品规则地址当作本项目订阅地址。下方“上游规则源”一节列出的原作者链接仅用于标明规则来源，不是本项目的订阅入口。
