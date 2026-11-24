@@ -5,7 +5,7 @@
 ## 当前清单的结构性问题
 
 当前清单混合了三种不同用途的来源：
-- DNS 专用来源：AdGuard DNS filter、AdRules DNS List、AWAvenue Ads Rule、HaGeZi DNS-Blocklists PRO mini、OISD Basic。
+- DNS 专用来源：AdGuard DNS filter、AdRules DNS List、AWAvenue Ads Rule、HaGeZi DNS-Blocklists PRO mini、OISD Small。
 - 浏览器内容过滤来源：AdGuard Base、AdGuard Chinese、AdGuard Mobile Ads、EasyList、EasyList China、EasyPrivacy、CJX's Annoyance List、xinggsf mv、jiekouAD。
 - Hosts 来源：StevenBlack hosts。
 
@@ -25,7 +25,7 @@ AdGuard 官方说明，AdGuard DNS filter 是为 DNS 级过滤简化的组合列
 
 HaGeZi 官方将 Light、Normal、Pro、Pro++、Ultimate 定义为不同强度的主列表，并明确建议主列表只选一个层级；Mini 是对应层级的体积优化版本，不应与其完整版本叠加。
 
-当前使用的是 Pro mini，不是同时叠加 HaGeZi Pro 完整版。OISD Basic 是另一套聚合来源，与 HaGeZi 可能有大量重叠，但不能仅凭两者定位相似就认定冗余。
+当前使用的是 Pro mini，不是同时叠加 HaGeZi Pro 完整版。OISD Small 是另一套聚合来源，与 HaGeZi 可能有大量重叠，但不能仅凭两者定位相似就认定冗余。
 
 **处理结论：暂时保留，要求后续输出来源交集率、独有规则量和误拦截反馈证据；不能把两个列表的简单并集当作质量提升。**
 
@@ -101,7 +101,7 @@ StevenBlack 的基础 hosts 列表面向广告、恶意软件、跟踪等用途�
 | AdRules DNS List | 214,254 | 19,364 | 保留。与 AdGuard DNS 高度重合，但仍有明显独立覆盖 |
 | AWAvenue Ads Rule (Only.Ads) | 651 | 7 | 保留纯广告变体；其中 a0.app.xiaomi.com 已在白名单，pay.sboot.cn 本轮新增白名单，剩余约 5 个独有候选 |
 | HaGeZi DNS-Blocklists PRO mini | 98,219 | 50,764 | 保留。独立覆盖贡献最大，使用 Pro mini 单一层级 |
-| OISD Basic（当前 URL 实际返回 oisd small） | 62,659 | 2,242 | 保留观察。边际覆盖较小，但该变体以广告为主，且持续维护 |
+| OISD Small（当前 URL 实际返回 oisd small） | 62,659 | 2,242 | 保留观察。边际覆盖较小，但该变体以广告为主，且持续维护 |
 | StevenBlack hosts | 81,675 | 20,753 | 保留基础 hosts；另有 21,882 个子域条目被本来源自身父域名覆盖，可由最终父级压缩消除 |
 
 全来源合并后的唯一拦截域名为 357,761 个；跨来源精确重复域名为 204,526 个。AdGuard DNS filter 与 AdRules DNS List 两两重合 179,653 个，但两者仍分别贡献 8,419 和 19,364 个父级压缩后独有候选，因此不能只因重合度高就删除其中之一。
