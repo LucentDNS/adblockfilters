@@ -21,6 +21,7 @@ vivo.com
 oppo.com
 huawei.com
 apple.com
+https-filtering-check.adtidy.org
 icloud.com
 mzstatic.com
 unionpay.com
