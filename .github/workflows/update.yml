@@ -123,10 +123,10 @@ jobs:
               "optimized_only_sample": sorted(current - baseline)[:100],
               "baseline_only_sample": sorted(baseline - current)[:100],
           }
-          Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           lines = ["# DNS output comparison", "", f"- Baseline rules: {len(baseline)}", f"- Optimized rules: {len(current)}", f"- Shared: {len(current & baseline)}", f"- Optimized-only: {len(current - baseline)}", f"- Baseline-only: {len(baseline - current)}", ""]
-          Path(".cache/report/comparison.md").write_text("\\n".join(lines), encoding="utf-8")
-          print("\\n".join(lines))
+          Path(".cache/report/comparison.md").write_text("\n".join(lines), encoding="utf-8")
+          print("\n".join(lines))
           PY
 
       - name: Check whitelist regression
