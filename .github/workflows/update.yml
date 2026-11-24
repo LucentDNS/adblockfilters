@@ -6,7 +6,7 @@ permissions:
 # 避免连续提交触发多个发布任务并发覆盖 Releases 和 dist。
 concurrency:
   group: update-filters-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 on:
   # Production builds are started only after the DNS-validation workflow
   # has published and verified its source snapshot and then dispatches this workflow.
@@ -80,8 +80,8 @@ jobs:
             "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/validated-dns-sources.tar.gz"
           test -s .cache/domain/validated-dns-sources.tar.gz || { echo "::error::Validated DNS source archive is missing or empty"; exit 1; }
           python scripts/validated_sources.py restore
-          cp rules/white.txt .cache/domain/ || true
-          cp rules/myblock.txt .cache/source/ || true
+          cp rules/white.txt .cache/domain/
+          cp rules/myblock.txt .cache/source/
 
       - name: Update Filters
         id: update
@@ -233,6 +233,7 @@ jobs:
             .cache/report/*
             .cache/audit/*
           retention-days: 14
+          if-no-files-found: error
 
       - name: Upload rules to release
         uses: softprops/action-gh-release@v3
@@ -240,7 +241,7 @@ jobs:
           tag_name: rule
           files: .cache/out/*
           overwrite_files: true
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
 
       - name: Upload sources to release
         uses: softprops/action-gh-release@v3
@@ -248,7 +249,7 @@ jobs:
           tag_name: source
           files: .cache/source/*
           overwrite_files: true
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
 
       - name: Remove obsolete source release assets
         env:
@@ -282,7 +283,7 @@ jobs:
             .cache/report/optimized-only.txt
             .cache/report/baseline-only.txt
           overwrite_files: true
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
 
       - name: Upload domain backup
         uses: softprops/action-gh-release@v3
@@ -290,7 +291,7 @@ jobs:
           tag_name: domain
           files: .cache/domain/domain.txt
           overwrite_files: true
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
 
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v7
@@ -315,13 +316,3 @@ jobs:
           git commit -m "Publish rules $(date -u +%Y%m%d%H%M)"
           git push -f origin dist
 
-  Delete_Workflow_Runs:
-    needs: [ Update_Filters ]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          retain_days: 1
-          keep_minimum_runs: 5
