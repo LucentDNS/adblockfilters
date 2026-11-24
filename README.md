@@ -15,8 +15,6 @@ DNS Lite 适用于希望减少规则数量的场景；仅在客户端有需要�
 
 | 客户端 | 版本 | 订阅地址 |
 |---|---|---|
-| AdGuard / AdGuard Home DNS | DNS 全量 | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt |
-| AdGuard / AdGuard Home DNS | DNS Lite | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdnslite.txt |
 | AdGuard 浏览器过滤 | 浏览器补充规则 | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockfilters.txt |
 | AdGuard 浏览器过滤 | 浏览器补充 Lite | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockfilterslite.txt |
 | InviZible Pro / personalDNSfilter | 域名全量 | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdomain.txt |
@@ -74,7 +72,7 @@ DNS Lite 适用于希望减少规则数量的场景；仅在客户端有需要�
 
 ## 维护与反馈
 
-- 规则产物由 GitHub Actions 自动构建，发布在 dist 分支及 Releases。
+- 规则产物由 GitHub Actions 每日自动构建；完成 DNS 验证、关键服务域名及白名单回归检查后，发布在 dist 分支及 Releases。
 - 构建审计、来源贡献及与上游基线的差异报告见 audit Release。规则数量差异不等同于质量优劣证明。
 - 如遇误拦截，请提交反馈并提供被影响的域名、客户端及复现情况；不要直接扩大白名单范围。
 
