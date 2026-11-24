@@ -207,6 +207,7 @@ def audit_one(rule, resolver, download):
 
     result["unique_block_domains"] = len(blocks)
     result["unique_allow_domains"] = len(allows)
+    result["allow_domain_samples"] = sorted(allows)[:100]
     result["unique_filter_rules"] = len(filters)
     result["unique_extracted_domains"] = len(extracted)
     return result, blocks, allows
@@ -425,6 +426,8 @@ def main():
     unique_dir.mkdir(parents=True, exist_ok=True)
     unique_after_whitelist_dir = OUT_DIR / "effective-unique-after-whitelist"
     unique_after_whitelist_dir.mkdir(parents=True, exist_ok=True)
+    allow_dir = OUT_DIR / "source-allow-domains"
+    allow_dir.mkdir(parents=True, exist_ok=True)
     for row in results:
         name = row["name"]
         own = domain_sets.get(name, set())
@@ -454,6 +457,12 @@ def main():
         (unique_after_whitelist_dir / f"{safe_name}.txt").write_text(
             "\n".join(sorted(after_whitelist_domains)) +
             ("\n" if after_whitelist_domains else ""), encoding="utf-8"
+        )
+        allow_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("_.")
+        write_domain_list(
+            allow_dir / f"{allow_name}.txt",
+            allow_sets.get(name, set()),
+            "No source allow domains."
         )
 
     (OUT_DIR / "source-audit.json").write_text(
