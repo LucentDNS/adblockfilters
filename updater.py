@@ -26,15 +26,19 @@ class Updater(object):
             tasks = [self.__Download(rule, path) for rule in self.ruleList]
             results = await asyncio.gather(*tasks)
 
-            # 更新规则状态
+            # 更新规则状态；任一来源下载失败都必须中止，禁止静默生成不完整规则。
             for new in results:
                 for rule in self.ruleList:
                     if new.name == rule.name:
                         rule.latest = new.latest
                         rule.update = new.update
+                        rule.download_ok = getattr(new, "download_ok", False)
                         if rule.update:
                             self.isNeedUpdate = True   # 只要有一个需要更新就标记
                         break
+            failed = [rule.name for rule in self.ruleList if not rule.download_ok]
+            if failed:
+                raise RuntimeError("Required upstream source download failed: " + ", ".join(failed))
             return self.isNeedUpdate, self.ruleList
 
         return asyncio.run(_update())
@@ -125,6 +129,7 @@ class Updater(object):
     async def __Download(self, rule:Rule, path:str) -> Rule:
         fileName = path + "/" + rule.filename
         fileName_download = fileName + '.download'
+        rule.download_ok = False
         try:
             if os.path.exists(fileName_download):
                 os.remove(fileName_download)
@@ -132,9 +137,13 @@ class Updater(object):
             async with httpx.AsyncClient() as client:
                 response = await client.get(rule.url)
                 response.raise_for_status()
-                contentType = response.headers.get("Content-Type")
-                if contentType.find("text/plain") < 0:
+                contentType = response.headers.get("Content-Type") or ""
+                if "text/plain" not in contentType:
                     raise Exception("Content-Type[%s] error"%(contentType))
+                if not response.content.strip():
+                    raise Exception("empty source response")
+                if response.text.lstrip().lower().startswith(("<!doctype html", "<html")):
+                    raise Exception("HTML response instead of a filter list")
                 lastModified = response.headers.get("Last-Modified")
                 with open(fileName_download,'wb') as f:
                     f.write(response.content)
@@ -149,6 +158,9 @@ class Updater(object):
                 rule.update = True
 
             os.rename(fileName_download, fileName)
+            rule.download_ok = os.path.getsize(fileName) > 0
+            if not rule.download_ok:
+                raise Exception("downloaded source file is empty")
 
             # 更新日期优先级：上游 Last-Modified > GitHub API(raw源最后 commit) > 内容变化当天
             if lastModified:
