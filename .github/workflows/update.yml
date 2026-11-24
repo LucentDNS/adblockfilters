@@ -265,8 +265,8 @@ jobs:
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
             .cache/audit/baseline-browser-analysis.json
-            .cache/audit/baseline-only-browser-explained.txt
-            .cache/audit/baseline-only-not-browser-explained.txt
+            .cache/audit/baseline-only-browser-overlap.txt
+            .cache/audit/baseline-only-no-browser-overlap.txt
             .cache/report/comparison.md
             .cache/report/comparison.json
             .cache/report/optimized-only.txt
