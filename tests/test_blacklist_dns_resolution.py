@@ -114,3 +114,28 @@ def test_unknown_dns_result_preserves_previous_state():
         initially_blocked=True
     )
     assert domain.blocked is True
+
+
+
+def test_domain_input_normalizes_leading_dots_and_ip_literals(tmp_path):
+    source = tmp_path / "domain.txt"
+    source.write_text(".51.77.227.98\n.Example.COM.\n", encoding="utf-8")
+
+    instance = BlackList.__new__(BlackList)
+    instance._BlackList__domainlistFile = str(source)
+    domains = instance._BlackList__getDomainDict()
+
+    assert set(domains) == {"51.77.227.98", "example.com"}
+    assert domains["51.77.227.98"].ip == "51.77.227.98"
+    assert domains["example.com"].fld == "example.com"
+
+
+def test_domain_input_deduplicates_normalized_variants(tmp_path):
+    source = tmp_path / "domain.txt"
+    source.write_text(".Example.COM\nexample.com.\nEXAMPLE.com\n", encoding="utf-8")
+
+    instance = BlackList.__new__(BlackList)
+    instance._BlackList__domainlistFile = str(source)
+    domains = instance._BlackList__getDomainDict()
+
+    assert list(domains) == ["example.com"]
