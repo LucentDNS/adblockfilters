@@ -17,3 +17,21 @@ def test_release_asset_filename_is_github_safe_and_stable():
     assert Rule("CJX's Annoyance List", "filter", "", "").filename == "CJX.s_Annoyance_List.txt"
     assert Rule("AWAvenue Ads Rule (Only.Ads)", "dns", "", "").filename == "AWAvenue_Ads_Rule_.Only.Ads.txt"
     assert Rule("AdGuard DNS filter", "dnsfilter", "", "").filename == "AdGuard_DNS_filter.txt"
+
+
+def test_get_rules_skips_subscription_tables_with_different_column_counts(tmp_path):
+    readme_path = tmp_path / "README.md"
+    readme_path.write_text(
+        "| Version | URL |\\n"
+        "|---|---|\\n"
+        "| DNS | https://example.com/list.txt |\\n"
+        "| Source | Type | Link | Updated |\\n"
+        "| Example | dns | [upstream](https://example.org/source.txt) | today |\\n",
+        encoding="utf-8",
+    )
+
+    rules = ReadMe(str(readme_path)).getRules()
+
+    assert len(rules) == 1
+    assert rules[0].name == "Example"
+    assert rules[0].url == "https://example.org/source.txt"

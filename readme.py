@@ -28,6 +28,8 @@ class ReadMe(object):
                 line = line.replace('\r', '').replace('\n', '')
                 if line.find('|')==0 and line.rfind('|')==len(line)-1:
                     rule = list(map(lambda x: x.strip(), line[1:-1].split('|')))
+                    if len(rule) < 4:
+                        continue
                     if rule[2].find('(') > 0 and rule[2].find(')') > 0 and rule[1].find('(') < 0:
                         url = rule[2][rule[2].find('(')+1:rule[2].find(')')]
                         matchObj1 = re.match(r'(http|https)://[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?', url)
