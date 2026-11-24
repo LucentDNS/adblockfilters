@@ -348,24 +348,25 @@ class BlackList(object):
             return starts, ends
     
     async def __resolve(self, dnsresolver, domain):
+        # A-only checks incorrectly classify IPv6-only domains as dead.
+        # Query both address families; failure/NODATA for one family must not
+        # discard a valid answer from the other family.
         ipList = []
-        try:
-            query_object = await dnsresolver.resolve(qname=domain, rdtype="A")
-            query_item = None
-            for item in query_object.response.answer:
-                if item.rdtype == DNSRdataType.A:
-                    query_item = item
-                    break
-            if query_item is None:
-                raise Exception("not A type")
-            for item in query_item:
-                ip = '{}'.format(item)
-                if ip != "0.0.0.0":
-                    ipList.append(ip)
-            return ipList
-        except Exception as e:
-            logger.error('"%s": %s' % (domain, e if e else "Resolver failed"))
-            return ipList
+        for rdtype in ("A", "AAAA"):
+            try:
+                query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
+                for item in query_object:
+                    ip = str(item)
+                    if ip not in ("0.0.0.0", "::") and ip not in ipList:
+                        ipList.append(ip)
+            except Exception:
+                # NXDOMAIN, NODATA, timeout, or a resolver-specific error for
+                # one query type is not conclusive until the other type is tried.
+                continue
+
+        if not ipList:
+            logger.warning('"%s": no A or AAAA answer from resolver' % domain)
+        return ipList
 
     async def __pingx(self, dnsresolver:DNSResolver, domain:DOMAIN, semaphore):
         async def connect_with_timeout(ip, port, timeout=5):
