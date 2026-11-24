@@ -521,10 +521,18 @@ def main():
 
     baseline_blocks = set()
     baseline_ip_literals = set()
+    baseline_allow_domains = set()
+    baseline_allow_ip_literals = set()
     if baseline_path.exists():
         for raw in baseline_path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = raw.strip()
-            if line.startswith("||") and line.endswith("^") and not line.startswith("@@"):
+            if line.startswith("@@||") and line.endswith("^"):
+                domain = line[4:-1].lower()
+                if is_ip_literal(domain):
+                    baseline_allow_ip_literals.add(domain)
+                else:
+                    baseline_allow_domains.add(domain)
+            elif line.startswith("||") and line.endswith("^") and not line.startswith("@@"):
                 domain = line[2:-1].lower()
                 if is_ip_literal(domain):
                     baseline_ip_literals.add(domain)
