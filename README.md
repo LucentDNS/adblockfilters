@@ -1,4 +1,4 @@
-# LucentDNS Adblock Filters
+# DNS Adblock Filters
 
 独立维护的 DNS 与浏览器内容过滤规则。上游来源经过分类、解析、去重和贡献审查；构建包含白名单回归及关键服务检查。
 
