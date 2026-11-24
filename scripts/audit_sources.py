@@ -3,16 +3,18 @@
 import asyncio
 import json
 import os
+import sys
 from collections import defaultdict
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 import httpx
 from tld.utils import update_tld_names
 
 from readme import ReadMe
 from resolver import Resolver
-
-ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / ".cache" / "audit-source"
 OUT_DIR = ROOT / ".cache" / "audit"
 TIMEOUT = httpx.Timeout(90.0, connect=30.0)
