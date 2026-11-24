@@ -1,5 +1,14 @@
 name: Update Filters
-on: 
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'readme.py'
+      - 'adblock.py'
+      - 'filter.py'
+      - 'resolver.py'
+      - '.github/workflows/update.yml'
   workflow_dispatch:
   schedule:
   - cron: 0 */8 * * *
