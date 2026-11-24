@@ -170,3 +170,9 @@ AWAvenue 自 1.7.6 起将规则拆分为广告、隐私、不受欢迎三类，�
 - AWAvenue 格式与适用范围说明：https://github.com/AWAvenue/AWAvenueAdsWebSite
 - StevenBlack 基础 hosts 与扩展说明：https://github.com/StevenBlack/hosts
 - xinggsf mv 文件用途说明：https://github.com/xinggsf/Adblock-Plus-Rule
+
+### 2026-11-24 follow-up: Spotify audio-edge exception
+
+The AWAvenue Only.Ads audit identified `heads-fa.spotify.com` as one of the few domains not covered by the other production sources. Independent Spotify-specific blocking references classify it as an audio-ad edge and warn that blocking this class of endpoint can cause silence gaps or playback disconnects. To prioritize low breakage over forcing DNS-level audio-ad removal, `heads-fa.spotify.com` is added to the project whitelist. This is a targeted exception only; it does not whitelist the whole Spotify domain. The separate `adstudio-assets.scdn.co` host is documented as an ad-creative CDN and remains blockable.
+
+Evidence: https://gist.github.com/abiudrn/e5c7de98fbf68958753137200e164db0 and https://github.com/v2fly/domain-list-community/blob/master/data/spotify
