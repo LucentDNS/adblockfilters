@@ -281,6 +281,10 @@ jobs:
             .cache/audit/baseline-browser-analysis.json
             .cache/audit/baseline-only-browser-overlap.txt
             .cache/audit/baseline-only-no-browser-overlap.txt
+            .cache/audit/baseline-only-current-dns-source-overlap.txt
+            .cache/audit/baseline-only-current-blacklist-overlap.txt
+            .cache/audit/baseline-only-current-whitelist-covered.txt
+            .cache/audit/baseline-only-not-current-dns-source.txt
             .cache/report/comparison.md
             .cache/report/comparison.json
             .cache/report/optimized-only.txt
