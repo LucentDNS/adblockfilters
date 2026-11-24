@@ -224,7 +224,7 @@ class BlackList(object):
         self.__directlistUrl = "https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/direct.txt"
         self.__IPlistFile = os.path.join(path, "rules/ipv4_china.txt")
         self.__IPlistUrl = "https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/ipv4_china.txt"
-        self.__maxTask = 500
+        self.__maxTask = 200
 
         self.__db = DomainDatabase(self.__databaseFile)
     
@@ -355,6 +355,7 @@ class BlackList(object):
         ipList = []
         no_answer_count = 0
         saw_nxdomain = False
+        error_types = []
         for rdtype in ("A", "AAAA"):
             try:
                 query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
@@ -367,10 +368,10 @@ class BlackList(object):
             except NoAnswer:
                 # NOERROR/NODATA is a definitive negative answer for this RR type.
                 no_answer_count += 1
-            except Exception:
+            except Exception as exc:
                 # Timeout, SERVFAIL, NoNameservers and resolver-specific errors
                 # are inconclusive. Do not turn them into blacklist evidence.
-                continue
+                error_types.append(type(exc).__name__)
 
         if ipList:
             return ipList, "resolved"
@@ -378,6 +379,9 @@ class BlackList(object):
             return [], "not_found"
         if no_answer_count == 2:
             return [], "no_address"
+        logger.warning('"%s": DNS result inconclusive; resolver errors=%s' % (
+            domain, ",".join(sorted(set(error_types))) if error_types else "no usable response"
+        ))
         return [], "unknown"
 
     async def __pingx(self, dnsresolver:DNSResolver, domain:DOMAIN, semaphore):
@@ -431,7 +435,8 @@ class BlackList(object):
                 domain.setBlock(True)
             else:
                 # Inconclusive DNS/TCP results preserve the previous known state.
-                logger.warning('"%s": DNS status unknown; preserve previous state' % domain.domain)
+                if domain.ip:
+                    logger.warning('"%s": TCP check inconclusive; preserve previous state' % domain.domain)
 
             logger.info("%s: %s (%s)" % (domain.domain, ipList, status))
             return domain
@@ -469,6 +474,8 @@ class BlackList(object):
             dnsresolver = DNSResolver()
             dnsresolver.nameservers = nameservers
             dnsresolver.port = port
+            dnsresolver.timeout = 2.0
+            dnsresolver.lifetime = 5.0
             semaphore = asyncio.Semaphore(self.__maxTask)
 
             tasks = []
