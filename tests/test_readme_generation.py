@@ -22,11 +22,11 @@ def test_release_asset_filename_is_github_safe_and_stable():
 def test_get_rules_skips_subscription_tables_with_different_column_counts(tmp_path):
     readme_path = tmp_path / "README.md"
     readme_path.write_text(
-        "| Version | URL |\\n"
-        "|---|---|\\n"
-        "| DNS | https://example.com/list.txt |\\n"
-        "| Source | Type | Link | Updated |\\n"
-        "| Example | dns | [upstream](https://example.org/source.txt) | today |\\n",
+        "| Version | URL |\n"
+        "|---|---|\n"
+        "| DNS | https://example.com/list.txt |\n"
+        "| Source | Type | Link | Updated |\n"
+        "| Example | dns | [upstream](https://example.org/source.txt) | today |\n",
         encoding="utf-8",
     )
 
