@@ -481,13 +481,8 @@ def main():
     # Separate genuine source omissions from exclusions inherited from the
     # current blacklist / project whitelist inputs.
     current_dns_domains = set(memberships)
-    def covered_by_current_dns_source(domain):
-        labels = domain.split(".")
-        return any(".".join(labels[index:]) in current_dns_domains for index in range(len(labels)))
+    current_source_exact = baseline_blocks & current_dns_domains
 
-    current_source_covered = {
-        domain for domain in baseline_blocks if covered_by_current_dns_source(domain)
-    }
     blacklist_path = ROOT / ".cache" / "domain" / "black.txt"
     blacklist_domains = set()
     if blacklist_path.exists():
@@ -507,14 +502,35 @@ def main():
                 if candidate and "/" not in candidate and "*" not in candidate:
                     blacklist_domains.add(candidate)
 
+    current_source_exact_blacklisted = current_source_exact & blacklist_domains
+    current_source_exact_whitelisted = {
+        domain for domain in current_source_exact
+        if covered_by_whitelist(domain, project_whitelist)
+    }
+    current_source_exact_active = (
+        current_source_exact - current_source_exact_blacklisted - current_source_exact_whitelisted
+    )
+
+    def covered_by_active_current_parent(domain):
+        labels = domain.split(".")
+        for index in range(1, len(labels)):
+            parent = ".".join(labels[index:])
+            if (parent in current_dns_domains and parent not in blacklist_domains
+                    and not covered_by_whitelist(parent, project_whitelist)):
+                return True
+        return False
+
+    current_source_parent_covered = {
+        domain for domain in baseline_blocks if covered_by_active_current_parent(domain)
+    }
+    current_effective_coverage = current_source_exact_active | current_source_parent_covered
+    source_not_covered = baseline_blocks - current_effective_coverage
+    source_presence_unexplained = current_source_exact_active - current_source_parent_covered
     blacklist_overlap = baseline_blocks & blacklist_domains
     whitelist_covered = {
         domain for domain in baseline_blocks
         if covered_by_whitelist(domain, project_whitelist)
     }
-    source_covered_unexplained = current_source_covered - blacklist_overlap - whitelist_covered
-    source_not_covered = baseline_blocks - current_source_covered
-
     provenance_path = ROOT / ".cache" / "domain" / "input-provenance.txt"
     input_provenance = {}
     if provenance_path.exists():
@@ -525,31 +541,38 @@ def main():
 
     browser_analysis.update({
         "current_dns_source_unique_domains": len(current_dns_domains),
-        "baseline_only_covered_by_current_dns_source_or_parent": len(current_source_covered),
-        "baseline_only_exactly_present_in_current_blacklist": len(blacklist_overlap),
-        "baseline_only_covered_by_project_whitelist": len(whitelist_covered),
-        "baseline_only_current_source_covered_but_not_explained_by_blacklist_or_whitelist": len(source_covered_unexplained),
-        "baseline_only_not_covered_by_current_dns_sources": len(source_not_covered),
+        "baseline_only_exactly_present_in_current_dns_sources": len(current_source_exact),
+        "baseline_only_exact_source_rules_excluded_by_blacklist": len(current_source_exact_blacklisted),
+        "baseline_only_exact_source_rules_excluded_by_whitelist": len(current_source_exact_whitelisted),
+        "baseline_only_exact_source_rules_active_but_missing_from_output": len(source_presence_unexplained),
+        "baseline_only_covered_by_active_current_source_parent": len(current_source_parent_covered),
+        "baseline_only_blacklist_exact_overlap": len(blacklist_overlap),
+        "baseline_only_project_whitelist_parent_coverage": len(whitelist_covered),
+        "baseline_only_not_effectively_covered_by_current_dns_sources": len(source_not_covered),
         "blacklist_input_available": blacklist_path.exists(),
         "domain_input_provenance": input_provenance
     })
     report += "\n## 原作者基线差异与当前 DNS 来源、黑名单及白名单的关系\n\n"
     report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}。\n"
-    report += f"- 基线独有 block 中，可由当前 DNS 来源同域名或父域名覆盖：{len(current_source_covered)} 条。\n"
-    report += f"- 与本次构建黑名单精确重合：{len(blacklist_overlap)} 条；被项目白名单父域名覆盖：{len(whitelist_covered)} 条。\n"
-    report += f"- 已在当前 DNS 来源中，但不能由黑名单或白名单解释的差异：{len(source_covered_unexplained)} 条。\n"
-    report += f"- 当前 DNS 来源无法覆盖的差异：{len(source_not_covered)} 条。\n"
+    report += f"- 基线独有 block 中，精确存在于当前 DNS 来源：{len(current_source_exact)} 条。\n"
+    report += f"- 其中被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条。\n"
+    report += f"- 当前来源中存在、未被黑/白名单排除、但仍未出现在输出：{len(source_presence_unexplained)} 条。\n"
+    report += f"- 由当前 DNS 来源中仍有效的父域名覆盖：{len(current_source_parent_covered)} 条。\n"
+    report += f"- 当前来源无法有效覆盖：{len(source_not_covered)} 条。\n"
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
-    report += "- 这组分类用于区分输入来源差异与排除规则，不代表黑名单判定本身已正确；若黑名单来自上游回退，它仍需由本项目自己的 DNS 检测重新验证。\n"
+    report += "- 若黑名单来自上游回退，其排除结果仍需由 NobleDNS 自己的 DNS 检测重新验证；本统计不把上游黑名单当作已验证事实。\n"
 
     (OUT_DIR / "baseline-only-current-dns-source-overlap.txt").write_text(
-        "\n".join(sorted(current_source_covered)) + ("\n" if current_source_covered else ""), encoding="utf-8"
+        "\n".join(sorted(current_effective_coverage)) + ("\n" if current_effective_coverage else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-only-current-blacklist-overlap.txt").write_text(
-        "\n".join(sorted(blacklist_overlap)) + ("\n" if blacklist_overlap else ""), encoding="utf-8"
+        "\n".join(sorted(current_source_exact_blacklisted)) + ("\n" if current_source_exact_blacklisted else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-only-current-whitelist-covered.txt").write_text(
-        "\n".join(sorted(whitelist_covered)) + ("\n" if whitelist_covered else ""), encoding="utf-8"
+        "\n".join(sorted(current_source_exact_whitelisted)) + ("\n" if current_source_exact_whitelisted else ""), encoding="utf-8"
+    )
+    (OUT_DIR / "baseline-only-current-source-unexplained.txt").write_text(
+        "\n".join(sorted(source_presence_unexplained)) + ("\n" if source_presence_unexplained else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-only-not-current-dns-source.txt").write_text(
         "\n".join(sorted(source_not_covered)) + ("\n" if source_not_covered else ""), encoding="utf-8"
