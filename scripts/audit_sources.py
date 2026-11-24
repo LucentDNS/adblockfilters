@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Audit upstream filter sources using the repository's current Resolver parser."""
 import asyncio
+import hashlib
 import json
 import os
 import re
@@ -99,6 +100,7 @@ def audit_one(rule, resolver, download):
         return result, set()
 
     lines = Path(download["path"]).read_text(encoding="utf-8", errors="replace").splitlines()
+    result["source_sha256"] = hashlib.sha256(Path(download["path"]).read_bytes()).hexdigest()
     result["total_lines"] = len(lines)
     seen_lines = set()
     blocks, allows, filters, extracted = set(), set(), set(), set()
@@ -335,6 +337,7 @@ def main():
 
     (OUT_DIR / "source-audit.json").write_text(
         json.dumps({
+            "audit_generated_at_utc": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(timespec="seconds"),
             "production_sources": len(production_names),
             "candidate_sources": len(candidate_names),
             "sources": results,
