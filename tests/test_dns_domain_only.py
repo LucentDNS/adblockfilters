@@ -29,6 +29,7 @@ def test_browser_ip_filter_is_kept_but_not_added_to_dns_domain_backup():
         set(),
         set(),
         set(),
+        {},
     )
     assert "||203.0.113.8^" in filter_list
     assert "||example.com^" in filter_list
