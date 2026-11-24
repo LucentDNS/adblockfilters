@@ -273,8 +273,9 @@ class BlackList(object):
                 with open(self.__domainlistFile, 'r') as f:
                     for line in f.readlines():
                         # 去掉换行符
-                        line = line.replace('\r', '').replace('\n', '').strip()
-                        # 去掉空行
+                        line = line.replace('\r', '').replace('\n', '').strip().lower().strip(".")
+                        # Normalize leading/trailing dots and case before DB lookup.
+                        # Adblock suffix notation like ".example.com" is not a DNS qname.
                         if len(line) < 1:
                             continue
                         # 去掉注释
