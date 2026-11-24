@@ -228,6 +228,7 @@ jobs:
           path: |
             .cache/out/*
             .cache/report/*
+            .cache/audit/*
           retention-days: 14
 
       - name: Upload rules to release
