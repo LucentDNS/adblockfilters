@@ -37,6 +37,8 @@ class Filter(object):
                 taskList.append(thread_pool.submit(resolver.resolveDNS, rule))
             if rule.type == "filter":
                 taskList.append(thread_pool.submit(resolver.resolveFilter, rule))
+            if rule.type == "filter-only":
+                taskList.append(thread_pool.submit(resolver.resolveFilterOnly, rule))
         # 添加收集的补充规则
         rule = Rule("myblock", "dns", "", "")
         taskList.append(thread_pool.submit(resolver.resolveDNS, rule))
