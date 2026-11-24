@@ -252,6 +252,20 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: false
 
+      - name: Publish source audit and baseline comparison reports
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: audit
+          files: |
+            .cache/audit/source-audit.md
+            .cache/audit/source-audit.json
+            .cache/report/comparison.md
+            .cache/report/comparison.json
+            .cache/report/optimized-only.txt
+            .cache/report/baseline-only.txt
+          overwrite_files: true
+          fail_on_unmatched_files: false
+
       - name: Upload domain backup
         uses: softprops/action-gh-release@v3
         with:
