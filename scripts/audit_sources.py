@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import httpx
+from tld import get_tld
 from tld.utils import update_tld_names
 
 from readme import ReadMe, Rule
@@ -175,7 +176,9 @@ def render_report(results, production_names, candidate_names, overlap, unique_to
         ("unique_block_domains", "唯一拦截域名"),
         ("unique_only_domains", "精确独有域名"),
         ("shared_domains", "精确重复域名"),
-        ("effective_unique_domains", "最终父级压缩后独有域名"),
+        ("effective_unique_domains", "父级压缩后独有候选（白名单前）"),
+        ("effective_unique_after_whitelist", "白名单后独有候选"),
+        ("white_excluded_domains", "被项目白名单排除"),
         ("external_parent_covered_domains", "被其他来源父域名覆盖"),
         ("internal_parent_covered_domains", "被本来源父域名压缩"),
         ("unique_allow_domains", "唯一放行域名"),
@@ -221,11 +224,48 @@ def render_report(results, production_names, candidate_names, overlap, unique_to
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
         "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
         "- 跨来源重复拦截域名：仅统计正式集成来源中解析为 block 的域名；不把候选来源或浏览器过滤规则提取的域名混入。",
-        "- 最终父级压缩后独有域名：先排除其他正式来源的相同域名/父域名覆盖，再排除本来源内被父域名覆盖的子域名；仍未扣除项目黑名单、白名单和上游 allow 例外，因此是来源贡献上限估计，不代表这些域名都应拦截。",
+        "- 父级压缩后独有候选（白名单前）：先排除其他正式来源的相同域名/父域名覆盖，再排除本来源内被父域名覆盖的子域名。",
+        "- 白名单后独有候选：在父级压缩后独有候选基础上，进一步扣除项目 white.txt 中精确域名及其子域名；尚未扣除动态黑名单和上游 allow 规则，因此仍是来源贡献估计，不代表每条都已完成误杀验证。",
         "- 候选来源的独有贡献：仅与正式来源比较，不能反向减少正式来源的独有贡献。",
         "- 过滤规则的域名提取统计单独保留，不计入 AdGuard Home DNS 拦截域名交集。"
     ])
     return "\n".join(out) + "\n"
+
+
+
+def load_project_whitelist():
+    """Parse DNS-domain exceptions with the same accepted syntax as Filter.__getWhiteDict."""
+    path = ROOT / "rules" / "white.txt"
+    domains = set()
+    if not path.exists():
+        return domains
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        value = raw.strip()
+        if not value or value.startswith("#"):
+            continue
+        if value.startswith("@@||"):
+            value = value[4:]
+        elif value.startswith("||"):
+            value = value[2:]
+        if "^" in value:
+            value = value.split("^", 1)[0]
+        if "$" in value:
+            value = value.split("$", 1)[0]
+        if (not value or value.endswith(".") or
+                any(char in value for char in "*/#|?^$")):
+            continue
+        try:
+            parsed = get_tld(value, fix_protocol=True, as_object=True)
+            domain = (f"{parsed.subdomain}." if parsed.subdomain else "") + parsed.fld
+            domains.add(domain.lower())
+        except Exception:
+            continue
+    return domains
+
+
+def covered_by_whitelist(domain, whitelist):
+    labels = domain.lower().split(".")
+    return any(".".join(labels[index:]) in whitelist for index in range(len(labels)))
 
 
 def main():
@@ -256,6 +296,7 @@ def main():
         domain_sets[rule.name] = domains
 
     production_sets = {name: domain_sets.get(name, set()) for name in production_names}
+    project_whitelist = load_project_whitelist()
     memberships = defaultdict(set)
     for name, domains in production_sets.items():
         for domain in domains:
@@ -290,7 +331,12 @@ def main():
             if not any(".".join(domain.split(".")[index:]) in after_external
                        for index in range(1, len(domain.split("."))))
         }
+        after_whitelist = {domain for domain in effective_unique
+                           if not covered_by_whitelist(domain, project_whitelist)}
         row["effective_unique_domains"] = len(effective_unique)
+        row["effective_unique_after_whitelist"] = len(after_whitelist)
+        row["white_excluded_domains"] = len(effective_unique) - len(after_whitelist)
+        row["effective_unique_after_whitelist_samples"] = sorted(after_whitelist)[:100]
         row["external_parent_covered_domains"] = len(own) - len(after_external)
         row["internal_parent_covered_domains"] = len(after_external) - len(effective_unique)
         row["effective_unique_samples"] = sorted(effective_unique)[:100]
@@ -313,6 +359,8 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     unique_dir = OUT_DIR / "effective-unique"
     unique_dir.mkdir(parents=True, exist_ok=True)
+    unique_after_whitelist_dir = OUT_DIR / "effective-unique-after-whitelist"
+    unique_after_whitelist_dir.mkdir(parents=True, exist_ok=True)
     for row in results:
         name = row["name"]
         own = domain_sets.get(name, set())
@@ -335,12 +383,21 @@ def main():
         (unique_dir / f"{safe_name}.txt").write_text(
             "\n".join(sorted(unique_domains)) + ("\n" if unique_domains else ""), encoding="utf-8"
         )
+        after_whitelist_domains = [
+            domain for domain in unique_domains
+            if not covered_by_whitelist(domain, project_whitelist)
+        ]
+        (unique_after_whitelist_dir / f"{safe_name}.txt").write_text(
+            "\n".join(sorted(after_whitelist_domains)) +
+            ("\n" if after_whitelist_domains else ""), encoding="utf-8"
+        )
 
     (OUT_DIR / "source-audit.json").write_text(
         json.dumps({
             "audit_generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "production_sources": len(production_names),
             "candidate_sources": len(candidate_names),
+            "project_whitelist_domains_parsed": len(project_whitelist),
             "sources": results,
             "cross_source_duplicate_domains": overlap,
             "unique_domains_all_production_sources": unique_total,
