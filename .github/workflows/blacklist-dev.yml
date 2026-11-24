@@ -180,7 +180,9 @@ jobs:
         with:
           tag_name: dev-domain-noble
           name: NobleDNS independent development domain state
-          body: Generated only from the NobleDNS development blacklist resolver. This release is isolated from the stable domain release.
+          body: Internal CI validation state only; not a user-facing rule subscription or production release. Isolated from the stable domain release.
+          prerelease: true
+          make_latest: false
           files: |
             domain.db
             domain.txt
