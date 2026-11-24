@@ -229,6 +229,31 @@ jobs:
           test -s .cache/out/adblockv2raylite.dat
           rm -f .cache/out/adblockv2ray.txt .cache/out/adblockv2raylite.txt
       
+      - name: Validate audit report assets
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          roots = (Path(".cache/audit"), Path(".cache/report"))
+          for root in roots:
+              if not root.exists():
+                  raise SystemExit(f"Required report directory is missing: {root}")
+              for path in root.rglob("*"):
+                  if not path.is_file():
+                      continue
+                  if path.suffix == ".txt" and path.stat().st_size == 0:
+                      path.write_text("! No entries matched this report.\\n", encoding="utf-8")
+                  elif path.suffix in {".md", ".json"} and path.stat().st_size == 0:
+                      raise SystemExit(f"Required report is empty: {path}")
+                  if path.suffix == ".json":
+                      try:
+                          json.loads(path.read_text(encoding="utf-8"))
+                      except Exception as exc:
+                          raise SystemExit(f"Invalid JSON report {path}: {exc}")
+          print("Audit report assets are present, non-empty, and valid.")
+          PY
+
       - name: Upload build and comparison artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
