@@ -139,17 +139,21 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import sqlite3
+          from blacklist import DomainDatabase
+
+          # Initialize the current schema when bootstrapping from an older DB.
+          database = DomainDatabase("domain.db")
+          database.close()
 
           connection = sqlite3.connect("domain.db")
-          table_exists = connection.execute(
-              "SELECT 1 FROM sqlite_master WHERE type='table' AND name='T_DOMAIN'"
-          ).fetchone()
-          if table_exists:
-              cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0, isChina = 0")
-              connection.commit()
-              print(f"Reset inherited block/China flags: {cursor.rowcount}")
-          else:
-              print("Fresh empty database: no inherited blacklist flags to reset.")
+          tables = {row[0].upper() for row in connection.execute(
+              "SELECT name FROM sqlite_master WHERE type='table'"
+          )}
+          if "T_DOMAIN" not in tables:
+              raise SystemExit(f"NobleDNS T_DOMAIN table missing after initialization: {tables}")
+          cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0")
+          connection.commit()
+          print(f"Reset inherited isBlock flags: {cursor.rowcount}")
           connection.close()
           PY
 
