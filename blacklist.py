@@ -14,6 +14,7 @@ from tld.utils import update_tld_names
 from loguru import logger
 from dns.asyncresolver import Resolver as DNSResolver
 from dns.rdatatype import RdataType as DNSRdataType
+from dns.resolver import NXDOMAIN, NoAnswer
 
 def _ip_in_ranges(ip_int:int, starts:List[int], ends:List[int]) -> bool:
     # starts/ends 为已排序且无重叠的 [起始, 结束] 区间，二分查找 O(log N)
@@ -347,11 +348,13 @@ class BlackList(object):
             logger.error("%s"%(e))
             return starts, ends
     
-    async def __resolve(self, dnsresolver, domain):
-        # A-only checks incorrectly classify IPv6-only domains as dead.
-        # Query both address families; failure/NODATA for one family must not
-        # discard a valid answer from the other family.
+    async def __resolve(self, dnsresolver, domain) -> Tuple[List[str], str]:
+        # Query both address families. A valid answer from either family is
+        # sufficient; transient resolver failures must never be treated as
+        # proof that a domain is dead.
         ipList = []
+        no_answer_count = 0
+        saw_nxdomain = False
         for rdtype in ("A", "AAAA"):
             try:
                 query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
@@ -359,14 +362,23 @@ class BlackList(object):
                     ip = str(item)
                     if ip not in ("0.0.0.0", "::") and ip not in ipList:
                         ipList.append(ip)
+            except NXDOMAIN:
+                saw_nxdomain = True
+            except NoAnswer:
+                # NOERROR/NODATA is a definitive negative answer for this RR type.
+                no_answer_count += 1
             except Exception:
-                # NXDOMAIN, NODATA, timeout, or a resolver-specific error for
-                # one query type is not conclusive until the other type is tried.
+                # Timeout, SERVFAIL, NoNameservers and resolver-specific errors
+                # are inconclusive. Do not turn them into blacklist evidence.
                 continue
 
-        if not ipList:
-            logger.warning('"%s": no A or AAAA answer from resolver' % domain)
-        return ipList
+        if ipList:
+            return ipList, "resolved"
+        if saw_nxdomain:
+            return [], "not_found"
+        if no_answer_count == 2:
+            return [], "no_address"
+        return [], "unknown"
 
     async def __pingx(self, dnsresolver:DNSResolver, domain:DOMAIN, semaphore):
         async def connect_with_timeout(ip, port, timeout=5):
@@ -395,20 +407,33 @@ class BlackList(object):
 
         async with semaphore: # 限制并发数，超过系统限制后会报错Too many open files
             ipList = []
+            status = "unknown"
             if domain.ip:  # IP
                 portList = [domain.port] * 3 if domain.port else [80, 443] * 3 # 重试 3 次
                 for port in portList:
                     if await connect_with_timeout(domain.ip, port, 5): # 5s 超时
                         ipList.append(domain.ip)
+                        status = "resolved"
                         break
             else: # 域名
                 count = 3
-                while len(ipList) < 1 and count > 0:
-                    ipList = await self.__resolve(dnsresolver, domain.domain)
+                while count > 0:
+                    ipList, status = await self.__resolve(dnsresolver, domain.domain)
+                    if status != "unknown":
+                        break
                     count -= 1
 
-            domain.setIPList(ipList)
-            logger.info("%s: %s" % (domain.domain, ipList))
+            if status == "resolved":
+                domain.setIPList(ipList)
+                domain.setBlock(False)
+            elif status in {"not_found", "no_address"}:
+                domain.setIPList([])
+                domain.setBlock(True)
+            else:
+                # Inconclusive DNS/TCP results preserve the previous known state.
+                logger.warning('"%s": DNS status unknown; preserve previous state' % domain.domain)
+
+            logger.info("%s: %s (%s)" % (domain.domain, ipList, status))
             return domain
 
     def __generateBlackList(self, blackList):
@@ -584,12 +609,11 @@ class BlackList(object):
             # 生成 Black 域名列表
             blackList = []
             for k,v in domainDict.items():
-                ipList = v.getIPList()
-                if len(ipList) == 0:
-                    v.setBlock(True)
+                # Only explicit NXDOMAIN or successful NODATA for both A/AAAA
+                # can mark a domain dead. Unknown resolver failures are not
+                # blacklist evidence.
+                if v.getBlock():
                     blackList.append(k)
-                else:
-                    v.setBlock(False)
             if len(blackList):
                 blackList.sort()
                 self.__generateBlackList(blackList)
