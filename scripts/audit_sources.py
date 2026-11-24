@@ -329,7 +329,13 @@ def main():
     browser_rules = [rule for rule in all_rules if rule.type == "filter"]
     candidate_rules = [
         Rule("Pollock hosts (candidate only)", "host",
-             "https://someonewhocares.org/hosts/hosts", "2026/11/22")
+             "https://someonewhocares.org/hosts/hosts", "2026/11/22"),
+        # The upstream author's current source table uses OISD Basic, while
+        # NobleDNS currently evaluates OISD Small. Audit the exact upstream
+        # cached snapshot as a candidate; do not add it to production inputs.
+        Rule("OISD Basic (upstream snapshot; candidate only)", "dns",
+             "https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt",
+             "upstream release snapshot")
     ]
     rules = production_rules + browser_rules + candidate_rules
     production_names = {rule.name for rule in production_rules}
@@ -628,7 +634,30 @@ def main():
                 key, value = raw.split("\t", 1)
                 input_provenance[key] = value
 
+    # Attribute baseline-only DNS blocks to the upstream author's OISD Basic
+    # snapshot separately from the current NobleDNS OISD Small source.
+    baseline_candidate_analysis = {}
+    for candidate in sorted(candidate_names):
+        candidate_domains = domain_sets.get(candidate, set())
+        exact = baseline_blocks & candidate_domains
+        parent_covered = {
+            domain for domain in baseline_blocks
+            if any(".".join(domain.split(".")[index:]) in candidate_domains
+                   for index in range(1, len(domain.split("."))))
+        }
+        baseline_candidate_analysis[candidate] = {
+            "candidate_unique_domains": len(candidate_domains),
+            "baseline_only_exact_overlap": len(exact),
+            "baseline_only_parent_covered": len(parent_covered),
+            "baseline_only_exact_or_parent_covered": len(exact | parent_covered),
+            "baseline_only_not_covered": len(baseline_blocks - exact - parent_covered),
+            "exact_overlap_samples": sorted(exact)[:100],
+            "parent_coverage_samples": sorted(parent_covered)[:100],
+        }
+
     browser_analysis.update({
+        "baseline_comparison_available": True,
+        "baseline_candidate_analysis": baseline_candidate_analysis,
         "current_dns_source_unique_domains": len(current_dns_domains),
         "baseline_only_exactly_present_in_current_dns_sources": len(current_source_exact),
         "baseline_only_exact_source_rules_excluded_by_blacklist": len(current_source_exact_blacklisted),
@@ -652,6 +681,17 @@ def main():
     report += f"- 当前输出中未被有效来源规则覆盖：{len(source_not_effectively_covered)} 条。\n"
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
     report += "- 若黑名单来自上游回退，其排除结果仍需由 NobleDNS 自己的 DNS 检测重新验证；本统计不把上游黑名单当作已验证事实。\n"
+    report += "\n### 原作者 OISD Basic 候选来源对基线差异的覆盖\n\n"
+    report += "- OISD Basic 仅作为审计候选，不进入 NobleDNS 正式来源或构建。\n"
+    report += "| 候选来源 | 可解析域名 | 基线独有精确重合 | 父域名覆盖 | 合计覆盖 | 未覆盖 |\n|---|---:|---:|---:|---:|---:|\n"
+    for candidate, stats in sorted(baseline_candidate_analysis.items()):
+        report += (
+            f"| {candidate} | {stats['candidate_unique_domains']} | "
+            f"{stats['baseline_only_exact_overlap']} | "
+            f"{stats['baseline_only_parent_covered']} | "
+            f"{stats['baseline_only_exact_or_parent_covered']} | "
+            f"{stats['baseline_only_not_covered']} |\n"
+        )
 
     write_domain_list(
         OUT_DIR / "baseline-only-current-dns-source-overlap.txt",
