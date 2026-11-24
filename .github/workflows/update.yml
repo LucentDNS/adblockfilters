@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - lucentdns-dev
+      - main
   schedule:
   - cron: 0 */8 * * *
 
