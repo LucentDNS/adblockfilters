@@ -57,6 +57,10 @@ def main():
         else:
             block_dict, _, _ = resolver.resolveFilter(rule)
         domains = domains_from_block_dict(block_dict)
+        if not domains:
+            raise SystemExit(
+                f"DNS/Hosts source {rule.name} produced no valid block domains; refusing a partial validation input"
+            )
         source_counts[rule.name] = len(domains)
         all_domains.update(domains)
 
