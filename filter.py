@@ -124,6 +124,17 @@ class Filter(object):
         
         return whiteDict
     
+    # 生成被父级拦截规则覆盖的白名单例外
+    def __getWhiteExceptions(self, whiteDict:Dict[str,Set[str]], blockList:List[str]) -> List[str]:
+        blocked = set(blockList)
+        exceptions = set()
+        for fld, subdomains in whiteDict.items():
+            for subdomain in subdomains:
+                domain = (subdomain + "." + fld) if subdomain else fld
+                if any(domain == item or domain.endswith("." + item) for item in blocked):
+                    exceptions.add(domain)
+        return sorted(exceptions)
+
     # 获取 China domain 清单，国内域名
     def __getChinaList(self, fileName:str) -> Set[str]:
         logger.info("resolve China list...")
@@ -259,6 +270,10 @@ class Filter(object):
         # 规则处理：合并、去重、排序、剔除剔除黑名单、剔除白名单
         blockList, blockSet_block = self.__domainSort(blockDict, blackSet, whiteDict)
         unblockList, unblockSet_unblock = self.__domainSort(unblockDict, blackSet, whiteDict)
+        # 若白名单子域名被上游父域名规则覆盖，必须生成更具体的 DNS 放行例外。
+        whiteExceptions = self.__getWhiteExceptions(whiteDict, blockList)
+        unblockList = sorted(set(unblockList) | set(whiteExceptions))
+        unblockSet_unblock |= set(whiteExceptions)
         filterList_var, filterList, domainSet_filter = self.__filterSort(filterDict, set(blockList), set(unblockList), blackSet, whiteSet)
 
         # 生成合并规则 AdGuard, AdGuardHome, DNSMasq, InviZible, SmartDNS等
