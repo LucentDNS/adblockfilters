@@ -142,29 +142,6 @@ jobs:
           cp .cache/domain/domain.txt domain.txt
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
 
-      - name: Reset inherited upstream blacklist decisions
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import sqlite3
-          from blacklist import DomainDatabase
-
-          # Initialize the current schema when bootstrapping from an older DB.
-          database = DomainDatabase("domain.db")
-          database.close()
-
-          connection = sqlite3.connect("domain.db")
-          tables = {row[0].upper() for row in connection.execute(
-              "SELECT name FROM sqlite_master WHERE type='table'"
-          )}
-          if "T_DOMAIN" not in tables:
-              raise SystemExit(f"NobleDNS T_DOMAIN table missing after initialization: {tables}")
-          cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0")
-          connection.commit()
-          print(f"Reset inherited isBlock flags: {cursor.rowcount}")
-          connection.close()
-          PY
-
       - name: Run DNS validation and generate independent blacklist
         id: generate
         run: |
