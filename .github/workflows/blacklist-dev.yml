@@ -6,7 +6,7 @@ permissions:
 
 concurrency:
   group: noble-dns-dev-blacklist
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
@@ -19,6 +19,7 @@ on:
       - rules/direct.txt
       - rules/ipv4_china.txt
       - rules/white.txt
+      - .github/workflows/blacklist-dev.yml
 
 env:
   TZ: Asia/Shanghai
