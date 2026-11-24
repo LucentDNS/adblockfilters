@@ -18,3 +18,4 @@ china.txt
 rules/*
 !rules/white.txt
 !rules/myblock.txt
+validated-dns-sources.tar.gz
