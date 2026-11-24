@@ -25,6 +25,13 @@ OUT_DIR = ROOT / ".cache" / "audit"
 CANDIDATE_SOURCE_DIR = OUT_DIR / "candidate-source"
 TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 
+def write_domain_list(path, domains, empty_note):
+    """Write a non-empty, comment-safe list so empty reports remain publishable."""
+    values = sorted(set(domains))
+    content = "\n".join(values) + "\n" if values else f"! {empty_note}\n"
+    Path(path).write_text(content, encoding="utf-8")
+
+
 
 def full_domain(value):
     if not value:
@@ -471,11 +478,15 @@ def main():
     (OUT_DIR / "baseline-browser-analysis.json").write_text(
         json.dumps(browser_analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    (OUT_DIR / "baseline-only-browser-overlap.txt").write_text(
-        "\n".join(sorted(browser_explained)) + ("\n" if browser_explained else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-browser-overlap.txt",
+        browser_explained,
+        "No baseline-only block rule overlaps browser-source domains."
     )
-    (OUT_DIR / "baseline-only-no-browser-overlap.txt").write_text(
-        "\n".join(sorted(browser_unexplained)) + ("\n" if browser_unexplained else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-no-browser-overlap.txt",
+        browser_unexplained,
+        "No baseline-only block rule remains outside browser-source domain coverage."
     )
 
     # Separate genuine source omissions from exclusions inherited from the
@@ -571,25 +582,35 @@ def main():
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
     report += "- 若黑名单来自上游回退，其排除结果仍需由 NobleDNS 自己的 DNS 检测重新验证；本统计不把上游黑名单当作已验证事实。\n"
 
-    (OUT_DIR / "baseline-only-current-dns-source-overlap.txt").write_text(
-        "\n".join(sorted(current_effective_coverage)) + ("\n" if current_effective_coverage else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-dns-source-overlap.txt",
+        current_effective_coverage,
+        "No baseline-only block rule is covered by current DNS sources."
     )
-    (OUT_DIR / "baseline-only-current-blacklist-overlap.txt").write_text(
-        "\n".join(sorted(current_source_exact_blacklisted)) + ("\n" if current_source_exact_blacklisted else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-blacklist-overlap.txt",
+        current_source_exact_blacklisted,
+        "No exact baseline-only rule is excluded by the current blacklist."
     )
-    (OUT_DIR / "baseline-only-current-whitelist-covered.txt").write_text(
-        "\n".join(sorted(current_source_exact_whitelisted)) + ("\n" if current_source_exact_whitelisted else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-whitelist-covered.txt",
+        current_source_exact_whitelisted,
+        "No exact baseline-only rule is covered by the project whitelist."
     )
-    unexplained_path = OUT_DIR / "baseline-only-current-source-unexplained.txt"
-    if source_presence_unexplained:
-        unexplained_path.write_text("\n".join(sorted(source_presence_unexplained)) + "\n", encoding="utf-8")
-    else:
-        unexplained_path.write_text("# None: no unexplained active source rules\n", encoding="utf-8")
-    (OUT_DIR / "baseline-only-not-effectively-covered-by-current-dns.txt").write_text(
-        "\n".join(sorted(source_not_effectively_covered)) + ("\n" if source_not_effectively_covered else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-source-unexplained.txt",
+        source_presence_unexplained,
+        "No active current-source rule is missing from the generated DNS output."
     )
-    (OUT_DIR / "baseline-only-absent-from-current-dns-sources.txt").write_text(
-        "\n".join(sorted(source_absent)) + ("\n" if source_absent else ""), encoding="utf-8"
+    write_domain_list(
+        OUT_DIR / "baseline-only-not-effectively-covered-by-current-dns.txt",
+        source_not_effectively_covered,
+        "All baseline-only block rules are effectively covered by current DNS sources."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-absent-from-current-dns-sources.txt",
+        source_absent,
+        "No baseline-only block rule is absent from current DNS sources."
     )
 
     (OUT_DIR / "baseline-browser-analysis.json").write_text(
