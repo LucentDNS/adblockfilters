@@ -1,4 +1,6 @@
 import os
+import hashlib
+import json
 
 from loguru import logger
 from tld.utils import update_tld_names
@@ -6,6 +8,82 @@ from tld.utils import update_tld_names
 from readme import ReadMe
 from updater import Updater
 from filter import Filter
+
+
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_domain_validation_provenance(ruleList, sourceDir, domainDir):
+    """Require the build's DNS sources to match the exact snapshots DNS-validated."""
+    provenance_path = os.path.join(domainDir, "domain-input-provenance.json")
+    if not os.path.isfile(provenance_path):
+        return False
+
+    with open(provenance_path, "r", encoding="utf-8") as stream:
+        provenance = json.load(stream)
+
+    expected_rules = {
+        rule.name: rule for rule in ruleList
+        if rule.type in ("host", "dns", "dnsfilter")
+    }
+    source_records = provenance.get("sources")
+    if not isinstance(source_records, list):
+        raise RuntimeError("DNS validation provenance has no source records")
+
+    records = {item.get("name"): item for item in source_records if isinstance(item, dict)}
+    if set(records) != set(expected_rules):
+        raise RuntimeError(
+            "DNS validation source set changed between validation and build: "
+            f"validated={sorted(records)} build={sorted(expected_rules)}"
+        )
+
+    for name, rule in expected_rules.items():
+        record = records[name]
+        if record.get("type") != rule.type or record.get("url") != rule.url:
+            raise RuntimeError(f"DNS validation source metadata changed: {name}")
+        source_path = os.path.join(sourceDir, rule.filename)
+        if not os.path.isfile(source_path):
+            raise RuntimeError(f"Validated DNS source snapshot is missing: {name}")
+        actual_sha = _sha256_file(source_path)
+        if actual_sha != record.get("sha256"):
+            raise RuntimeError(
+                f"DNS source changed after validation: {name}; "
+                f"validated={record.get('sha256')} build={actual_sha}"
+            )
+
+    myblock_path = os.path.join(sourceDir, "myblock.txt")
+    if not os.path.isfile(myblock_path):
+        raise RuntimeError("Validated myblock.txt snapshot is missing")
+    actual_myblock_sha = _sha256_file(myblock_path)
+    if actual_myblock_sha != provenance.get("myblock_sha256"):
+        raise RuntimeError("myblock.txt changed after DNS validation")
+
+    domain_path = os.path.join(domainDir, "domain.txt")
+    if not os.path.isfile(domain_path):
+        raise RuntimeError("DNS validation domain.txt is missing")
+    with open(domain_path, "r", encoding="utf-8") as stream:
+        domain_count = sum(1 for line in stream if line.strip())
+    if domain_count != provenance.get("unique_validation_domains"):
+        raise RuntimeError(
+            "DNS validation domain count mismatch: "
+            f"provenance={provenance.get('unique_validation_domains')} file={domain_count}"
+        )
+
+    expected_domain_sha = provenance.get("domain_file_sha256")
+    if expected_domain_sha and _sha256_file(domain_path) != expected_domain_sha:
+        raise RuntimeError("domain.txt changed after DNS validation")
+
+    logger.info(
+        f"DNS validation provenance verified: {len(expected_rules)} source snapshots, "
+        f"{domain_count} candidate domains"
+    )
+    return True
+
 
 class ADBlock(object):
     def __init__(self):
@@ -34,6 +112,9 @@ class ADBlock(object):
         # 更新上游规则（下载到 .cache/source）
         updater = Updater(ruleList)
         update, ruleList = updater.update(self.sourceDir)
+
+        # Dev builds must use the exact DNS/Hosts snapshots that produced black.txt/china.txt.
+        verify_domain_validation_provenance(ruleList, self.sourceDir, self.domainDir)
 
         # 每次都重新生成：black/china/white/myblock 等输入也会变化。
         # 不能只在上游源变化时构建，否则域名有效性名单更新后产物会长期过期。
