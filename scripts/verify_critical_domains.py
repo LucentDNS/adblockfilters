@@ -11,6 +11,7 @@ from resolver import Resolver
 
 CRITICAL_FILE = ROOT / "tests" / "data" / "critical-domains.txt"
 DNS_OUTPUT = ROOT / ".cache" / "out" / "adblockdns.txt"
+FILTER_OUTPUT = ROOT / ".cache" / "out" / "adblockfilters.txt"
 SOURCE_DIR = ROOT / ".cache" / "source"
 MAX_DNS_RULES = 500_000
 
@@ -37,7 +38,7 @@ def is_covered(domain, rules):
     return any(domain == rule or domain.endswith("." + rule) for rule in rules)
 
 
-def parse_dns_rules(path):
+def parse_rules(path, browser_filter=False):
     resolver = Resolver(str(SOURCE_DIR))
     block_domains = set()
     allow_domains = set()
@@ -46,7 +47,13 @@ def parse_dns_rules(path):
         line = raw.strip()
         if not line or line.startswith(("!", "#")):
             continue
-        block, unblock, filt = resolver._Resolver__resolveDNS(line)
+        try:
+            if browser_filter:
+                block, unblock, filt = resolver._Resolver__resolveFilter(line)
+            else:
+                block, unblock, filt = resolver._Resolver__resolveDNS(line)
+        except Exception:
+            continue
         block_domain = normalize_domain(block)
         allow_domain = normalize_domain(unblock)
         if block_domain:
@@ -66,8 +73,8 @@ def parse_dns_rules(path):
 
 
 def main():
-    if not CRITICAL_FILE.is_file() or not DNS_OUTPUT.is_file():
-        raise SystemExit("Critical-domain regression inputs or compiled DNS output are missing")
+    if not CRITICAL_FILE.is_file() or not DNS_OUTPUT.is_file() or not FILTER_OUTPUT.is_file():
+        raise SystemExit("Critical-domain regression inputs or compiled DNS/browser outputs are missing")
 
     critical_domains = [
         line.strip().lower()
@@ -86,23 +93,32 @@ def main():
             f"DNS output exceeds the 500,000-rule resource limit: {dns_rule_count}"
         )
 
-    block_domains, allow_domains = parse_dns_rules(DNS_OUTPUT)
     failures = []
-    for domain in critical_domains:
-        blocks = sorted(rule for rule in block_domains if domain == rule or domain.endswith("." + rule))
-        allows = sorted(rule for rule in allow_domains if domain == rule or domain.endswith("." + rule))
-        if blocks and not allows:
-            failures.append((domain, blocks))
+    output_summaries = []
+    for label, path, browser_filter in (
+        ("DNS", DNS_OUTPUT, False),
+        ("browser", FILTER_OUTPUT, True),
+    ):
+        block_domains, allow_domains = parse_rules(path, browser_filter=browser_filter)
+        output_summaries.append((label, len(block_domains), len(allow_domains)))
+        for domain in critical_domains:
+            blocks = sorted(rule for rule in block_domains if domain == rule or domain.endswith("." + rule))
+            allows = sorted(rule for rule in allow_domains if domain == rule or domain.endswith("." + rule))
+            if blocks and not allows:
+                failures.append((label, domain, blocks))
 
     if failures:
-        for domain, blocks in failures:
-            print(f"BLOCKED CRITICAL DOMAIN: {domain}; matching block rules: {', '.join(blocks)}")
-        raise SystemExit(f"{len(failures)} critical service domains are blocked")
+        for label, domain, blocks in failures:
+            print(f"BLOCKED CRITICAL DOMAIN ({label}): {domain}; matching block rules: {', '.join(blocks)}")
+        raise SystemExit(f"{len(failures)} critical service/output combinations are blocked")
 
+    summary = "; ".join(
+        f"{label}: {blocks} block domains, {allows} allow domains"
+        for label, blocks, allows in output_summaries
+    )
     print(
         f"Build quality gate passed: {dns_rule_count}/{MAX_DNS_RULES} DNS rules; "
-        f"{len(critical_domains)} critical service roots; "
-        f"{len(block_domains)} block domains; {len(allow_domains)} allow domains"
+        f"{len(critical_domains)} critical service roots checked in DNS and browser outputs; {summary}"
     )
 
 
