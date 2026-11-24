@@ -62,3 +62,29 @@ def test_validation_provenance_rejects_changed_domain_input(tmp_path):
 
     with pytest.raises(RuntimeError, match="domain count mismatch|domain.txt changed"):
         verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
+
+
+def test_refresh_preserves_dns_snapshot_used_for_validation(tmp_path, monkeypatch):
+    import adblock
+
+    rules, source_dir, domain_dir, source_path = _prepare(tmp_path)
+    original = source_path.read_bytes()
+
+    class FakeUpdater:
+        def __init__(self, rule_list):
+            self.rule_list = rule_list
+
+        def update(self, path):
+            source_path.write_text("||changed-after-validation.example^\\n", encoding="utf-8")
+            return True, self.rule_list
+
+    monkeypatch.setattr(adblock, "Updater", FakeUpdater)
+
+    updated, returned_rules = adblock.update_sources_preserving_validated_dns(
+        rules, str(source_dir), str(domain_dir)
+    )
+
+    assert updated is True
+    assert returned_rules == rules
+    assert source_path.read_bytes() == original
+    assert verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
