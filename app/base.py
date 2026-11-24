@@ -10,9 +10,8 @@ from loguru import logger
 
 class APPBase(ABC):
     def __init__(self, blockList:List[str], unblockList:List[str], filterDict:Dict[str,str], filterList:List[str], filterList_var:List[str], ChinaSet:Set[str], fileName:str, sourceRule:str):
-        repository = os.environ.get("GITHUB_REPOSITORY", "LucentDNS/adblockfilters").strip("/")
-        self.homepage:str = "https://github.com/%s" % repository
-        self.source:str = "https://raw.githubusercontent.com/%s/main/rules" % repository
+        self.homepage:str = "https://github.com/217heidai/adblockfilters"
+        self.source:str = "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules"
         self.version:str = "%s"%(time.strftime("%Y%m%d%H%M%S", time.localtime()))
         _sha = os.environ.get("GITHUB_SHA", "")[:7]
         if _sha:
