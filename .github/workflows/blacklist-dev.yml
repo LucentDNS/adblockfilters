@@ -141,9 +141,15 @@ jobs:
           import sqlite3
 
           connection = sqlite3.connect("domain.db")
-          cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0")
-          connection.commit()
-          print(f"Reset inherited isBlock flags: {cursor.rowcount}")
+          table_exists = connection.execute(
+              "SELECT 1 FROM sqlite_master WHERE type='table' AND name='T_DOMAIN'"
+          ).fetchone()
+          if table_exists:
+              cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0")
+              connection.commit()
+              print(f"Reset inherited isBlock flags: {cursor.rowcount}")
+          else:
+              print("Fresh empty database: no inherited blacklist flags to reset.")
           connection.close()
           PY
 
