@@ -19,13 +19,11 @@ on:
       - rules/direct.txt
       - rules/ipv4_china.txt
       - rules/white.txt
-      - .github/workflows/blacklist-dev.yml
 
 env:
   TZ: Asia/Shanghai
   SMARTDNS_URL: https://github.com/pymumu/smartdns/releases/download/Release46.1/smartdns-x86_64
   SMARTDNS_PATH: /tmp/smartdns
-  DB_URL: https://github.com/217heidai/adblockfilters/releases/download/domain/domain.db
 
 jobs:
   Generate_Dev_Blacklist:
@@ -114,19 +112,26 @@ jobs:
       - name: Download database
         run: |
           set -euo pipefail
-          curl -fsSL --retry 3 --retry-all-errors -o domain.db \
-            "https://github.com/${{ github.repository }}/releases/download/dev-domain/domain.db" \
-            || curl -fsSL --retry 3 --retry-all-errors -o domain.db "$DB_URL"
-          test -s domain.db || { echo "domain.db is missing or empty"; exit 1; }
+          # The first NobleDNS run must not inherit upstream block/IP state.
+          # Reuse a database only after our own fresh-validation marker exists.
+          if curl -fsSL --retry 3 --retry-all-errors \
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain/nobledns-bootstrap-complete.txt" \
+              -o /tmp/nobledns-bootstrap-complete.txt; then
+            curl -fsSL --retry 3 --retry-all-errors -o domain.db \
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain/domain.db"
+            test -s domain.db || { echo "NobleDNS domain.db is missing or empty"; exit 1; }
+            echo "Using the previously generated NobleDNS DNS-validation database."
+          else
+            echo "No NobleDNS validation marker found; starting with an empty database for a full independent DNS pass."
+            : > domain.db
+          fi
 
       - name: Download NobleDNS domain input
         run: |
           set -euo pipefail
           curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
-            "https://github.com/${{ github.repository }}/releases/download/domain/domain.txt" \
-            || curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
-              "https://github.com/217heidai/adblockfilters/releases/download/domain/domain.txt"
-          test -s domain.txt || { echo "domain.txt is missing or empty"; exit 1; }
+            "https://github.com/${{ github.repository }}/releases/download/domain/domain.txt"
+          test -s domain.txt || { echo "NobleDNS domain input is missing or empty"; exit 1; }
 
       - name: Run DNS validation and generate independent blacklist
         id: generate
@@ -139,6 +144,7 @@ jobs:
           # publish a non-empty asset while the parser still treats it as empty.
           test -s black.txt || printf '! NobleDNS dev blacklist: no confirmed dead domains\n' > black.txt
           test -s china.txt || printf '! NobleDNS dev China list: no validated China domains\n' > china.txt
+          printf 'NobleDNS fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Upload log on failure
@@ -170,8 +176,22 @@ jobs:
             domain.db
             black.txt
             china.txt
+            nobledns-bootstrap-complete.txt
           overwrite_files: true
           fail_on_unmatched_files: true
+
+      - name: Verify dev-domain release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          assets="$(gh release view dev-domain --json assets --jq '.assets[].name')"
+          for name in domain.db black.txt china.txt nobledns-bootstrap-complete.txt; do
+            if ! grep -Fxq "$name" <<< "$assets"; then
+              echo "::error::dev-domain release is missing $name"
+              exit 1
+            fi
+          done
 
       - name: Trigger development rule build after blacklist publication
         env:

@@ -23,6 +23,30 @@ def resolve(answers):
     return asyncio.run(instance._BlackList__resolve(FakeResolver(answers), "example.test"))
 
 
+class DummyDomain:
+    def __init__(self, initially_blocked=False):
+        self.domain = "example.test"
+        self.ip = None
+        self.port = None
+        self.ip_list = []
+        self.blocked = initially_blocked
+
+    def setIPList(self, values):
+        self.ip_list = values
+
+    def setBlock(self, value):
+        self.blocked = value
+
+
+def pingx(answers, initially_blocked=False):
+    instance = BlackList.__new__(BlackList)
+    domain = DummyDomain(initially_blocked)
+    asyncio.run(instance._BlackList__pingx(
+        FakeResolver(answers), domain, asyncio.Semaphore(1)
+    ))
+    return domain
+
+
 def test_aaaa_only_domain_is_not_marked_unresolved():
     assert resolve({"A": NoAnswer(), "AAAA": ["2001:db8::1"]}) == (
         ["2001:db8::1"], "resolved"
@@ -73,3 +97,20 @@ def test_other_resolver_errors_are_unknown():
     assert resolve({"A": LookupError("resolver failure"), "AAAA": LookupError("resolver failure")}) == (
         [], "unknown"
     )
+
+def test_nodata_for_a_and_aaaa_does_not_blacklist_a_valid_name():
+    domain = pingx({"A": NoAnswer(), "AAAA": NoAnswer()}, initially_blocked=True)
+    assert domain.blocked is False
+
+
+def test_nxdomain_is_blacklisted():
+    domain = pingx({"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")})
+    assert domain.blocked is True
+
+
+def test_unknown_dns_result_preserves_previous_state():
+    domain = pingx(
+        {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")},
+        initially_blocked=True
+    )
+    assert domain.blocked is True

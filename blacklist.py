@@ -430,9 +430,14 @@ class BlackList(object):
             if status == "resolved":
                 domain.setIPList(ipList)
                 domain.setBlock(False)
-            elif status in {"not_found", "no_address"}:
+            elif status == "not_found":
                 domain.setIPList([])
                 domain.setBlock(True)
+            elif status == "no_address":
+                # NOERROR/NODATA only means this RR type has no record.
+                # MX, TXT, SRV and other valid records may still exist.
+                domain.setIPList([])
+                domain.setBlock(False)
             else:
                 # Inconclusive DNS/TCP results preserve the previous known state.
                 if domain.ip:
@@ -616,9 +621,9 @@ class BlackList(object):
             # 生成 Black 域名列表
             blackList = []
             for k,v in domainDict.items():
-                # Only explicit NXDOMAIN or successful NODATA for both A/AAAA
-                # can mark a domain dead. Unknown resolver failures are not
-                # blacklist evidence.
+                # Only explicit NXDOMAIN is sufficient evidence that a name
+                # does not exist. NODATA for A/AAAA can coexist with MX/TXT/SRV
+                # records, so it must not create a DNS blacklist entry.
                 if v.getBlock():
                     blackList.append(k)
             if len(blackList):
