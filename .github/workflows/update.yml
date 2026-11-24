@@ -99,9 +99,7 @@ jobs:
       - name: Compare with upstream published DNS baseline
         run: |
           mkdir -p .cache/baseline .cache/report
-          curl -fsSL --retry 3 --retry-all-errors \\
-            -o .cache/baseline/upstream-adblockdns.txt \\
-            https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt
+          curl -fsSL --retry 3 --retry-all-errors -o .cache/baseline/upstream-adblockdns.txt https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt
           python - <<'PY'
           from pathlib import Path
           import json
