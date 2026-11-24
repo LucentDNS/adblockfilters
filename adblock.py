@@ -34,8 +34,10 @@ class ADBlock(object):
         # 更新上游规则（下载到 .cache/source）
         updater = Updater(ruleList)
         update, ruleList = updater.update(self.sourceDir)
-        if not update:
-            return
+
+        # 每次都重新生成：black/china/white/myblock 等输入也会变化。
+        # 不能只在上游源变化时构建，否则域名有效性名单更新后产物会长期过期。
+        logger.info("source changed: %s; regenerate outputs from current inputs" % update)
 
         # 生成新规则（读 .cache/domain，输出 .cache/out）
         filter = Filter(ruleList, self.domainDir, self.outDir, self.sourceDir)
