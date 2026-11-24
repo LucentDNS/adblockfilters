@@ -140,6 +140,11 @@ jobs:
               for line in output.splitlines()
               if line.startswith("||") and line.endswith("^")
           }
+          allowed = {
+              line[4:-1].strip()
+              for line in output.splitlines()
+              if line.startswith("@@||") and line.endswith("^")
+          }
           failures = []
           for raw in Path("rules/white.txt").read_text(encoding="utf-8").splitlines():
               domain = raw.strip()
@@ -157,7 +162,9 @@ jobs:
               if (not domain or domain.endswith(".") or
                       any(ch in domain for ch in "*/#|?^$")):
                   continue
-              if any(domain == item or domain.endswith("." + item) for item in blocked):
+              covered = any(domain == item or domain.endswith("." + item) for item in blocked)
+              excepted = any(domain == item or domain.endswith("." + item) for item in allowed)
+              if covered and not excepted:
                   failures.append(domain)
           if failures:
               for domain in failures:
