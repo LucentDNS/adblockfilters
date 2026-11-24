@@ -310,3 +310,9 @@ bce.baidu.com
 
 # AWAvenue Ads Rule upstream notes: Changhong Smart TV payment endpoint; keep payment functionality available.
 pay.sboot.cn
+
+# Sobot (智齿) customer-service platform; preserve customer-service widgets.
+sobot.com
+
+# Douyu web-game portal; preserve wan.douyu.com game access.
+wan.douyu.com
