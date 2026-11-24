@@ -63,6 +63,7 @@ jobs:
 
       - name: Run unit tests
         run: |
+          python -m py_compile blacklist.py updater.py readme.py scripts/audit_sources.py
           pytest -q tests
 
       - name: Prepare domain inputs
@@ -263,6 +264,9 @@ jobs:
           files: |
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
+            .cache/audit/baseline-browser-analysis.json
+            .cache/audit/baseline-only-browser-explained.txt
+            .cache/audit/baseline-only-not-browser-explained.txt
             .cache/report/comparison.md
             .cache/report/comparison.json
             .cache/report/optimized-only.txt
