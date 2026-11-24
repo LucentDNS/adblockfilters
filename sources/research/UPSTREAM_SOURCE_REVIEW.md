@@ -309,3 +309,34 @@ Evidence: https://gist.github.com/abiudrn/e5c7de98fbf68958753137200e164db0 and h
 ### 质量结论
 
 本次构建证明流程可重复、输入快照一致、规则格式可编译、关键服务和白名单门禁通过，且规则数量处于资源预算内；集合比较也显示 LucentDNS 相比基线多出 20,727 条规则。但“规则更多”不等于“质量更好”。由于仍有 9 条基线独有域名 block 尚未找到当前来源证据，本项目暂不宣称已全面优于原作者，也不将该开发构建发布为正式版。下一步只针对这 9 条做可复核的来源与有效性核查，并继续收集真实误拦截反馈；不为追求数量而盲目扩源或直接复制原作者成品。
+
+## 2026-11-24 基线剩余 9 个未覆盖域名的定向核查
+
+本次完整构建的 `baseline-only-absent-from-current-dns-sources.txt` 列出 9 个原作者基线 block 域名。它们不在当前六个 DNS/Hosts 正式来源中，也没有可用父域名覆盖。逐项检索后，**不将它们批量补回 DNS 黑名单**：
+
+| 域名 | 当前可核实信息 | 处理 |
+|---|---|---|
+| `https-filtering-check.adtidy.org` | AdGuard Filters Registry 将其定义为 AdGuard HTTPS filtering 检测页专用规则；AdGuard 测试页需要它可访问。 | 不补回 block；保持不拦截。 |
+| `api.statsig.com` | Statsig 官方文档说明其 SDK 使用该 API 获取 feature gates、dynamic configs 并提交事件。它不只是广告域名，拦截可能影响应用功能开关或配置。 | 不补回 block；保持不拦截。 |
+| `mobile.events.data.microsoft.com` | 属于 Microsoft `events.data.microsoft.com` 事件服务子域；OISD 的排除记录明确列出该主机。 | 不补回 block；保持不拦截。 |
+| `evtubescms.phncdn.com` | 属于 `phncdn.com` CDN 主机；历史公开快照显示其承载视频文件路径，不能把它简单当作广告主机。 | 不补回 block，避免无依据地影响媒体内容加载。 |
+| `fb_servpub-a.akamaihd.net` | 属于 Akamai CDN 主机。历史社区屏蔽列表曾提到该主机，但单一用户列表不足以证明它在当前用途下是纯广告端点。 | 暂不补回；等待明确的服务用途或误拦截证据。 |
+| `symaa.cn` | 可检索到的历史公开网站资料将其描述为沈阳物流企业网站；该资料较旧，不能作为当前安全结论。 | 不补回 block；没有足够证据将其认定为广告或恶意域名。 |
+| `hbnygj.com` | 当前检索未找到足以确认其广告用途或恶意活动的权威证据。 | 不补回；保留为未确认差异。 |
+| `2006mindfreaklike.blogspot.com` | 仅找到历史性屏蔽列表收录记录，缺少当前活跃性、恶意行为或广告用途证据。 | 不因旧列表收录而补回。 |
+| `girlownedbypolicelike.blogspot.com` | 当前未找到可靠的用途或威胁情报证据。 | 不补回；保留为未确认差异。 |
+
+### 本次判断边界
+
+- 这 9 个域名目前都没有被 LucentDNS 最终 DNS 输出拦截，因此本次没有为它们新增白名单；“不补回”不等于“新增放行规则”。
+- 对 AdGuard 测试端点、Statsig 功能 API、Microsoft 事件服务和媒体 CDN，存在明确的非广告用途证据；不为追求与原作者集合完全一致而引入潜在功能损害。
+- 对其余 5 个域名，证据不足时采取不新增规则的保守策略；不把“未查到威胁”误写成“确认安全”，也不把原作者基线收录本身当作恶意证据。
+- 后续若用户反馈这些域名相关功能异常，按实际应用、请求上下文和上游证据重新评估，不直接扩大父域名白名单。
+
+参考：
+- AdGuard Filters Registry HTTPS filtering test rule：https://github.com/AdguardTeam/FiltersRegistry/blob/master/filters/filter_10_Useful/filter.txt
+- anti-AD 关于 AdGuard HTTPS 检测页误拦截的记录：https://github.com/privacy-protection-tools/anti-AD/issues/937
+- Statsig 官方域名及 SDK 用途说明：https://docs.statsig.com/infrastructure/statsig_domains
+- OISD 对 Microsoft mobile events 域名的排除说明：https://oisd.nl/excludes/mobile.events.data.microsoft.com
+- evtubescms.phncdn.com 历史视频文件快照：https://archive.ph/evtubescms.phncdn.com
+- Akamai 主机历史社区列表示例（仅作为弱证据，不作为本项目纳入依据）：https://github.com/pi-hole/pi-hole/issues/2760
