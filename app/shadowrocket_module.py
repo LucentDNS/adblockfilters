@@ -48,13 +48,11 @@ class ShadowrocketModule(APPBase):
                 if isLite:
                     f.write("#!name=AdBlock Shadowrocket Module Lite\n")
                     f.write(
-                        "#!desc=每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"
                         % (self.sourceRule)
                     )
                 else:
                     f.write("#!name=AdBlock Shadowrocket Module\n")
                     f.write(
-                        "#!desc=每 8 个小时更新一次。规则源：%s。\n"
                         % (self.sourceRule)
                     )
 
