@@ -29,9 +29,9 @@ class SmartDNS(APPBase):
             with open(fileName, 'a') as f:
                 f.write("#\n")
                 if isLite:
-                    f.write("# Title: AdBlock SmartDNS Lite\n")
+                    f.write("# Title: LucentDNS AdBlock SmartDNS Lite\n")
                 else:
-                    f.write("# Title: AdBlock SmartDNS\n")
+                    f.write("# Title: LucentDNS AdBlock SmartDNS\n")
                 f.write("# Homepage: %s\n"%(self.homepage))
                 f.write("# Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("# Version: %s\n"%(self.version))
