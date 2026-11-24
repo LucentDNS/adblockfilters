@@ -5,7 +5,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: noble-dns-dev-blacklist-${{ github.ref }}
+  group: noble-dns-dev-blacklist
   cancel-in-progress: true
 
 on:
@@ -48,7 +48,13 @@ jobs:
           set -euo pipefail
           sudo timedatectl set-timezone "$TZ"
           python -m pip install --upgrade pip
-          pip install -U tld IPy dnspython httpx loguru
+          pip install -U tld IPy dnspython httpx loguru pytest
+
+      - name: Run DNS resolver regression tests
+        run: |
+          set -euo pipefail
+          python -m py_compile blacklist.py
+          python -m pytest -q tests
 
       - name: Setup SmartDNS
         run: |
@@ -70,6 +76,40 @@ jobs:
             echo "SmartDNS not ready after 30s"
             exit 1
           fi
+
+      - name: Verify SmartDNS can resolve valid and nonexistent domains
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import dns.resolver
+          from dns.resolver import NXDOMAIN
+
+          resolver = dns.resolver.Resolver(configure=False)
+          resolver.nameservers = ["127.0.0.1"]
+          resolver.port = 5053
+          resolver.timeout = 3.0
+          resolver.lifetime = 8.0
+
+          success = []
+          for domain in ("example.com", "cloudflare.com", "baidu.com"):
+              try:
+                  answer = resolver.resolve(domain, "A")
+                  if len(answer) > 0:
+                      success.append(domain)
+              except Exception as exc:
+                  print(f"Probe failed for {domain}: {type(exc).__name__}: {exc}")
+
+          if len(success) < 2:
+              raise SystemExit(f"SmartDNS health check failed: only {success} resolved")
+
+          try:
+              resolver.resolve("noble-dns-probe-20261124.example.invalid", "A")
+          except NXDOMAIN:
+              print("NXDOMAIN probe passed")
+          else:
+              raise SystemExit("SmartDNS failed to return NXDOMAIN for reserved .invalid domain")
+          print(f"Positive DNS probes passed: {', '.join(success)}")
+          PY
 
       - name: Download database
         run: |
