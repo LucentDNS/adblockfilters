@@ -16,6 +16,12 @@ on:
     paths:
       - blacklist.py
       - smartdns.conf
+      - README.md
+      - readme.py
+      - resolver.py
+      - updater.py
+      - scripts/generate_domain_input.py
+      - rules/myblock.txt
       - rules/direct.txt
       - rules/ipv4_china.txt
       - rules/white.txt
@@ -127,12 +133,14 @@ jobs:
             : > domain.db
           fi
 
-      - name: Download NobleDNS domain input
+      - name: Generate DNS validation input from NobleDNS sources
         run: |
           set -euo pipefail
-          curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
-            "https://github.com/${{ github.repository }}/releases/download/domain/domain.txt"
-          test -s domain.txt || { echo "NobleDNS domain input is missing or empty"; exit 1; }
+          python -m py_compile scripts/generate_domain_input.py
+          python scripts/generate_domain_input.py
+          test -s .cache/domain/domain.txt || { echo "NobleDNS domain input is missing or empty"; exit 1; }
+          cp .cache/domain/domain.txt domain.txt
+          cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
 
       - name: Reset inherited upstream blacklist decisions
         run: |
@@ -198,6 +206,8 @@ jobs:
           body: Generated only from the NobleDNS development blacklist resolver. This release is isolated from the stable domain release.
           files: |
             domain.db
+            domain.txt
+            domain-input-provenance.json
             black.txt
             china.txt
             nobledns-bootstrap-complete.txt
@@ -210,7 +220,7 @@ jobs:
         run: |
           set -euo pipefail
           assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
-          for name in domain.db black.txt china.txt nobledns-bootstrap-complete.txt; do
+          for name in domain.db domain.txt domain-input-provenance.json black.txt china.txt nobledns-bootstrap-complete.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
               echo "::error::dev-domain release is missing $name"
               exit 1
