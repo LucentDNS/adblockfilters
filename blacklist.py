@@ -294,9 +294,12 @@ class BlackList(object):
         logger.info("resolve China domain list...")
         fullSet,domainSet,regexpSet,keywordSet = set(),set(),set(),set()
         try:
-            self.__download(self.__directlistFile, self.__directlistUrl)
-            if os.path.exists(self.__directlistFile):
-                with open(self.__directlistFile, 'r') as f:
+            downloaded = self.__download(self.__directlistFile, self.__directlistUrl)
+            if not os.path.exists(self.__directlistFile) or os.path.getsize(self.__directlistFile) == 0:
+                raise RuntimeError("China direct-domain source is missing or empty")
+            if not downloaded:
+                logger.warning("Using previously cached China direct-domain source")
+            with open(self.__directlistFile, 'r') as f:
                     for line in f.readlines():
                         # 去掉换行符
                         line = line.replace('\r', '').replace('\n', '').strip()
@@ -321,19 +324,24 @@ class BlackList(object):
                             domainSet.add(line[len('domain:'):])
                             continue
             
+            if not (fullSet or domainSet or regexpSet or keywordSet):
+                raise RuntimeError("China direct-domain source contains no usable rules")
             logger.info("China domain list: full[%d], domain[%d], regexp[%d], keyword[%d]"%(len(fullSet),len(domainSet),len(regexpSet),len(keywordSet)))
             return fullSet,domainSet,regexpSet,keywordSet
         except Exception as e:
             logger.error("%s"%(e))
-            return fullSet,domainSet,regexpSet,keywordSet
+            raise
         
     def __getIPDict_CN(self) -> Tuple[List[int], List[int]]:
         logger.info("resolve China IP list...")
         starts, ends = [], []
         try:
-            self.__download(self.__IPlistFile, self.__IPlistUrl)            
-            if os.path.exists(self.__IPlistFile):
-                with open(self.__IPlistFile, 'r') as f:
+            downloaded = self.__download(self.__IPlistFile, self.__IPlistUrl)
+            if not os.path.exists(self.__IPlistFile) or os.path.getsize(self.__IPlistFile) == 0:
+                raise RuntimeError("China IPv4 range source is missing or empty")
+            if not downloaded:
+                logger.warning("Using previously cached China IPv4 range source")
+            with open(self.__IPlistFile, 'r') as f:
                     for line in f.readlines():
                         row = line.replace('\r', '').replace("\n", "").split("/")
                         ip, offset = row[0], int(row[1])
@@ -344,11 +352,13 @@ class BlackList(object):
             pairs = sorted(zip(starts, ends))
             starts = [p[0] for p in pairs]
             ends = [p[1] for p in pairs]
+            if not starts:
+                raise RuntimeError("China IPv4 range source contains no usable ranges")
             logger.info("China IP list: %d"%(len(starts)))
             return starts, ends
         except Exception as e:
             logger.error("%s"%(e))
-            return starts, ends
+            raise
     
     async def __resolve(self, dnsresolver, domain) -> Tuple[List[str], str]:
         # Query both address families. A valid answer from either family is
@@ -460,6 +470,7 @@ class BlackList(object):
             logger.info("black domain: %d"%(len(blackList)))
         except Exception as e:
             logger.error("%s"%(e))
+            raise
     
     def __generateChinaList(self, ChinaList):
         logger.info("generate China list...")
@@ -473,6 +484,7 @@ class BlackList(object):
             logger.info("China domain: %d"%(len(ChinaList)))
         except Exception as e:
             logger.error("%s"%(e))
+            raise
 
     def __testDomain(self, domainDict:Dict[str,DOMAIN], nameservers:str, port=53):
         logger.info("resolve domain...")
@@ -559,7 +571,7 @@ class BlackList(object):
             return domainDict, deleteList
         except Exception as e:
             logger.error("%s"%(e))
-            return domainDict, deleteList
+            raise
     
     def __updateDomainDict_db(self, domainDict:Dict[str, DOMAIN]):
         logger.info("update domain list to db...")
@@ -573,6 +585,7 @@ class BlackList(object):
                 self.__db.updateALL(L)
         except Exception as e:
             logger.error("%s"%(e))
+            raise
 
     def __deleteDomian_db(self, domainList:List[str]):
             logger.info("delete domain from db...")
@@ -580,13 +593,14 @@ class BlackList(object):
                 self.__db.deleteBatch(domainList)
             except Exception as e:
                 logger.error("%s"%(e))
+                raise
 
     def generate(self):
         try:
             # 获取域名清单 https://raw.githubusercontent.com/217heidai/adblockfilters/refs/heads/main/rules/domain.txt
             domainDict = self.__getDomainDict()
             if len(domainDict) < 1:
-                return
+                raise RuntimeError("Domain input is missing or contains no usable domains")
             
             # 获取数据库域名清单
             domainDict, deleteList = self.__getDomainDict_db(domainDict)
@@ -650,6 +664,7 @@ class BlackList(object):
             
         except Exception as e:
             logger.error("%s"%(e))
+            raise
 
 if __name__ == "__main__":
     path = os.getcwd()
