@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - main
+      - lucentdns-dev
 
 env:
   TZ: Asia/Shanghai
