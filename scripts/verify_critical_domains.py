@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Fail the build if essential service domains are covered by DNS block rules."""
+"""Fail the build if essential service domains are covered by domain-wide block rules."""
 import ipaddress
+import re
 import sys
 from pathlib import Path
 
@@ -14,6 +15,12 @@ DNS_OUTPUT = ROOT / ".cache" / "out" / "adblockdns.txt"
 FILTER_OUTPUT = ROOT / ".cache" / "out" / "adblockfilters.txt"
 SOURCE_DIR = ROOT / ".cache" / "source"
 MAX_DNS_RULES = 500_000
+
+# These modifiers do not narrow a rule to a resource type or page context.
+# All other modifiers (e.g. script, image, third-party, domain=...) make the
+# rule narrower than a domain-wide block and must not be treated as blocking
+# the service root itself.
+DOMAIN_WIDE_OPTIONS = {"important", "all", "document", "match-case", "~third-party", "1p"}
 
 
 def normalize_domain(value):
@@ -38,20 +45,63 @@ def is_covered(domain, rules):
     return any(domain == rule or domain.endswith("." + rule) for rule in rules)
 
 
+def parse_domain_wide_browser_rule(raw):
+    """Return (host, is_allow) only for host-wide network rules.
+
+    Cosmetic rules, URL/path rules, regex rules, wildcard hosts, and rules
+    restricted by request type or page-domain options are intentionally ignored.
+    """
+    line = raw.strip()
+    if not line or line.startswith(("!", "#")):
+        return None
+
+    is_allow = line.startswith("@@")
+    if is_allow:
+        line = line[2:]
+
+    match = re.fullmatch(
+        r"\|\|(?P<host>[A-Za-z0-9.-]+)\^?(?:\$(?P<options>[A-Za-z0-9_~,.-]+))?",
+        line,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+
+    host = normalize_domain(match.group("host"))
+    if not host:
+        return None
+
+    options = {
+        option.strip().lower()
+        for option in (match.group("options") or "").split(",")
+        if option.strip()
+    }
+    if "badfilter" in options or options - DOMAIN_WIDE_OPTIONS:
+        return None
+
+    return host, is_allow
+
+
 def parse_rules(path, browser_filter=False):
-    resolver = Resolver(str(SOURCE_DIR))
     block_domains = set()
     allow_domains = set()
 
+    if browser_filter:
+        for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            parsed = parse_domain_wide_browser_rule(raw)
+            if not parsed:
+                continue
+            domain, is_allow = parsed
+            (allow_domains if is_allow else block_domains).add(domain)
+        return block_domains, allow_domains
+
+    resolver = Resolver(str(SOURCE_DIR))
     for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = raw.strip()
         if not line or line.startswith(("!", "#")):
             continue
         try:
-            if browser_filter:
-                block, unblock, filt = resolver._Resolver__resolveFilter(line)
-            else:
-                block, unblock, filt = resolver._Resolver__resolveDNS(line)
+            block, unblock, filt = resolver._Resolver__resolveDNS(line)
         except Exception:
             continue
         block_domain = normalize_domain(block)
@@ -97,13 +147,13 @@ def main():
     output_summaries = []
     for label, path, browser_filter in (
         ("DNS", DNS_OUTPUT, False),
-        ("browser", FILTER_OUTPUT, True),
+        ("browser domain-wide rules", FILTER_OUTPUT, True),
     ):
         block_domains, allow_domains = parse_rules(path, browser_filter=browser_filter)
         output_summaries.append((label, len(block_domains), len(allow_domains)))
         for domain in critical_domains:
-            blocks = sorted(rule for rule in block_domains if domain == rule or domain.endswith("." + rule))
-            allows = sorted(rule for rule in allow_domains if domain == rule or domain.endswith("." + rule))
+            blocks = sorted(rule for rule in block_domains if is_covered(domain, {rule}))
+            allows = sorted(rule for rule in allow_domains if is_covered(domain, {rule}))
             if blocks and not allows:
                 failures.append((label, domain, blocks))
 
