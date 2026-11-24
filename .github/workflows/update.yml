@@ -103,7 +103,7 @@ jobs:
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
 
-      - name: Audit upstream source contribution
+      - name: Audit upstream source contribution (whitelist-aware)
         run: |
           python scripts/audit_sources.py
 
