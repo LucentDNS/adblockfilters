@@ -95,7 +95,7 @@ class ReadMe(object):
             f.write("1. 2026-11-24：将 **AdGuard DNS filter**、**AdRules DNS List** 的来源类型由 `filter` 更正为 `dnsfilter`。这两项是 DNS 级规则源，现由 DNS 解析器解析并纳入 DNS 域名规则构建；这是类型纠正，不是新增或删除来源。\n")
             f.write("2. 2026-11-24：普通 `filter` 类型来源与 DNS/Hosts 来源分流。AdGuard Base、AdGuard Chinese、AdGuard Mobile Ads、CJX、EasyList、EasyList China、EasyPrivacy、xinggsf mv、jiekouAD 等浏览器规则仍保留在浏览器补充过滤构建中；不再把其启发式提取的域名混入 DNS 域名订阅。\n")
             f.write("3. 本轮未新增或删除上游来源。后续若新增、停用或删除来源，必须同步修改下方来源订阅表，并在此处记录来源名称、变更类型和理由。\n")
-            f.write("4. 2026-11-24：修正白名单解析，支持将 `||domain^$options` 形式规范化为域名白名单；路径、通配符和元素隐藏规则不会再被误当作 DNS 域名白名单。\n")
+            f.write("4. 2026-11-24：修正白名单解析，支持纯域名及不带修饰符的 `||domain^` 形式；带 `$options` 的浏览器例外仅作为精确过滤规则处理，不会扩大为 DNS 域名白名单。路径、通配符和元素隐藏规则也不会被误当作 DNS 域名白名单。\n")
             f.write("5. 2026-11-24：补齐白名单父域名覆盖处理。若白名单子域名仍被上游父域名拦截规则覆盖，最终 DNS 规则会生成对应的 `@@||子域名^` 放行例外；自动回归检查同时检查父域名覆盖。\n")
             f.write("6. 2026-11-24：完成 6 个 DNS/Hosts 上游的同解析器逐源审计，全部下载成功。合并域名集合 357,687 个，跨来源精确重复 204,526 个；父级压缩后独有覆盖候选分别为 AdGuard DNS 8,344、AdRules DNS 19,353、AWAvenue Only.Ads 4、HaGeZi Pro mini 50,685、OISD Small 2,242、StevenBlack 20,745。该指标尚未扣除项目黑白名单和上游 allow 例外，不等同于最终有效拦截数或误杀验证。\n")
             f.write("7. 2026-11-24：AWAvenue Ads Rule 从默认的“广告+隐私+不受欢迎”混合版切换为作者提供的 AdGuard Only.Ads 纯广告变体；解析拦截域名由 978 降至 651，减少 327 个候选条目，降低非广告功能拦截风险。\n")
