@@ -172,8 +172,9 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         ("unique_block_domains", "唯一拦截域名"),
         ("unique_only_domains", "精确独有域名"),
         ("shared_domains", "精确重复域名"),
-        ("effective_unique_domains", "父级去重后独有候选"),
-        ("parent_covered_domains", "被其他来源父域名覆盖"),
+        ("effective_unique_domains", "最终父级压缩后独有域名"),
+        ("external_parent_covered_domains", "被其他来源父域名覆盖"),
+        ("internal_parent_covered_domains", "被本来源父域名压缩"),
         ("unique_allow_domains", "唯一放行域名"),
         ("unique_filter_rules", "过滤规则"),
         ("filter_domain_unresolved", "过滤规则未提取域名")
@@ -210,7 +211,7 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
         "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
         "- 跨来源重复拦截域名：仅统计解析为 block 的域名，和 AdGuard Home DNS 输出口径一致；不把浏览器过滤规则中提取出的域名混入。",
-        "- 父级去重后独有候选：仅排除其他来源中相同域名或父域名已覆盖的条目；当前为来源贡献初筛，尚未扣除全局 allow/白名单例外，也不代表这些域名都应拦截。",
+        "- 最终父级压缩后独有域名：先排除其他来源的相同域名/父域名覆盖，再按构建器规则排除本来源内被父域名覆盖的子域名；仍未扣除项目黑名单、白名单和全局 allow 例外，因此是来源贡献上限估计，不代表这些域名都应拦截。",
         "- 过滤规则的域名提取统计单独保留，不计入 AdGuard Home DNS 拦截域名交集。"
     ])
     return "\n".join(out) + "\n"
@@ -247,9 +248,15 @@ def main():
         def covered_by_other_parent(domain):
             labels = domain.split(".")
             return any(".".join(labels[index:]) in other_domains for index in range(len(labels)))
-        effective_unique = {domain for domain in own if not covered_by_other_parent(domain)}
+        after_external = {domain for domain in own if not covered_by_other_parent(domain)}
+        effective_unique = {
+            domain for domain in after_external
+            if not any(".".join(domain.split(".")[index:]) in after_external
+                       for index in range(1, len(domain.split("."))))
+        }
         row["effective_unique_domains"] = len(effective_unique)
-        row["parent_covered_domains"] = len(own) - len(effective_unique)
+        row["external_parent_covered_domains"] = len(own) - len(after_external)
+        row["internal_parent_covered_domains"] = len(after_external) - len(effective_unique)
         row["effective_unique_samples"] = sorted(effective_unique)[:100]
     pairwise = []
     for left, right in combinations([rule.name for rule in rules], 2):
@@ -264,11 +271,16 @@ def main():
         name = row["name"]
         own = domain_sets.get(name, set())
         other_domains = set().union(*(domains for other, domains in domain_sets.items() if other != name))
-        unique_domains = []
+        after_external = set()
         for domain in own:
             labels = domain.split(".")
             if not any(".".join(labels[index:]) in other_domains for index in range(len(labels))):
-                unique_domains.append(domain)
+                after_external.add(domain)
+        unique_domains = [
+            domain for domain in after_external
+            if not any(".".join(domain.split(".")[index:]) in after_external
+                       for index in range(1, len(domain.split("."))))
+        ]
         safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("_.")
         (unique_dir / f"{safe_name}.txt").write_text("\n".join(sorted(unique_domains)) + ("\n" if unique_domains else ""), encoding="utf-8")
     (OUT_DIR / "source-audit.json").write_text(
