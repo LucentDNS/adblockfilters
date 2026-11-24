@@ -223,6 +223,10 @@ jobs:
           cd ..
           cp domain-list-community/dlc.dat .cache/out/adblockv2raylite.dat
           rm -rf domain-list-community
+          # These plain-text files are internal inputs for DAT compilation, not published client formats.
+          test -s .cache/out/adblockv2ray.dat
+          test -s .cache/out/adblockv2raylite.dat
+          rm -f .cache/out/adblockv2ray.txt .cache/out/adblockv2raylite.txt
       
       - name: Upload build and comparison artifacts
         uses: actions/upload-artifact@v4
