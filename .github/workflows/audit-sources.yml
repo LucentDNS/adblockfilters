@@ -3,7 +3,7 @@ name: Audit upstream sources
 on:
   push:
     branches:
-      - lucentdns-dev
+      - main
     paths:
       - 'scripts/audit_sources.py'
       - '.github/workflows/audit-sources.yml'
