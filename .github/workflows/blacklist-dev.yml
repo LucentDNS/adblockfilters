@@ -4,7 +4,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: noble-dns-dev-blacklist-\${{ github.ref }}
+  group: noble-dns-dev-blacklist-${{ github.ref }}
   cancel-in-progress: true
 
 on:
@@ -74,7 +74,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL --retry 3 --retry-all-errors -o domain.db \
-            "https://github.com/\${{ github.repository }}/releases/download/dev-domain/domain.db" \
+            "https://github.com/${{ github.repository }}/releases/download/dev-domain/domain.db" \
             || curl -fsSL --retry 3 --retry-all-errors -o domain.db "$DB_URL"
           test -s domain.db || { echo "domain.db is missing or empty"; exit 1; }
 
@@ -82,7 +82,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
-            "https://github.com/\${{ github.repository }}/releases/download/domain/domain.txt" \
+            "https://github.com/${{ github.repository }}/releases/download/domain/domain.txt" \
             || curl -fsSL --retry 3 --retry-all-errors -o domain.txt \
               "https://github.com/217heidai/adblockfilters/releases/download/domain/domain.txt"
           test -s domain.txt || { echo "domain.txt is missing or empty"; exit 1; }
