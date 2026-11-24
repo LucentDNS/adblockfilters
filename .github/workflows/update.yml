@@ -60,7 +60,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile blacklist.py updater.py readme.py scripts/audit_sources.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py
           python -m pytest -q tests
 
       - name: Prepare domain inputs
@@ -119,6 +119,10 @@ jobs:
           rm -rf __pycache__
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
+
+      - name: Verify critical service domains are not blocked
+        run: |
+          python scripts/verify_critical_domains.py
 
       - name: Compare with upstream published DNS baseline
         run: |
