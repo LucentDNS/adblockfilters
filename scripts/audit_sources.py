@@ -168,7 +168,7 @@ def audit_one(rule, resolver, download):
     return result, blocks
 
 
-def render_report(results, production_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps):
+def render_report(results, production_names, browser_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps):
     cols = [
         ("name", "来源"), ("role", "身份"), ("type", "类型"), ("total_lines", "总行数"),
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
@@ -187,7 +187,8 @@ def render_report(results, production_names, candidate_names, overlap, unique_to
     ]
     out = [
         "# 上游规则源基线审计", "",
-        f"- 正式集成来源数：{len(production_names)}",
+        f"- 正式 DNS/Hosts 来源数：{len(production_names)}",
+        f"- 浏览器补充来源数：{len(browser_names)}（只审计域名提取，不计入 DNS 输出）",
         f"- 额外候选来源数：{len(candidate_names)}（仅用于评估，不参与正式构建）",
         f"- 下载成功：{sum(1 for r in results if r['download_ok'])}",
         f"- 下载失败：{sum(1 for r in results if not r['download_ok'])}",
@@ -278,12 +279,14 @@ def main():
     # 浏览器 filter 来源不应被解析成 DNS 域名，也不应让大量路径型规则污染 DNS 来源报告。
     all_rules = ReadMe(str(ROOT / "README.md")).getRules()
     production_rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
+    browser_rules = [rule for rule in all_rules if rule.type == "filter"]
     candidate_rules = [
         Rule("Pollock hosts (candidate only)", "host",
              "https://someonewhocares.org/hosts/hosts", "2026/11/22")
     ]
-    rules = production_rules + candidate_rules
+    rules = production_rules + browser_rules + candidate_rules
     production_names = {rule.name for rule in production_rules}
+    browser_names = {rule.name for rule in browser_rules}
     candidate_names = {rule.name for rule in candidate_rules}
     downloads = asyncio.run(download_all(rules))
     resolver = Resolver(str(SOURCE_DIR))
@@ -291,7 +294,12 @@ def main():
 
     for rule in rules:
         row, domains = audit_one(rule, resolver, downloads.get(rule.name, {}))
-        row["role"] = "正式来源" if rule.name in production_names else "候选源（不集成）"
+        if rule.name in production_names:
+            row["role"] = "正式 DNS/Hosts 来源"
+        elif rule.name in browser_names:
+            row["role"] = "浏览器补充（不进入 DNS）"
+        else:
+            row["role"] = "候选源（不集成）"
         results.append(row)
         domain_sets[rule.name] = domains
 
@@ -318,6 +326,8 @@ def main():
         if name in production_names:
             row["unique_only_domains"] = sum(1 for domain in own if memberships[domain] == {name})
         else:
+            # Browser sources and candidate sources are compared only with the
+            # production DNS/Hosts set; they never become production DNS inputs.
             row["unique_only_domains"] = sum(1 for domain in own if domain not in memberships)
         row["shared_domains"] = len(own) - row["unique_only_domains"]
 
@@ -396,6 +406,7 @@ def main():
         json.dumps({
             "audit_generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "production_sources": len(production_names),
+            "browser_supplement_sources": len(browser_names),
             "candidate_sources": len(candidate_names),
             "project_whitelist_domains_parsed": len(project_whitelist),
             "sources": results,
@@ -412,8 +423,58 @@ def main():
         }, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     report = render_report(
-        results, production_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps
+        results, production_names, browser_names, candidate_names,
+        overlap, unique_total, pairwise, candidate_overlaps
     )
+
+    # Explain whether baseline-only DNS block rules were extracted from browser filters.
+    baseline_path = ROOT / ".cache" / "report" / "baseline-only.txt"
+    baseline_blocks = set()
+    if baseline_path.exists():
+        for raw in baseline_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = raw.strip()
+            if line.startswith("||") and line.endswith("^") and not line.startswith("@@"):
+                baseline_blocks.add(line[2:-1].lower())
+
+    browser_domains = set().union(*(domain_sets.get(name, set()) for name in browser_names)) if browser_names else set()
+    browser_exact = baseline_blocks & browser_domains
+
+    def covered_by_browser_parent(domain):
+        labels = domain.split(".")
+        return any(".".join(labels[index:]) in browser_domains for index in range(len(labels)))
+
+    browser_explained = {domain for domain in baseline_blocks if covered_by_browser_parent(domain)}
+    browser_unexplained = baseline_blocks - browser_explained
+    browser_analysis = {
+        "baseline_only_block_rules": len(baseline_blocks),
+        "browser_filter_extracted_unique_domains": len(browser_domains),
+        "baseline_only_exactly_present_in_browser_sources": len(browser_exact),
+        "baseline_only_covered_by_browser_source_parent": len(browser_explained),
+        "baseline_only_not_explained_by_browser_sources": len(browser_unexplained),
+        "per_browser_source_exact_matches": {
+            name: len(baseline_blocks & domain_sets.get(name, set()))
+            for name in sorted(browser_names)
+        }
+    }
+    report += "\n## 原作者基线独有拦截规则与浏览器来源关系\n\n"
+    report += "- 该分析只判断原作者基线独有 DNS 拦截规则是否可在当前浏览器补充来源中找到同域名或父域名证据；不代表这些规则都应该进入 DNS 输出。\n"
+    report += f"- 原作者基线独有拦截规则：{len(baseline_blocks)} 条。\n"
+    report += f"- 浏览器来源可提取的唯一拦截域名：{len(browser_domains)} 个。\n"
+    report += f"- 与浏览器来源精确匹配：{len(browser_exact)} 条；被浏览器来源父域名覆盖：{len(browser_explained)} 条；未能由浏览器来源解释：{len(browser_unexplained)} 条。\n"
+    report += "\n| 浏览器来源 | 与基线独有拦截规则精确匹配数 |\n|---|---:|\n"
+    for name, count in sorted(browser_analysis["per_browser_source_exact_matches"].items(), key=lambda item: item[1], reverse=True):
+        report += f"| {name} | {count} |\n"
+
+    (OUT_DIR / "baseline-browser-analysis.json").write_text(
+        json.dumps(browser_analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    (OUT_DIR / "baseline-only-browser-explained.txt").write_text(
+        "\n".join(sorted(browser_explained)) + ("\n" if browser_explained else ""), encoding="utf-8"
+    )
+    (OUT_DIR / "baseline-only-not-browser-explained.txt").write_text(
+        "\n".join(sorted(browser_unexplained)) + ("\n" if browser_unexplained else ""), encoding="utf-8"
+    )
+
     (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
     print(report)
 
