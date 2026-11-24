@@ -90,14 +90,14 @@ class ReadMe(object):
 
             f.write("## 说明\n")
             f.write("1. 定时从上游各规则源获取更新，合并去重。\n")
-            f.write("2. 使用国内、国外各 3 组 DNS 服务，分别对上游各规则源拦截的域名进行解析，去除已无法解析的域名。（上游各规则源中存在大量已无法解析的域名，无需加入拦截规则）\n")
-            f.write("3. 本项目仅对上游规则进行合并、去重、去除无效域名，不做任何修改。如发现误拦截情况，可临时添加放行规则（如 `@@||www.example.com^$important`），并向上游规则反馈。\n")
-            f.write("4. 规则文件托管于 GitHub Releases，加速通道为 gh-proxy.com / ghfast.top / github.boki.moe，请根据网络情况选择。手机浏览器（Via、X）订阅失败时请改用直链列。\n")
+            f.write("2. DNS / Hosts 来源参与 DNS 域名拦截；filter-only 来源只进入浏览器规则，不会把网页过滤列表中的纯域名规则混入 DNS 黑名单。\\n")
+            f.write("3. DNS 域名经过连通性检查、黑名单与白名单处理；浏览器过滤规则保留原始过滤语法。\\n")
+            f.write("4. 规则文件通过本仓库 GitHub Releases 与 dist 分支分发；订阅地址指向本仓库。\\n")
             f.write("\n")
 
             f.write("## 订阅链接\n")
             f.write("1. 规则x’为规则x的 Lite 版，仅针对国内域名拦截，体积较小（如添加完整规则报错数量限制，请尝试 Lite 规则）\n")
-            f.write("2. AdGuard 等浏览器插件使用规则1 + 规则2（规则2为规则1的补充，仅适用浏览器插件）\n")
+            f.write("2. AdGuard 等浏览器插件使用规则1 + 规则2；规则2仅包含浏览器专用补充，不参与 DNS 拦截。\\n")
             f.write("\n")
             tmp = "| 规则 | 原始链接 |"
             for i in range(1, len(self.proxyList)):
@@ -143,12 +143,9 @@ class ReadMe(object):
             f.write("\n")
 
             f.write("## 上游规则源\n")
-            f.write("1. 感谢各位广告过滤规则维护大佬们的辛苦付出。\n")
-            f.write("2. 不再引用[anti-AD](https://anti-ad.net/adguard.txt)、[yhosts](https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts.txt)，具体原因见[Mosney/anti-anti-AD](https://github.com/Mosney/anti-anti-AD)。\n")
-            f.write("3. 移除[Notracking blocklist](https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt)，原项目[已停止维护](https://github.com/notracking/hosts-blocklists/issues/900)。\n")
-            f.write("4. 移除[ADgk](https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt)、[SmartTV Blocklist](https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt)、[1024 hosts](https://raw.githubusercontent.com/Goooler/1024_hosts/master/hosts)、[ad-wars hosts](https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts)规则长时间未更新。\n")
-            f.write("5. 不再引用[NEO DEV HOST](https://github.com/neodevpro/neodevhost/blob/master/lite_adblocker)，原因见[Issues 85](https://github.com/217heidai/adblockfilters/issues/85)。\n")
-            f.write("6. 不再引用[xinggsf rule](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt)、[1Hosts (Lite)](https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/adblock.txt)、[Hblock](https://hblock.molinero.dev/hosts_adblock.txt)，误杀较多。\n")
+            f.write("1. 来源分层：dns 用于 DNS 拦截；filter-only 只进入浏览器规则，不污染 DNS 域名黑名单。\\n")
+            f.write("2. 上游来源按用途、维护状态和增量价值筛选，不以规则数量作为质量标准。\\n")
+            f.write("3. 历史排除记录：anti-AD、yhosts、Notracking、ADgk、SmartTV Blocklist、1024 hosts、ad-wars、NEO DEV HOST、xinggsf rule、1Hosts Lite、Hblock；排除记录可按新证据重新审查。\\n")
             f.write("\n")
 
             tmp = "| 规则 | 类型 | 原始链接 |"
