@@ -583,8 +583,8 @@ def main():
     unexplained_path = OUT_DIR / "baseline-only-current-source-unexplained.txt"
     if source_presence_unexplained:
         unexplained_path.write_text("\n".join(sorted(source_presence_unexplained)) + "\n", encoding="utf-8")
-    elif unexplained_path.exists():
-        unexplained_path.unlink()
+    else:
+        unexplained_path.write_text("# None: no unexplained active source rules\n", encoding="utf-8")
     (OUT_DIR / "baseline-only-not-effectively-covered-by-current-dns.txt").write_text(
         "\n".join(sorted(source_not_effectively_covered)) + ("\n" if source_not_effectively_covered else ""), encoding="utf-8"
     )
