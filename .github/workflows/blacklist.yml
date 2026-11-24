@@ -1,5 +1,6 @@
 name: Generate LucentDNS DNS State
 
+# README-only changes must not restart DNS validation or recursively dispatch production builds.
 permissions:
   contents: write
   actions: write
