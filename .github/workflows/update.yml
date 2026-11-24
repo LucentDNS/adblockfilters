@@ -299,6 +299,16 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
 
+      - name: Remove obsolete audit report assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for asset in baseline-only-browser-explained.txt baseline-only-not-browser-explained.txt baseline-only-not-current-dns-source.txt; do
+            if gh release view audit --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
+              gh release delete-asset audit "$asset" --yes
+            fi
+          done
+
       - name: Upload domain backup
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
