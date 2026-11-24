@@ -17,6 +17,7 @@ class Rule(object):
 class ReadMe(object):
     def __init__(self, filename:str):
         self.filename = filename
+        self.repository = os.environ.get("GITHUB_REPOSITORY", "LucentDNS/adblockfilters").strip("/")
         self.ruleList:List[Rule] = []
         self.proxyList = [
             "",
@@ -55,20 +56,20 @@ class ReadMe(object):
         link = ""
 
         if tag == "rule":
-            link += " [原始链接](https://raw.githubusercontent.com/217heidai/adblockfilters/dist/%s) |" % (fileName)
+            link += " [原始链接](https://raw.githubusercontent.com/%s/dist/%s) |" % (self.repository, fileName)
 
             for i in range(1, len(self.proxyList)):
                 proxy = self.proxyList[i]
-                link += " [加速链接%d](%s/https://raw.githubusercontent.com/217heidai/adblockfilters/dist/%s) |" % (i, proxy, fileName)
+                link += " [加速链接%d](%s/https://raw.githubusercontent.com/%s/dist/%s) |" % (i, proxy, self.repository, fileName)
         else:
             if url:
                 link += " [原始链接](%s) |" % (url)
             else:
-                link += " [原始链接](https://github.com/217heidai/adblockfilters/releases/download/%s/%s) |" % (tag, fileName)
+                link += " [原始链接](https://github.com/%s/releases/download/%s/%s) |" % (self.repository, tag, fileName)
 
             for i in range(1, len(self.proxyList)):
                 proxy = self.proxyList[i]
-                link += " [加速链接%d](%s/https://github.com/217heidai/adblockfilters/releases/download/%s/%s) |" % (i, proxy, tag, fileName)
+                link += " [加速链接%d](%s/https://github.com/%s/releases/download/%s/%s) |" % (i, proxy, self.repository, tag, fileName)
 
         return link
 
@@ -162,4 +163,4 @@ class ReadMe(object):
             f.write("\n")
 
             f.write("## Star History\n")
-            f.write("[![Star History Chart](https://star-history.dera.page/svg?repos=217heidai/adblockfilters)](https://star-history.dera.page/#217heidai/adblockfilters)\n")
+            f.write("[![Star History Chart](https://star-history.dera.page/svg?repos=%s)](https://star-history.dera.page/#%s)\n" % (self.repository, self.repository))
