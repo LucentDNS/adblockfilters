@@ -286,8 +286,15 @@ jobs:
             .cache/audit/source-audit.json
             .cache/audit/baseline-browser-analysis.json
             .cache/audit/baseline-only-browser-overlap.txt
+            .cache/audit/baseline-only-allow-exceptions-still-blocked.txt
+            .cache/audit/baseline-only-allow-exceptions-no-longer-needed.txt
             .cache/audit/baseline-only-no-browser-overlap.txt
             .cache/audit/baseline-only-current-dns-source-overlap.txt
+            .cache/audit/baseline-only-current-source-allow-covered.txt
+            .cache/audit/baseline-only-current-source-parent-inactive.txt
+            .cache/audit/baseline-only-current-source-parent-inactive-blacklisted.txt
+            .cache/audit/baseline-only-current-source-parent-inactive-whitelisted.txt
+            .cache/audit/baseline-only-current-source-parent-inactive-allowed.txt
             .cache/audit/baseline-only-current-blacklist-overlap.txt
             .cache/audit/baseline-only-current-whitelist-covered.txt
             .cache/audit/baseline-only-current-source-unexplained.txt
