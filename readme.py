@@ -99,6 +99,7 @@ class ReadMe(object):
             f.write("2. 2026-11-24：普通 `filter` 类型来源与 DNS/Hosts 来源分流。AdGuard Base、AdGuard Chinese、AdGuard Mobile Ads、CJX、EasyList、EasyList China、EasyPrivacy、xinggsf mv、jiekouAD 等浏览器规则仍保留在浏览器补充过滤构建中；不再把其启发式提取的域名混入 DNS 域名订阅。\n")
             f.write("3. 本轮未新增或删除上游来源。后续若新增、停用或删除来源，必须同步修改下方来源订阅表，并在此处记录来源名称、变更类型和理由。\n")
             f.write("4. 2026-11-24：修正白名单解析，支持将 `||domain^$options` 形式规范化为域名白名单；路径、通配符和元素隐藏规则不会再被误当作 DNS 域名白名单。\n")
+            f.write("5. 2026-11-24：补齐白名单父域名覆盖处理。若白名单子域名仍被上游父域名拦截规则覆盖，最终 DNS 规则会生成对应的 `@@||子域名^` 放行例外；自动回归检查同时检查父域名覆盖。\n")
             f.write("\n")
 
             f.write("## 订阅链接\n")
