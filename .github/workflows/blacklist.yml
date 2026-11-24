@@ -5,7 +5,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: lucentdns-domain-state
+  group: lucentdns-dev-domain-noble
   cancel-in-progress: false
 
 on:
@@ -124,10 +124,10 @@ jobs:
           # The first LucentDNS run must not inherit upstream block/IP state.
           # Reuse a database only after our own fresh-validation marker exists.
           if curl -fsSL --retry 3 --retry-all-errors \
-              "https://github.com/${{ github.repository }}/releases/download/domain-state/nobledns-bootstrap-complete.txt" \
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/nobledns-bootstrap-complete.txt" \
               -o /tmp/nobledns-bootstrap-complete.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
-              "https://github.com/${{ github.repository }}/releases/download/domain-state/domain.db"
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
             test -s domain.db || { echo "LucentDNS domain.db is missing or empty"; exit 1; }
             echo "Using the previously generated LucentDNS DNS-validation database."
           else
@@ -162,7 +162,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: lucentdns-domain-state-log
+          name: lucentdns-dev-domain-noble-log
           path: blacklist.log
           if-no-files-found: warn
 
@@ -180,7 +180,7 @@ jobs:
       - name: Publish validated domain state
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: domain-state
+          tag_name: dev-domain-noble
           name: LucentDNS independent development domain state
           body: Internal DNS-validation state used by the production rule build. Not a user-facing rule subscription.
           prerelease: true
@@ -195,20 +195,20 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
 
-      - name: Verify domain-state release assets
+      - name: Verify dev-domain-noble release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          assets="$(gh release view domain-state --json assets --jq '.assets[].name')"
+          assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
           for name in domain.db domain.txt domain-input-provenance.json black.txt china.txt nobledns-bootstrap-complete.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
-              echo "::error::domain-state release is missing $name"
+              echo "::error::dev-domain-noble release is missing $name"
               exit 1
             fi
           done
 
-      - name: Trigger production rule build after domain-state publication
+      - name: Trigger production rule build after dev-domain-noble publication
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run update.yml --ref main
