@@ -169,6 +169,8 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
         ("unparsed_candidate_lines", "未识别候选"),
         ("unique_block_domains", "唯一拦截域名"),
+        ("unique_only_domains", "独有拦截域名"),
+        ("shared_domains", "共享拦截域名"),
         ("unique_allow_domains", "唯一放行域名"),
         ("unique_filter_rules", "过滤规则"),
         ("filter_domain_unresolved", "过滤规则未提取域名")
@@ -216,7 +218,10 @@ def main():
     except Exception as exc:
         print(f"Warning: public suffix list update failed: {exc}")
 
-    rules = ReadMe(str(ROOT / "README.md")).getRules()
+    # 本审计只回答 DNS 上游是否值得进入 DNS 规则：仅审计 host/dns/dnsfilter。
+    # 浏览器 filter 来源不应被解析成 DNS 域名，也不应让大量路径型规则污染 DNS 来源报告。
+    all_rules = ReadMe(str(ROOT / "README.md")).getRules()
+    rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
     downloads = asyncio.run(download_all(rules))
     resolver = Resolver(str(SOURCE_DIR))
     results, memberships, domain_sets = [], defaultdict(set), {}
