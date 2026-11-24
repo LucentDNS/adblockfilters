@@ -169,8 +169,10 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
         ("unparsed_candidate_lines", "未识别候选"),
         ("unique_block_domains", "唯一拦截域名"),
-        ("unique_only_domains", "独有拦截域名"),
-        ("shared_domains", "共享拦截域名"),
+        ("unique_only_domains", "精确独有域名"),
+        ("shared_domains", "精确重复域名"),
+        ("effective_unique_domains", "有效独有覆盖域名"),
+        ("parent_covered_domains", "被其他来源父域名覆盖"),
         ("unique_allow_domains", "唯一放行域名"),
         ("unique_filter_rules", "过滤规则"),
         ("filter_domain_unresolved", "过滤规则未提取域名")
@@ -239,6 +241,14 @@ def main():
         own = domain_sets.get(row["name"], set())
         row["unique_only_domains"] = sum(1 for domain in own if memberships[domain] == {row["name"]})
         row["shared_domains"] = len(own) - row["unique_only_domains"]
+        other_domains = set().union(*(domains for name, domains in domain_sets.items() if name != row["name"]))
+        def covered_by_other_parent(domain):
+            labels = domain.split(".")
+            return any(".".join(labels[index:]) in other_domains for index in range(len(labels)))
+        effective_unique = {domain for domain in own if not covered_by_other_parent(domain)}
+        row["effective_unique_domains"] = len(effective_unique)
+        row["parent_covered_domains"] = len(own) - len(effective_unique)
+        row["effective_unique_samples"] = sorted(effective_unique)[:100]
     pairwise = []
     for left, right in combinations([rule.name for rule in rules], 2):
         count = len(domain_sets.get(left, set()) & domain_sets.get(right, set()))
