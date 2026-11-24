@@ -10,6 +10,7 @@ LucentDNS 维护的 DNS 与内容过滤规则聚合项目。项目定时获取�
 2. 域名有效性：项目通过独立维护的域名状态数据和 DNS 检测流程维护黑名单、国内域名清单等构建输入；构建时会排除黑名单中的域名。该步骤不代表对所有上游规则逐条进行实时 DNS 查询，也不能保证所有被拦截域名均无误杀。
 3. 规则处理：DNS/Hosts 类条目会进行解析、归一化、合并、去重和排序，并结合黑名单、白名单及国内域名清单生成完整与 Lite 版本；浏览器过滤规则会按解析器可识别的语法处理，并与 DNS 规则去重。部分复杂过滤语法会保留原规则文本，不能把它们等同于已提取并验证的域名。项目会对上游规则做处理，不是原样镜像。
 4. 质量边界：项目提供来源审计、构建结果与上游已发布 DNS 规则的集合对比及白名单回归检查。数量差异和重合度只能说明规则集合变化，不能单独证明拦截质量更好或误杀更少。遇到误拦截请先添加本地白名单（例如 `@@||www.example.com^$important`），并提交反馈以便核查。
+5. 每轮来源审计与上游基线差异报告会随构建发布到 [审计报告 Release](https://github.com/LucentDNS/adblockfilters/releases/tag/audit)，包含来源快照 SHA-256、来源贡献和规则差异；报告是可追溯证据，不代表完成了真实用户环境的误杀验证。
 
 ## 规则源调整记录
 1. 2026-11-24：将 **AdGuard DNS filter**、**AdRules DNS List** 的来源类型由 `filter` 更正为 `dnsfilter`。这两项是 DNS 级规则源，现由 DNS 解析器解析并纳入 DNS 域名规则构建；这是类型纠正，不是新增或删除来源。
@@ -17,7 +18,7 @@ LucentDNS 维护的 DNS 与内容过滤规则聚合项目。项目定时获取�
 3. 本轮未新增或删除上游来源。后续若新增、停用或删除来源，必须同步修改下方来源订阅表，并在此处记录来源名称、变更类型和理由。
 4. 2026-11-24：修正白名单解析，支持将 `||domain^$options` 形式规范化为域名白名单；路径、通配符和元素隐藏规则不会再被误当作 DNS 域名白名单。
 5. 2026-11-24：补齐白名单父域名覆盖处理。若白名单子域名仍被上游父域名拦截规则覆盖，最终 DNS 规则会生成对应的 `@@||子域名^` 放行例外；自动回归检查同时检查父域名覆盖。
-6. 2026-11-24：完成 6 个 DNS/Hosts 上游的同解析器逐源审计，全部下载成功。合并域名集合 357,761 个，跨来源精确重复 204,526 个；父级压缩后独有覆盖候选分别为 AdGuard DNS 8,419、AdRules DNS 19,364、AWAvenue Only.Ads 7、HaGeZi Pro mini 50,764、OISD Basic 2,242、StevenBlack 20,753。该指标尚未扣除项目黑白名单和上游 allow 例外，不等同于最终有效拦截数或误杀验证。
+6. 2026-11-24：完成 6 个 DNS/Hosts 上游的同解析器逐源审计，全部下载成功。合并域名集合 357,761 个，跨来源精确重复 204,526 个；父级压缩后独有覆盖候选分别为 AdGuard DNS 8,419、AdRules DNS 19,364、AWAvenue Only.Ads 7、HaGeZi Pro mini 50,764、OISD Small 2,242、StevenBlack 20,753。该指标尚未扣除项目黑白名单和上游 allow 例外，不等同于最终有效拦截数或误杀验证。
 7. 2026-11-24：AWAvenue Ads Rule 从默认的“广告+隐私+不受欢迎”混合版切换为作者提供的 AdGuard Only.Ads 纯广告变体；解析拦截域名由 978 降至 651，减少 327 个候选条目，降低非广告功能拦截风险。
 8. 2026-11-24：新增 `pay.sboot.cn` 白名单例外。AWAvenue 上游更新记录说明该域名用于长虹电视支付功能，需要相关功能时应放行；`a0.app.xiaomi.com` 已由现有白名单覆盖。
 9. 2026-11-24：对原作者另列的 Pollock hosts 做候选审计；13,116 个可解析拦截域名中，父级压缩后仅有 2 个独有覆盖候选，13,114 个已被现有正式来源覆盖，因此不集成。该候选仅用于审计，不进入正式订阅表或构建。
@@ -89,7 +90,7 @@ LucentDNS 维护的 DNS 与内容过滤规则聚合项目。项目定时获取�
 | jiekouAD | filter | [原始链接](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt) | [加速链接1](https://gh-proxy.com/https://github.com/LucentDNS/adblockfilters/releases/download/source/jiekouAD.txt) | [加速链接2](https://ghfast.top/https://github.com/LucentDNS/adblockfilters/releases/download/source/jiekouAD.txt) | [加速链接3](https://github.boki.moe/https://github.com/LucentDNS/adblockfilters/releases/download/source/jiekouAD.txt) | 2026/11/22 |
 | AWAvenue Ads Rule (Only.Ads) | dns | [原始链接](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt) | [加速链接1](https://gh-proxy.com/https://github.com/LucentDNS/adblockfilters/releases/download/source/AWAvenue_Ads_Rule_(Only.Ads).txt) | [加速链接2](https://ghfast.top/https://github.com/LucentDNS/adblockfilters/releases/download/source/AWAvenue_Ads_Rule_(Only.Ads).txt) | [加速链接3](https://github.boki.moe/https://github.com/LucentDNS/adblockfilters/releases/download/source/AWAvenue_Ads_Rule_(Only.Ads).txt) | 2026/11/23 |
 | DNS-Blocklists PRO mini | dns | [原始链接](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt) | [加速链接1](https://gh-proxy.com/https://github.com/LucentDNS/adblockfilters/releases/download/source/DNS-Blocklists_PRO_mini.txt) | [加速链接2](https://ghfast.top/https://github.com/LucentDNS/adblockfilters/releases/download/source/DNS-Blocklists_PRO_mini.txt) | [加速链接3](https://github.boki.moe/https://github.com/LucentDNS/adblockfilters/releases/download/source/DNS-Blocklists_PRO_mini.txt) | 2026/11/24 |
-| OISD Basic | dns | [原始链接](https://abp.oisd.nl/basic/) | [加速链接1](https://gh-proxy.com/https://github.com/LucentDNS/adblockfilters/releases/download/source/OISD_Basic.txt) | [加速链接2](https://ghfast.top/https://github.com/LucentDNS/adblockfilters/releases/download/source/OISD_Basic.txt) | [加速链接3](https://github.boki.moe/https://github.com/LucentDNS/adblockfilters/releases/download/source/OISD_Basic.txt) | 2026/11/24 |
+| OISD Small | dns | [原始链接](https://small.oisd.nl/) | [加速链接1](https://gh-proxy.com/https://github.com/LucentDNS/adblockfilters/releases/download/source/OISD_Basic.txt) | [加速链接2](https://ghfast.top/https://github.com/LucentDNS/adblockfilters/releases/download/source/OISD_Basic.txt) | [加速链接3](https://github.boki.moe/https://github.com/LucentDNS/adblockfilters/releases/download/source/OISD_Basic.txt) | 2026/11/24 |
 | StevenBlack hosts | host | [原始链接](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) | [加速链接1](https://gh-proxy.com/https://github.com/LucentDNS/adblockfilters/releases/download/source/StevenBlack_hosts.txt) | [加速链接2](https://ghfast.top/https://github.com/LucentDNS/adblockfilters/releases/download/source/StevenBlack_hosts.txt) | [加速链接3](https://github.boki.moe/https://github.com/LucentDNS/adblockfilters/releases/download/source/StevenBlack_hosts.txt) | 2026/11/24 |
 
 ## Star History
