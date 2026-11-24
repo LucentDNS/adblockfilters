@@ -224,6 +224,7 @@ class BlackList(object):
         self.__directlistUrl = "https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/direct.txt"
         self.__IPlistFile = os.path.join(path, "rules/ipv4_china.txt")
         self.__IPlistUrl = "https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/ipv4_china.txt"
+        # Cap concurrent DNS checks to reduce upstream resolver rate limiting.
         self.__maxTask = 200
 
         self.__db = DomainDatabase(self.__databaseFile)
