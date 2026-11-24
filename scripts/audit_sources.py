@@ -873,8 +873,33 @@ def main():
 
     write_domain_list(
         OUT_DIR / "baseline-only-current-dns-source-overlap.txt",
-        current_effective_coverage,
-        "No baseline-only block rule is covered by current DNS sources."
+        current_source_exact | current_source_parent_present,
+        "No baseline-only block rule is present in current DNS sources."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-source-allow-covered.txt",
+        baseline_only_source_allow_covered,
+        "No baseline-only block rule is covered by current source allow rules."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-source-parent-inactive.txt",
+        current_source_parent_inactive,
+        "No baseline-only block rule has an inactive current-source parent."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-source-parent-inactive-blacklisted.txt",
+        current_source_parent_inactive_blacklisted,
+        "No baseline-only block rule has a blacklisted current-source parent."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-source-parent-inactive-whitelisted.txt",
+        current_source_parent_inactive_whitelisted,
+        "No baseline-only block rule has a whitelisted current-source parent."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-current-source-parent-inactive-allowed.txt",
+        current_source_parent_inactive_upstream_allowed,
+        "No baseline-only block rule has a source-allowed current-source parent."
     )
     write_domain_list(
         OUT_DIR / "baseline-only-current-blacklist-overlap.txt",
