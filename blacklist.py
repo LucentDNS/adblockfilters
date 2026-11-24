@@ -509,23 +509,19 @@ class BlackList(object):
                 else:
                     if now - v.getTimeStamp() > 3110400: # 超过 36 天，重新解析
                         tasks.append(self.__pingx(dnsresolver, v, semaphore))
-            results = []
             total = len(tasks)
             for completed, task in enumerate(asyncio.as_completed(tasks), 1):
                 domain = await task
-                results.append(domain)
-                if completed % 5000 == 0 or completed == total:
-                    logger.info("DNS validation progress: %d/%d", completed, total)
-
-            for domain in results:
                 domainDict[domain.domain] = domain
+                if completed % 5000 == 0 or completed == total:
+                    logger.info(f"DNS validation progress: {completed}/{total}")
 
             resolved = sum(1 for item in domainDict.values() if item.getIPList())
             nxdomain = sum(1 for item in domainDict.values() if item.getBlock())
             unresolved = len(domainDict) - resolved - nxdomain
             logger.info(
-                "DNS validation summary: total=%d resolved=%d NXDOMAIN=%d no-address-or-inconclusive=%d",
-                len(domainDict), resolved, nxdomain, unresolved
+                f"DNS validation summary: total={len(domainDict)} resolved={resolved} "
+                f"NXDOMAIN={nxdomain} no-address-or-inconclusive={unresolved}"
             )
             return domainDict
 
