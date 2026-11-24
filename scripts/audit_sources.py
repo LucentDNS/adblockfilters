@@ -270,7 +270,7 @@ def main():
             if not any(".".join(labels[index:]) in other_domains for index in range(len(labels))):
                 unique_domains.append(domain)
         safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("_.")
-        (unique_dir / f"{safe_name}.txt").write_text("\\n".join(sorted(unique_domains)) + ("\\n" if unique_domains else ""), encoding="utf-8")
+        (unique_dir / f"{safe_name}.txt").write_text("\n".join(sorted(unique_domains)) + ("\n" if unique_domains else ""), encoding="utf-8")
     (OUT_DIR / "source-audit.json").write_text(
         json.dumps({"sources": results, "cross_source_duplicate_domains": overlap,
                     "unique_domains_all_sources": len(memberships),
