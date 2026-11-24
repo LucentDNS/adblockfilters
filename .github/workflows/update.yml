@@ -135,8 +135,12 @@ jobs:
               "baseline_only_sample": baseline_only[:100],
           }
           Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          Path(".cache/report/optimized-only.txt").write_text("\n".join(optimized_only) + ("\n" if optimized_only else ""), encoding="utf-8")
-          Path(".cache/report/baseline-only.txt").write_text("\n".join(baseline_only) + ("\n" if baseline_only else ""), encoding="utf-8")
+          Path(".cache/report/optimized-only.txt").write_text(
+              "\n".join(optimized_only) + ("\n" if optimized_only else "! No NobleDNS-only rules in this comparison.\n"),
+              encoding="utf-8")
+          Path(".cache/report/baseline-only.txt").write_text(
+              "\n".join(baseline_only) + ("\n" if baseline_only else "! No upstream-only rules in this comparison.\n"),
+              encoding="utf-8")
           lines = ["# DNS output comparison", "", f"- Baseline rules: {len(baseline)}", f"- Optimized rules: {len(current)}", f"- Shared: {len(current & baseline)}", f"- Optimized-only: {len(optimized_only)}", f"- Baseline-only: {len(baseline_only)}", ""]
           Path(".cache/report/comparison.md").write_text("\n".join(lines), encoding="utf-8")
           print("\n".join(lines))
