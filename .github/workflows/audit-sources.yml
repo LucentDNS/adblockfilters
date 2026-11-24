@@ -10,6 +10,8 @@ on:
       - 'README.md'
       - 'resolver.py'
       - 'readme.py'
+      - 'blacklist.py'
+      - 'tests/**'
   workflow_dispatch:
 
 permissions:
@@ -26,7 +28,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: python -m pip install tld IPy loguru httpx
+        run: python -m pip install tld IPy loguru httpx dnspython pytest
+      - name: Run regression tests
+        run: python -m pytest -q
       - name: Audit source lists with current resolver
         run: python scripts/audit_sources.py
       - name: Upload audit report
