@@ -3,13 +3,15 @@
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from readme import ReadMe, Rule
 from resolver import Resolver
 from updater import Updater
-
-ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / ".cache" / "source"
 DOMAIN_DIR = ROOT / ".cache" / "domain"
 MYBLOCK_SOURCE = ROOT / "rules" / "myblock.txt"
