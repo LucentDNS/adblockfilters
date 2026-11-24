@@ -176,3 +176,19 @@ AWAvenue 自 1.7.6 起将规则拆分为广告、隐私、不受欢迎三类，�
 The AWAvenue Only.Ads audit identified `heads-fa.spotify.com` as one of the few domains not covered by the other production sources. Independent Spotify-specific blocking references classify it as an audio-ad edge and warn that blocking this class of endpoint can cause silence gaps or playback disconnects. To prioritize low breakage over forcing DNS-level audio-ad removal, `heads-fa.spotify.com` is added to the project whitelist. This is a targeted exception only; it does not whitelist the whole Spotify domain. The separate `adstudio-assets.scdn.co` host is documented as an ad-creative CDN and remains blockable.
 
 Evidence: https://gist.github.com/abiudrn/e5c7de98fbf68958753137200e164db0 and https://github.com/v2fly/domain-list-community/blob/master/data/spotify
+
+
+## 2026-11-24 来源独有贡献：白名单后复核
+
+同一轮审计快照保持不变；本次在父级压缩后，按项目 `rules/white.txt` 与构建器相同的域名例外语法，再扣除白名单域名及其子域名。六个正式来源全部下载成功，合并域名集合 357,761 个，跨来源精确重复 204,526 个。
+
+| 正式来源 | 父级压缩后独有候选（白名单前） | 白名单后独有候选 |
+|---|---:|---:|
+| AdGuard DNS filter | 8,419 | 8,418 |
+| AdRules DNS List | 19,364 | 19,353 |
+| AWAvenue Ads Rule (Only.Ads) | 7 | 4 |
+| HaGeZi DNS-Blocklists PRO mini | 50,764 | 50,685 |
+| OISD Small | 2,242 | 2,242 |
+| StevenBlack hosts | 20,753 | 20,745 |
+
+这组数字比此前单纯父级压缩统计更接近实际贡献，但仍未扣除动态黑名单及上游 allow 规则，也不等同于逐条误杀验证。AWAvenue 的 7 个独有候选中，`a0.app.xiaomi.com`、`pay.sboot.cn` 已在白名单，新增的 `heads-fa.spotify.com` 也按低误伤原则放行，故剩余 4 个候选；其余独有候选样本保存在审计产物的 `effective-unique-after-whitelist/` 目录。
