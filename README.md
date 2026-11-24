@@ -59,6 +59,7 @@
 4. 移除[ADgk](https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt)、[SmartTV Blocklist](https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt)、[1024 hosts](https://raw.githubusercontent.com/Goooler/1024_hosts/master/hosts)、[ad-wars hosts](https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts)规则长时间未更新。
 5. 不再引用[NEO DEV HOST](https://github.com/neodevpro/neodevhost/blob/master/lite_adblocker)，原因见[Issues 85](https://github.com/217heidai/adblockfilters/issues/85)。
 6. 不再引用[xinggsf rule](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt)、[1Hosts (Lite)](https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/adblock.txt)、[Hblock](https://hblock.molinero.dev/hosts_adblock.txt)，误杀较多。
+7. 移除[Pollock hosts](https://someonewhocares.org/hosts/hosts)：与 StevenBlack hosts 高度重复，在本项目 16 个来源的交叉审计中仅贡献 3 个全局独有拦截域名，额外维护价值很低。
 
 | 规则 | 类型 | 原始链接 | 加速链接1 | 加速链接2 | 加速链接3 | 更新日期 |
 |:-|:-|:-|:-|:-|:-|:-|
@@ -77,7 +78,6 @@
 | DNS-Blocklists PRO mini | dns | [原始链接](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt) | [加速链接1](https://gh-proxy.com/https://github.com/217heidai/adblockfilters/releases/download/source/DNS-Blocklists_PRO_mini.txt) | [加速链接2](https://ghfast.top/https://github.com/217heidai/adblockfilters/releases/download/source/DNS-Blocklists_PRO_mini.txt) | [加速链接3](https://github.boki.moe/https://github.com/217heidai/adblockfilters/releases/download/source/DNS-Blocklists_PRO_mini.txt) | 2026/11/23 |
 | OISD Basic | dns | [原始链接](https://abp.oisd.nl/basic/) | [加速链接1](https://gh-proxy.com/https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt) | [加速链接2](https://ghfast.top/https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt) | [加速链接3](https://github.boki.moe/https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt) | 2026/11/24 |
 | StevenBlack hosts | host | [原始链接](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) | [加速链接1](https://gh-proxy.com/https://github.com/217heidai/adblockfilters/releases/download/source/StevenBlack_hosts.txt) | [加速链接2](https://ghfast.top/https://github.com/217heidai/adblockfilters/releases/download/source/StevenBlack_hosts.txt) | [加速链接3](https://github.boki.moe/https://github.com/217heidai/adblockfilters/releases/download/source/StevenBlack_hosts.txt) | 2026/11/16 |
-| Pollock hosts | host | [原始链接](https://someonewhocares.org/hosts/hosts) | [加速链接1](https://gh-proxy.com/https://github.com/217heidai/adblockfilters/releases/download/source/Pollock_hosts.txt) | [加速链接2](https://ghfast.top/https://github.com/217heidai/adblockfilters/releases/download/source/Pollock_hosts.txt) | [加速链接3](https://github.boki.moe/https://github.com/217heidai/adblockfilters/releases/download/source/Pollock_hosts.txt) | 2026/11/23 |
 
 ## Star History
 [![Star History Chart](https://star-history.dera.page/svg?repos=217heidai/adblockfilters)](https://star-history.dera.page/#217heidai/adblockfilters)
