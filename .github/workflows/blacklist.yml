@@ -5,7 +5,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: noble-dns-dev-blacklist
+  group: lucentdns-domain-state
   cancel-in-progress: false
 
 on:
@@ -27,7 +27,7 @@ on:
       - rules/direct.txt
       - rules/ipv4_china.txt
       - rules/white.txt
-      - .github/workflows/blacklist-dev.yml
+      - .github/workflows/blacklist.yml
 
 env:
   TZ: Asia/Shanghai
@@ -35,7 +35,7 @@ env:
   SMARTDNS_PATH: /tmp/smartdns
 
 jobs:
-  Generate_Dev_Blacklist:
+  Generate_Domain_State:
     runs-on: ubuntu-latest
     timeout-minutes: 180
 
@@ -131,7 +131,7 @@ jobs:
             test -s domain.db || { echo "NobleDNS domain.db is missing or empty"; exit 1; }
             echo "Using the previously generated NobleDNS DNS-validation database."
           else
-            echo "No NobleDNS validation marker found; starting with an empty database for a full independent DNS pass."
+            echo "No LucentDNS validation marker found; starting with an empty database for a full independent DNS pass."
             : > domain.db
           fi
 
@@ -153,16 +153,16 @@ jobs:
           test -s domain.db || { echo "domain.db missing after blacklist generation"; exit 1; }
           # Empty lists are represented by a comment-only file so GitHub can
           # publish a non-empty asset while the parser still treats it as empty.
-          test -s black.txt || printf '! NobleDNS dev blacklist: no confirmed dead domains\n' > black.txt
-          test -s china.txt || printf '! NobleDNS dev China list: no validated China domains\n' > china.txt
-          printf 'NobleDNS fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
+          test -s black.txt || printf '! LucentDNS validated blacklist: no confirmed dead domains\n' > black.txt
+          test -s china.txt || printf '! LucentDNS validated China list: no validated China domains\n' > china.txt
+          printf 'LucentDNS fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Upload log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: noble-dns-dev-blacklist-log
+          name: lucentdns-domain-state-log
           path: blacklist.log
           if-no-files-found: warn
 
