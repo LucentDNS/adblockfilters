@@ -147,6 +147,8 @@ jobs:
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           python -m py_compile scripts/validated_sources.py
           python scripts/validated_sources.py package
+          cp .cache/domain/validated-dns-sources.tar.gz validated-dns-sources.tar.gz
+          test -s validated-dns-sources.tar.gz || { echo "Validated DNS source archive was not packaged"; exit 1; }
 
       - name: Run DNS validation and generate independent blacklist
         id: generate
