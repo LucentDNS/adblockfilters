@@ -27,9 +27,9 @@ class V2ray(APPBase):
             with open(fileName, 'a') as f:
                 f.write("#\n")
                 if isLite:
-                    f.write("# Title: AdBlock V2ray/Xray Lite\n")
+                    f.write("# Title: LucentDNS AdBlock V2ray/Xray Lite\n")
                 else:
-                    f.write("# Title: AdBlock V2ray/Xray\n")
+                    f.write("# Title: LucentDNS AdBlock V2ray/Xray\n")
                 f.write("# Homepage: %s\n"%(self.homepage))
                 f.write("# Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("# Version: %s\n"%(self.version))
