@@ -520,11 +520,18 @@ def main():
                 return True
         return False
 
+    current_source_parent_present = {
+        domain for domain in baseline_blocks - current_source_exact
+        if any(".".join(domain.split(".")[index:]) in current_dns_domains
+               for index in range(1, len(domain.split("."))))
+    }
     current_source_parent_covered = {
-        domain for domain in baseline_blocks if covered_by_active_current_parent(domain)
+        domain for domain in current_source_parent_present
+        if covered_by_active_current_parent(domain)
     }
     current_effective_coverage = current_source_exact_active | current_source_parent_covered
-    source_not_covered = baseline_blocks - current_effective_coverage
+    source_not_effectively_covered = baseline_blocks - current_effective_coverage
+    source_absent = baseline_blocks - current_source_exact - current_source_parent_present
     source_presence_unexplained = current_source_exact_active - current_source_parent_covered
     blacklist_overlap = baseline_blocks & blacklist_domains
     whitelist_covered = {
@@ -548,7 +555,8 @@ def main():
         "baseline_only_covered_by_active_current_source_parent": len(current_source_parent_covered),
         "baseline_only_blacklist_exact_overlap": len(blacklist_overlap),
         "baseline_only_project_whitelist_parent_coverage": len(whitelist_covered),
-        "baseline_only_not_effectively_covered_by_current_dns_sources": len(source_not_covered),
+        "baseline_only_not_effectively_covered_by_current_dns_sources": len(source_not_effectively_covered),
+        "baseline_only_absent_from_current_dns_sources": len(source_absent),
         "blacklist_input_available": blacklist_path.exists(),
         "domain_input_provenance": input_provenance
     })
@@ -558,7 +566,8 @@ def main():
     report += f"- 其中被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条。\n"
     report += f"- 当前来源中存在、未被黑/白名单排除、但仍未出现在输出：{len(source_presence_unexplained)} 条。\n"
     report += f"- 由当前 DNS 来源中仍有效的父域名覆盖：{len(current_source_parent_covered)} 条。\n"
-    report += f"- 当前来源无法有效覆盖：{len(source_not_covered)} 条。\n"
+    report += f"- 当前六个 DNS/Hosts 来源中既无精确规则也无父域名：{len(source_absent)} 条。\n"
+    report += f"- 当前输出中未被有效来源规则覆盖：{len(source_not_effectively_covered)} 条。\n"
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
     report += "- 若黑名单来自上游回退，其排除结果仍需由 NobleDNS 自己的 DNS 检测重新验证；本统计不把上游黑名单当作已验证事实。\n"
 
@@ -571,12 +580,18 @@ def main():
     (OUT_DIR / "baseline-only-current-whitelist-covered.txt").write_text(
         "\n".join(sorted(current_source_exact_whitelisted)) + ("\n" if current_source_exact_whitelisted else ""), encoding="utf-8"
     )
-    (OUT_DIR / "baseline-only-current-source-unexplained.txt").write_text(
-        "\n".join(sorted(source_presence_unexplained)) + ("\n" if source_presence_unexplained else ""), encoding="utf-8"
+    unexplained_path = OUT_DIR / "baseline-only-current-source-unexplained.txt"
+    if source_presence_unexplained:
+        unexplained_path.write_text("\n".join(sorted(source_presence_unexplained)) + "\n", encoding="utf-8")
+    elif unexplained_path.exists():
+        unexplained_path.unlink()
+    (OUT_DIR / "baseline-only-not-effectively-covered-by-current-dns.txt").write_text(
+        "\n".join(sorted(source_not_effectively_covered)) + ("\n" if source_not_effectively_covered else ""), encoding="utf-8"
     )
-    (OUT_DIR / "baseline-only-not-current-dns-source.txt").write_text(
-        "\n".join(sorted(source_not_covered)) + ("\n" if source_not_covered else ""), encoding="utf-8"
+    (OUT_DIR / "baseline-only-absent-from-current-dns-sources.txt").write_text(
+        "\n".join(sorted(source_absent)) + ("\n" if source_absent else ""), encoding="utf-8"
     )
+
     (OUT_DIR / "baseline-browser-analysis.json").write_text(
         json.dumps(browser_analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
