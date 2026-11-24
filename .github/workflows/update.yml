@@ -12,7 +12,6 @@ on:
   push:
     branches:
       - main
-      - lucentdns-dev
 
 env:
   TZ: Asia/Shanghai
@@ -90,24 +89,14 @@ jobs:
             echo "::error::Required input $name could not be downloaded from either source."
             exit 1
           }
-          if [[ "${GITHUB_REF}" == "refs/heads/lucentdns-dev" ]]; then
-            # Development builds must consume the independently DNS-validated
-            # NobleDNS data set. Never silently fall back to the upstream blacklist.
-            for name in black.txt china.txt domain.txt domain-input-provenance.json; do
-              curl -fsSL --retry 3 --retry-all-errors \
-                -o ".cache/domain/$name" \
-                "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/$name"
-              test -s ".cache/domain/$name" || { echo "::error::NobleDNS dev-domain/$name is missing or empty"; exit 1; }
-              printf '%s\t%s\n' "$name" "NobleDNS independent DNS validation" >> .cache/domain/input-provenance.txt
-            done
-          else
-            download_required "black.txt" ".cache/domain/black.txt" \
-              "https://github.com/${{ github.repository }}/releases/download/domain/black.txt" \
-              "https://github.com/217heidai/adblockfilters/releases/download/domain/black.txt"
-            download_required "china.txt" ".cache/domain/china.txt" \
-              "https://github.com/${{ github.repository }}/releases/download/domain/china.txt" \
-              "https://github.com/217heidai/adblockfilters/releases/download/domain/china.txt"
-          fi
+          # Use the independently DNS-validated LucentDNS domain state for every production build.
+          for name in black.txt china.txt domain.txt domain-input-provenance.json; do
+            curl -fsSL --retry 3 --retry-all-errors \
+              -o ".cache/domain/$name" \
+              "https://github.com/\${{ github.repository }}/releases/download/domain-state/$name"
+            test -s ".cache/domain/$name" || { echo "::error::Validated domain-state/$name is missing or empty"; exit 1; }
+            printf '%s\t%s\n' "$name" "LucentDNS independent DNS validation" >> .cache/domain/input-provenance.txt
+          done
           cp rules/white.txt .cache/domain/ || true
           cp rules/myblock.txt .cache/source/ || true
 
@@ -263,8 +252,7 @@ jobs:
           retention-days: 14
 
       - name: Upload rules to release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lucentdns-dev'
-        uses: softprops/action-gh-release@v3
+                uses: softprops/action-gh-release@v3
         with:
           tag_name: rule
           files: .cache/out/*
@@ -272,8 +260,7 @@ jobs:
           fail_on_unmatched_files: false
 
       - name: Upload sources to release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lucentdns-dev'
-        uses: softprops/action-gh-release@v3
+                uses: softprops/action-gh-release@v3
         with:
           tag_name: source
           files: .cache/source/*
@@ -281,8 +268,7 @@ jobs:
           fail_on_unmatched_files: false
 
       - name: Remove obsolete source release assets
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lucentdns-dev'
-        env:
+                env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # These files belonged to removed source configurations or audit-only candidates.
@@ -293,8 +279,7 @@ jobs:
           done
 
       - name: Publish source audit and baseline comparison reports
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lucentdns-dev'
-        uses: softprops/action-gh-release@v3
+                uses: softprops/action-gh-release@v3
         with:
           tag_name: audit
           files: |
@@ -317,8 +302,7 @@ jobs:
           fail_on_unmatched_files: false
 
       - name: Upload domain backup
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lucentdns-dev'
-        uses: softprops/action-gh-release@v3
+                uses: softprops/action-gh-release@v3
         with:
           tag_name: domain
           files: .cache/domain/domain.txt
@@ -331,8 +315,7 @@ jobs:
           commit_message: ${{ steps.update.outputs.message }}
 
       - name: Publish to dist branch
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/lucentdns-dev'
-        # 必须放在 Commit Changes 之后：孤儿分支切换会清空工作区（含刚生成的 README），
+                # 必须放在 Commit Changes 之后：孤儿分支切换会清空工作区（含刚生成的 README），
         # 若放前面，README 更新会丢失。dist 为孤儿分支，每轮 force-push 单提交，不产生历史。
         run: |
           cp -r .cache/out /tmp/dist-out
