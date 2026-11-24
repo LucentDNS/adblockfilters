@@ -98,7 +98,7 @@ jobs:
             for name in black.txt china.txt; do
               curl -fsSL --retry 3 --retry-all-errors \
                 -o ".cache/domain/$name" \
-                "https://github.com/${{ github.repository }}/releases/download/dev-domain/$name"
+                "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/$name"
               test -s ".cache/domain/$name" || { echo "::error::NobleDNS dev-domain/$name is missing or empty"; exit 1; }
               printf '%s\t%s\n' "$name" "NobleDNS independent DNS validation" >> .cache/domain/input-provenance.txt
             done

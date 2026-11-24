@@ -116,7 +116,7 @@ jobs:
           # The first NobleDNS run must not inherit upstream block/IP state.
           # Reuse a database only after our own fresh-validation marker exists.
           if curl -fsSL --retry 3 --retry-all-errors \
-              "https://github.com/${{ github.repository }}/releases/download/dev-domain/nobledns-bootstrap-complete.txt" \
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/nobledns-bootstrap-complete.txt" \
               -o /tmp/nobledns-bootstrap-complete.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
               "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
@@ -205,7 +205,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          assets="$(gh release view dev-domain --json assets --jq '.assets[].name')"
+          assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
           for name in domain.db black.txt china.txt nobledns-bootstrap-complete.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
               echo "::error::dev-domain release is missing $name"
