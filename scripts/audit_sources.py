@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 import httpx
 from tld.utils import update_tld_names
 
-from readme import ReadMe
+from readme import ReadMe, Rule
 from resolver import Resolver
 SOURCE_DIR = ROOT / ".cache" / "source"
 OUT_DIR = ROOT / ".cache" / "audit"
@@ -227,6 +227,9 @@ def main():
     # 浏览器 filter 来源不应被解析成 DNS 域名，也不应让大量路径型规则污染 DNS 来源报告。
     all_rules = ReadMe(str(ROOT / "README.md")).getRules()
     rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
+    # Reference-only candidate from the original 217heidai source table; it is audited
+    # here for marginal contribution but is NOT added to the production README/build inputs.
+    rules.append(Rule("Pollock hosts (candidate only)", "host", "https://someonewhocares.org/hosts/hosts", "2026/11/22"))
     downloads = asyncio.run(download_all(rules))
     resolver = Resolver(str(SOURCE_DIR))
     results, memberships, domain_sets = [], defaultdict(set), {}
