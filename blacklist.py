@@ -21,6 +21,23 @@ def _ip_in_ranges(ip_int:int, starts:List[int], ends:List[int]) -> bool:
     i = bisect_right(starts, ip_int) - 1
     return i >= 0 and ip_int <= ends[i]
 
+DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
+DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
+
+
+def _needs_dns_validation(ip_list, last_checked, now, is_new=False) -> bool:
+    """
+    Refresh positive answers every 36 days. Retry empty answers after a short
+    cooldown so a second same-day workflow run does not repeat the same DNS
+    batch, while the daily schedule still rechecks negative/inconclusive names.
+    New domains are always checked immediately.
+    """
+    age = now - last_checked
+    if ip_list:
+        return age > DNS_POSITIVE_REFRESH_SECONDS
+    return is_new or age > DNS_NEGATIVE_RECHECK_SECONDS
+
+
 class DomainDatabase(object):
     def __init__(self, dbFile: str):
         self.__table_domain = "T_DOMAIN"
@@ -504,11 +521,8 @@ class BlackList(object):
             now = int(time.time()) 
             for _,v in domainDict.items():
                 ipList = v.getIPList()
-                if len(ipList) < 1: # ipList 为空，重新解析
+                if _needs_dns_validation(ipList, v.getTimeStamp(), now, v.getUpdate()):
                     tasks.append(self.__pingx(dnsresolver, v, semaphore))
-                else:
-                    if now - v.getTimeStamp() > 3110400: # 超过 36 天，重新解析
-                        tasks.append(self.__pingx(dnsresolver, v, semaphore))
             total = len(tasks)
             for completed, task in enumerate(asyncio.as_completed(tasks), 1):
                 domain = await task
