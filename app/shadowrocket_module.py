@@ -43,19 +43,19 @@ class ShadowrocketModule(APPBase):
             if os.path.exists(fileName):
                 os.remove(fileName)
 
-            with open(fileName, "w", encoding="utf-8", newline="\\n") as f:
+            with open(fileName, "w", encoding="utf-8", newline="\n") as f:
                 title = "LucentDNS AdBlock Shadowrocket Module"
                 if isLite:
                     title += " Lite"
-                f.write(f"#!name={title}\\n")
-                f.write(f"#!homepage={self.homepage}\\n")
-                f.write(f"#!source={self.source}/{os.path.basename(fileName)}\\n")
-                f.write(f"#!version={self.version}\\n")
-                f.write(f"#!updated={self.time}\\n")
-                f.write("\\n")
-                f.write("[Rule]\\n")
+                f.write(f"#!name={title}\n")
+                f.write(f"#!homepage={self.homepage}\n")
+                f.write(f"#!source={self.source}/{os.path.basename(fileName)}\n")
+                f.write(f"#!version={self.version}\n")
+                f.write(f"#!updated={self.time}\n")
+                f.write("\n")
+                f.write("[Rule]\n")
                 for domain in blockList:
-                    f.write(f"DOMAIN-SUFFIX,{domain},REJECT-DROP\\n")
+                    f.write(f"DOMAIN-SUFFIX,{domain},REJECT-DROP\n")
 
             if isLite:
                 logger.info("LucentDNS Shadowrocket Module Lite: block=%d" % len(blockList))
