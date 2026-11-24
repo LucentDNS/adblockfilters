@@ -319,3 +319,6 @@ wan.douyu.com
 
 # Spotify audio-ad edge; blocking may cause playback gaps or disconnects.
 heads-fa.spotify.com
+
+# AdGuard HTTPS filtering self-test endpoint; keep it available for accurate diagnostics.
+https-filtering-check.adtidy.org
