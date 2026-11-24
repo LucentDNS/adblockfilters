@@ -1,13 +1,19 @@
 .DS_Store
 
-__pycache__
-.venv
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+*.log
 .python-version
-pyproject.toml
-uv.lock
-domain.db
 
-# B1: 生成产物/缓存不进 git
+domain.db
+domain.txt
+domain-input-provenance.json
+black.txt
+china.txt
+
 .cache/
 rules/*
 !rules/white.txt
