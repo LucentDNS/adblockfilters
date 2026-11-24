@@ -491,6 +491,19 @@ class Resolver(object):
         logger.info("%s: block=%d, unblock=%d, filter=%d"%(rule.name,len(blockDict),len(unblockDict),len(filterDict)))
         return blockDict,unblockDict,filterDict
     
+    def resolveFilterOnly(self, rule:Rule) -> Tuple[Dict[str,Set[str]],Dict[str,Set[str]],Dict[str,str]]:
+        """Keep browser filters without promoting their plain domain rules into DNS blocking."""
+        blockDict, unblockDict, filterDict = self.resolveFilter(rule)
+        browserFilterDict = dict(filterDict)
+        for fld, subdomains in blockDict.items():
+            for subdomain in subdomains:
+                domain = ("%s.%s" % (subdomain, fld)) if subdomain else fld
+                browserFilterDict["||%s^" % domain] = domain
+        for fld, subdomains in unblockDict.items():
+            for subdomain in subdomains:
+                domain = ("%s.%s" % (subdomain, fld)) if subdomain else fld
+                browserFilterDict["@@||%s^" % domain] = domain
+        return {}, {}, browserFilterDict
     def resolveFilter(self, rule:Rule) -> Tuple[Dict[str,Set[str]],Dict[str,Set[str]],Dict[str,str]]:
         blockDict:Dict[str,Set[str]] = dict()
         unblockDict:Dict[str,Set[str]] = dict()
