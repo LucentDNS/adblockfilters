@@ -55,20 +55,20 @@ class ReadMe(object):
         link = ""
 
         if tag == "rule":
-            link += " [原始链接](https://raw.githubusercontent.com/217heidai/adblockfilters/dist/%s) |" % (fileName)
+            link += " [原始链接](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/%s) |" % (fileName)
 
             for i in range(1, len(self.proxyList)):
                 proxy = self.proxyList[i]
-                link += " [加速链接%d](%s/https://raw.githubusercontent.com/217heidai/adblockfilters/dist/%s) |" % (i, proxy, fileName)
+                link += " [加速链接%d](%s/https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/%s) |" % (i, proxy, fileName)
         else:
             if url:
                 link += " [原始链接](%s) |" % (url)
             else:
-                link += " [原始链接](https://github.com/217heidai/adblockfilters/releases/download/%s/%s) |" % (tag, fileName)
+                link += " [原始链接](https://github.com/LucentDNS/adblockfilters/releases/download/%s/%s) |" % (tag, fileName)
 
             for i in range(1, len(self.proxyList)):
                 proxy = self.proxyList[i]
-                link += " [加速链接%d](%s/https://github.com/217heidai/adblockfilters/releases/download/%s/%s) |" % (i, proxy, tag, fileName)
+                link += " [加速链接%d](%s/https://github.com/LucentDNS/adblockfilters/releases/download/%s/%s) |" % (i, proxy, tag, fileName)
 
         return link
 
@@ -162,4 +162,4 @@ class ReadMe(object):
             f.write("\n")
 
             f.write("## Star History\n")
-            f.write("[![Star History Chart](https://star-history.dera.page/svg?repos=217heidai/adblockfilters)](https://star-history.dera.page/#217heidai/adblockfilters)\n")
+            f.write("[![Star History Chart](https://star-history.dera.page/svg?repos=LucentDNS/adblockfilters)](https://star-history.dera.page/#LucentDNS/adblockfilters)\n")
