@@ -12,6 +12,7 @@ from resolver import Resolver
 CRITICAL_FILE = ROOT / "tests" / "data" / "critical-domains.txt"
 DNS_OUTPUT = ROOT / ".cache" / "out" / "adblockdns.txt"
 SOURCE_DIR = ROOT / ".cache" / "source"
+MAX_DNS_RULES = 500_000
 
 
 def normalize_domain(value):
@@ -76,6 +77,15 @@ def main():
     if not critical_domains:
         raise SystemExit("Critical-domain regression list is empty")
 
+    dns_rule_count = sum(
+        1 for line in DNS_OUTPUT.read_text(encoding="utf-8", errors="replace").splitlines()
+        if line.strip() and not line.lstrip().startswith("!")
+    )
+    if dns_rule_count > MAX_DNS_RULES:
+        raise SystemExit(
+            f"DNS output exceeds the 500,000-rule resource limit: {dns_rule_count}"
+        )
+
     block_domains, allow_domains = parse_dns_rules(DNS_OUTPUT)
     failures = []
     for domain in critical_domains:
@@ -90,7 +100,8 @@ def main():
         raise SystemExit(f"{len(failures)} critical service domains are blocked")
 
     print(
-        f"Critical-domain regression passed: {len(critical_domains)} service roots; "
+        f"Build quality gate passed: {dns_rule_count}/{MAX_DNS_RULES} DNS rules; "
+        f"{len(critical_domains)} critical service roots; "
         f"{len(block_domains)} block domains; {len(allow_domains)} allow domains"
     )
 
