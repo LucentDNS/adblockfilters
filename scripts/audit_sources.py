@@ -80,7 +80,8 @@ def audit_one(rule, resolver, download):
         "filter_domain_extracted": 0, "filter_domain_unresolved": 0,
         "unique_block_domains": 0, "unique_allow_domains": 0,
         "unique_filter_rules": 0, "unique_extracted_domains": 0,
-        "duplicate_raw_lines": 0, "download_error": download.get("error", "")
+        "duplicate_raw_lines": 0, "download_error": download.get("error", ""),
+        "samples_unparsed": [], "samples_filter_domain_unresolved": []
     }
     if not download.get("ok"):
         return result, set()
@@ -131,12 +132,18 @@ def audit_one(rule, resolver, download):
                     result["filter_domain_extracted"] += 1
                 else:
                     result["filter_domain_unresolved"] += 1
+                    if len(result["samples_filter_domain_unresolved"]) < 20:
+                        result["samples_filter_domain_unresolved"].append(s[:240])
             if parsed:
                 result["parsed_lines"] += 1
             else:
                 result["unparsed_candidate_lines"] += 1
+                if len(result["samples_unparsed"]) < 20:
+                    result["samples_unparsed"].append(s[:240])
         except Exception:
             result["unparsed_candidate_lines"] += 1
+            if len(result["samples_unparsed"]) < 20:
+                result["samples_unparsed"].append(s[:240])
 
     result["unique_block_domains"] = len(blocks)
     result["unique_allow_domains"] = len(allows)
