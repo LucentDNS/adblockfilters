@@ -1,5 +1,4 @@
 ﻿import re
-import os
 from typing import List
 
 from loguru import logger
@@ -20,7 +19,6 @@ class ReadMe(object):
     def __init__(self, filename:str):
         self.filename = filename
         self.ruleList:List[Rule] = []
-        self.proxyList = [""]
 
     def getRules(self) -> List[Rule]:
         logger.info("resolve readme...")
@@ -47,27 +45,6 @@ class ReadMe(object):
 
     def setRules(self, ruleList:List[Rule]):
         self.ruleList = ruleList
-
-    def __subscribeLink(self, fileName:str, tag:str, url:str=None):
-        link = ""
-
-        if tag == "rule":
-            link += " [原始链接](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/%s) |" % (fileName)
-
-            for i in range(1, len(self.proxyList)):
-                proxy = self.proxyList[i]
-                link += " [加速链接%d](%s/https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/%s) |" % (i, proxy, fileName)
-        else:
-            if url:
-                link += " [原始链接](%s) |" % (url)
-            else:
-                link += " [原始链接](https://github.com/LucentDNS/adblockfilters/releases/download/%s/%s) |" % (tag, fileName)
-
-            for i in range(1, len(self.proxyList)):
-                proxy = self.proxyList[i]
-                link += " [加速链接%d](%s/https://github.com/LucentDNS/adblockfilters/releases/download/%s/%s) |" % (i, proxy, tag, fileName)
-
-        return link
 
     def regenerate(self):
         logger.info("regenerate readme...")
