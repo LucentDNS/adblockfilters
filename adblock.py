@@ -85,6 +85,39 @@ def verify_domain_validation_provenance(ruleList, sourceDir, domainDir):
     return True
 
 
+def update_sources_preserving_validated_dns(ruleList, sourceDir, domainDir):
+    """Refresh upstream metadata without replacing DNS snapshots already validated for this build."""
+    provenance_path = os.path.join(domainDir, "domain-input-provenance.json")
+    snapshots = []
+    if os.path.isfile(provenance_path):
+        import shutil
+        import tempfile
+
+        backup_dir = tempfile.mkdtemp(prefix="lucentdns-validated-dns-")
+        try:
+            for rule in ruleList:
+                if rule.type not in ("host", "dns", "dnsfilter"):
+                    continue
+                source_path = os.path.join(sourceDir, rule.filename)
+                if os.path.isfile(source_path):
+                    backup_path = os.path.join(backup_dir, rule.filename)
+                    shutil.copy2(source_path, backup_path)
+                    snapshots.append((backup_path, source_path))
+
+            try:
+                updater = Updater(ruleList)
+                return updater.update(sourceDir)
+            finally:
+                # The validation input and final build must consume byte-identical DNS sources.
+                for backup_path, source_path in snapshots:
+                    shutil.copy2(backup_path, source_path)
+        finally:
+            shutil.rmtree(backup_dir, ignore_errors=True)
+
+    updater = Updater(ruleList)
+    return updater.update(sourceDir)
+
+
 class ADBlock(object):
     def __init__(self):
         self.pwd = os.getcwd()
@@ -110,8 +143,9 @@ class ADBlock(object):
         ruleList = testList
         '''
         # 更新上游规则（下载到 .cache/source）
-        updater = Updater(ruleList)
-        update, ruleList = updater.update(self.sourceDir)
+        update, ruleList = update_sources_preserving_validated_dns(
+            ruleList, self.sourceDir, self.domainDir
+        )
 
         # Dev builds must use the exact DNS/Hosts snapshots that produced black.txt/china.txt.
         verify_domain_validation_provenance(ruleList, self.sourceDir, self.domainDir)
