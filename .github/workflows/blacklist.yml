@@ -19,7 +19,6 @@ on:
       - blacklist.py
       - smartdns.conf
       - README.md
-      - readme.py
       - resolver.py
       - updater.py
       - scripts/generate_domain_input.py
