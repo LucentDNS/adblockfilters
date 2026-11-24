@@ -98,7 +98,21 @@ class Filter(object):
 
         for address in whiteSet:
             try:
-                res = get_tld(address, fix_protocol=True, as_object=True)
+                # 白名单允许使用纯域名，也兼容 ||domain^$options 形式。
+                # 路径/通配符/元素隐藏等浏览器规则不应被误当作 DNS 域名白名单。
+                domain = address.strip()
+                if domain.startswith("@@||"):
+                    domain = domain[4:]
+                elif domain.startswith("||"):
+                    domain = domain[2:]
+                if "^" in domain:
+                    domain = domain.split("^", 1)[0]
+                if "$" in domain:
+                    domain = domain.split("$", 1)[0]
+                if (not domain or domain.endswith(".") or
+                        any(char in domain for char in "*/#|?^$")):
+                    continue
+                res = get_tld(domain, fix_protocol=True, as_object=True)
                 fld = res.fld
                 subdomain = res.subdomain
                 if fld not in whiteDict:
