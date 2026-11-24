@@ -742,32 +742,45 @@ def main():
             "parent_coverage_samples": sorted(parent_covered)[:100],
         }
 
+    baseline_only_source_allow_covered = {
+        domain for domain in baseline_blocks if covered_by_source_allow(domain)
+    }
     browser_analysis.update({
         "baseline_comparison_available": True,
         "baseline_candidate_analysis": baseline_candidate_analysis,
         "current_dns_source_unique_domains": len(current_dns_domains),
+        "current_dns_source_allow_domains": len(current_source_allow_domains),
         "baseline_only_exactly_present_in_current_dns_sources": len(current_source_exact),
         "baseline_only_exact_source_rules_excluded_by_blacklist": len(current_source_exact_blacklisted),
         "baseline_only_exact_source_rules_excluded_by_whitelist": len(current_source_exact_whitelisted),
+        "baseline_only_exact_source_rules_excluded_by_upstream_allow": len(current_source_exact_upstream_allowed),
+        "baseline_only_source_allow_covered": len(baseline_only_source_allow_covered),
         "baseline_only_exact_source_rules_active_but_missing_from_output": len(source_presence_unexplained),
+        "baseline_only_parent_present_in_current_dns_sources": len(current_source_parent_present),
         "baseline_only_covered_by_active_current_source_parent": len(current_source_parent_covered),
+        "baseline_only_parent_inactive": len(current_source_parent_inactive),
+        "baseline_only_parent_inactive_blacklisted": len(current_source_parent_inactive_blacklisted),
+        "baseline_only_parent_inactive_whitelisted": len(current_source_parent_inactive_whitelisted),
+        "baseline_only_parent_inactive_upstream_allowed": len(current_source_parent_inactive_upstream_allowed),
+        "baseline_only_parent_inactive_unexplained": len(current_source_parent_inactive_unexplained),
         "baseline_only_blacklist_exact_overlap": len(blacklist_overlap),
         "baseline_only_project_whitelist_parent_coverage": len(whitelist_covered),
-        "baseline_only_not_effectively_covered_by_current_dns_sources": len(source_not_effectively_covered),
+        "baseline_only_not_effectively_covered_by_current_dns_sources": len(source_unexplained),
         "baseline_only_absent_from_current_dns_sources": len(source_absent),
         "blacklist_input_available": blacklist_path.exists(),
         "domain_input_provenance": input_provenance
     })
-    report += "\n## 原作者基线差异与当前 DNS 来源、黑名单及白名单的关系\n\n"
-    report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}。\n"
-    report += f"- 基线独有 block 中，精确存在于当前 DNS 来源：{len(current_source_exact)} 条。\n"
-    report += f"- 其中被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条。\n"
-    report += f"- 当前来源中存在、未被黑/白名单排除、但仍未出现在输出：{len(source_presence_unexplained)} 条。\n"
-    report += f"- 由当前 DNS 来源中仍有效的父域名覆盖：{len(current_source_parent_covered)} 条。\n"
+    report += "\n## 原作者基线差异与当前 DNS 来源、黑名单、白名单及来源放行的关系\n\n"
+    report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}；来源放行域名：{len(current_source_allow_domains)}。\n"
+    report += f"- 基线独有 block 中，精确存在于当前 DNS 来源：{len(current_source_exact)} 条；另有父域名来源覆盖：{len(current_source_parent_present)} 条。\n"
+    report += f"- 精确来源规则中，被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条；被上游来源 allow 规则覆盖：{len(current_source_exact_upstream_allowed)} 条。\n"
+    report += f"- 基线 block 被当前来源 allow 精确或父域名覆盖：{len(baseline_only_source_allow_covered)} 条。\n"
+    report += f"- 当前来源中存在、未被黑/白名单或来源 allow 解释、但仍未出现在输出：{len(source_presence_unexplained)} 条。\n"
+    report += f"- 父域名来源覆盖：有效父域名 {len(current_source_parent_covered)} 条；失效或被例外排除的父域名 {len(current_source_parent_inactive)} 条（黑名单 {len(current_source_parent_inactive_blacklisted)}、白名单 {len(current_source_parent_inactive_whitelisted)}、来源 allow {len(current_source_parent_inactive_upstream_allowed)}、仍未解释 {len(current_source_parent_inactive_unexplained)}）。\n"
     report += f"- 当前六个 DNS/Hosts 来源中既无精确规则也无父域名：{len(source_absent)} 条。\n"
-    report += f"- 当前输出中未被有效来源规则覆盖：{len(source_not_effectively_covered)} 条。\n"
+    report += f"- 尚未由当前来源、黑名单、白名单或来源 allow 解释的基线 block 差异：{len(source_unexplained)} 条。\n"
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
-    report += "- 若黑名单来自上游回退，其排除结果仍需由 NobleDNS 自己的 DNS 检测重新验证；本统计不把上游黑名单当作已验证事实。\n"
+    report += "- DNS NXDOMAIN 只用于解释确实经过本项目 DNS 验证的域名；未验证的基线独有域名不得假定为失效。\n"
     report += "\n### 原作者 OISD Basic 候选来源对基线差异的覆盖\n\n"
     report += "- OISD Basic 仅作为审计候选，不进入 NobleDNS 正式来源或构建。\n"
     report += "| 候选来源 | 可解析域名 | 基线独有精确重合 | 父域名覆盖 | 合计覆盖 | 未覆盖 |\n|---|---:|---:|---:|---:|---:|\n"
