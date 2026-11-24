@@ -12,6 +12,7 @@ LucentDNS 维护的 DNS 与内容过滤规则聚合项目。项目定时获取�
 4. 质量边界：项目提供来源审计、构建结果与上游已发布 DNS 规则的集合对比及白名单回归检查。数量差异和重合度只能说明规则集合变化，不能单独证明拦截质量更好或误杀更少。遇到误拦截请先添加本地白名单（例如 `@@||www.example.com^$important`），并提交反馈以便核查。
 
 ## 订阅链接
+所有“规则订阅”均由 LucentDNS 自己的 `dist` 分支或 Releases 提供；不会把 217heidai 或其他上游作者的成品规则地址当作本项目订阅地址。下方“上游规则源”一节列出的原作者链接仅用于标明规则来源，不是本项目的订阅入口。
 1. 规则x’为规则x的 Lite 版，仅针对国内域名拦截，体积较小（如添加完整规则报错数量限制，请尝试 Lite 规则）
 2. AdGuard 浏览器扩展可按需同时使用规则1（DNS 域名规则）和规则2（补充的浏览器过滤规则）；仅使用 DNS 过滤的场景通常只需规则1。
 
@@ -57,7 +58,7 @@ LucentDNS 维护的 DNS 与内容过滤规则聚合项目。项目定时获取�
 2. 不再引用[anti-AD](https://anti-ad.net/adguard.txt)、[yhosts](https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts.txt)，具体原因见[Mosney/anti-anti-AD](https://github.com/Mosney/anti-anti-AD)。
 3. 移除[Notracking blocklist](https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt)，原项目[已停止维护](https://github.com/notracking/hosts-blocklists/issues/900)。
 4. 移除[ADgk](https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt)、[SmartTV Blocklist](https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt)、[1024 hosts](https://raw.githubusercontent.com/Goooler/1024_hosts/master/hosts)、[ad-wars hosts](https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts)规则长时间未更新。
-5. 不再引用[NEO DEV HOST](https://github.com/neodevpro/neodevhost/blob/master/lite_adblocker)，原因见[Issues 85](https://github.com/217heidai/adblockfilters/issues/85)。
+5. 不再引用[NEO DEV HOST](https://github.com/neodevpro/neodevhost/blob/master/lite_adblocker)，原因见项目此前的来源审查记录。
 6. 不再引用[xinggsf rule](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt)、[1Hosts (Lite)](https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/adblock.txt)、[Hblock](https://hblock.molinero.dev/hosts_adblock.txt)，误杀较多。
 
 | 规则 | 类型 | 原始链接 | 加速链接1 | 加速链接2 | 加速链接3 | 更新日期 |
