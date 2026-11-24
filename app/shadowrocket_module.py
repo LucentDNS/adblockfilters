@@ -1,4 +1,4 @@
-﻿import os
+import os
 from typing import List, Set, Dict
 
 from loguru import logger
@@ -32,43 +32,34 @@ class ShadowrocketModule(APPBase):
     def generate(self, isLite: bool = False):
         try:
             if isLite:
-                logger.info("generate adblock Shadowrocket Module Lite...")
+                logger.info("generate LucentDNS Shadowrocket Module Lite...")
                 fileName = self.fileNameLite
                 blockList = self.blockListLite
             else:
-                logger.info("generate adblock Shadowrocket Module...")
+                logger.info("generate LucentDNS Shadowrocket Module...")
                 fileName = self.fileName
                 blockList = self.blockList
 
             if os.path.exists(fileName):
                 os.remove(fileName)
 
-            # Shadowrocket sgmodule metadata uses #!key=value
-            with open(fileName, "a", encoding="utf-8") as f:
+            with open(fileName, "w", encoding="utf-8", newline="\\n") as f:
+                title = "LucentDNS AdBlock Shadowrocket Module"
                 if isLite:
-                    f.write("#!name=AdBlock Shadowrocket Module Lite\n")
-                    f.write(
-                        % (self.sourceRule)
-                    )
-                else:
-                    f.write("#!name=AdBlock Shadowrocket Module\n")
-                    f.write(
-                        % (self.sourceRule)
-                    )
-
-                f.write("#!homepage=%s\n" % (self.homepage))
-                f.write("#!source=%s/%s\n" % (self.source, os.path.basename(fileName)))
-                f.write("#!version=%s\n" % (self.version))
-                f.write("#!updated=%s\n" % (self.time))
-                f.write("\n")
-
-                f.write("[Rule]\n")
+                    title += " Lite"
+                f.write(f"#!name={title}\\n")
+                f.write(f"#!homepage={self.homepage}\\n")
+                f.write(f"#!source={self.source}/{os.path.basename(fileName)}\\n")
+                f.write(f"#!version={self.version}\\n")
+                f.write(f"#!updated={self.time}\\n")
+                f.write("\\n")
+                f.write("[Rule]\\n")
                 for domain in blockList:
-                    f.write("DOMAIN-SUFFIX,%s,REJECT-DROP\n" % (domain))
+                    f.write(f"DOMAIN-SUFFIX,{domain},REJECT-DROP\\n")
 
             if isLite:
-                logger.info("adblock Shadowrocket Module Lite: block=%d" % (len(blockList)))
+                logger.info("LucentDNS Shadowrocket Module Lite: block=%d" % len(blockList))
             else:
-                logger.info("adblock Shadowrocket Module: block=%d" % (len(blockList)))
+                logger.info("LucentDNS Shadowrocket Module: block=%d" % len(blockList))
         except Exception as e:
-            logger.error("%s" % (e))
+            logger.error("%s" % e)
