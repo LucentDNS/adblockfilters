@@ -51,8 +51,6 @@ class ReadMe(object):
     def regenerate(self):
         logger.info("regenerate readme...")
         rows = [
-            ("AdGuard / AdGuard Home DNS", "adblockdns.txt", "DNS 全量"),
-            ("AdGuard / AdGuard Home DNS", "adblockdnslite.txt", "DNS Lite"),
             ("AdGuard 浏览器过滤", "adblockfilters.txt", "浏览器补充规则"),
             ("AdGuard 浏览器过滤", "adblockfilterslite.txt", "浏览器补充 Lite"),
             ("InviZible Pro / personalDNSfilter", "adblockdomain.txt", "域名全量"),
@@ -87,7 +85,7 @@ class ReadMe(object):
             ("V2Ray / Xray", "adblockv2raylite.dat", "DAT Lite"),
         ]
         with open(self.filename, "w", encoding="utf-8", newline="\n") as f:
-            f.write("# LucentDNS Adblock Filters\n\n")
+            f.write("# DNS Adblock Filters\n\n")
             f.write("独立维护的 DNS 与浏览器内容过滤规则。上游来源经过分类、解析、去重和贡献审查；构建包含白名单回归及关键服务检查。\n\n")
             f.write("## DNS 订阅\n\n")
             f.write("| 版本 | 地址 |\n|---|---|\n")
@@ -107,7 +105,7 @@ class ReadMe(object):
                 f.write(f"| {rule.name} | {rule.type} | [upstream]({rule.url}) | {rule.latest} |\n")
             f.write("\n")
             f.write("## 维护与反馈\n\n")
-            f.write("- 规则产物由 GitHub Actions 自动构建，发布在 dist 分支及 Releases。\n")
+            f.write("- 规则产物由 GitHub Actions 每日自动构建；完成 DNS 验证、关键服务域名及白名单回归检查后，发布在 dist 分支及 Releases。\n")
             f.write("- 构建审计、来源贡献及与上游基线的差异报告见 audit Release。规则数量差异不等同于质量优劣证明。\n")
             f.write("- 如遇误拦截，请提交反馈并提供被影响的域名、客户端及复现情况；不要直接扩大白名单范围。\n\n")
             f.write("## License\n\nGPL-3.0. 上游规则遵循各自原始许可证及使用条款。\n")
