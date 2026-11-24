@@ -37,6 +37,8 @@ class Filter(object):
                 taskList.append(("domain", thread_pool.submit(resolver.resolveHost, rule)))
             if rule.type == "dns":
                 taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
+            if rule.type == "dnsfilter":
+                taskList.append(("domain", thread_pool.submit(resolver.resolveFilter, rule)))
             if rule.type == "filter":
                 taskList.append(("filter", thread_pool.submit(resolver.resolveFilter, rule)))
         # 添加用户维护的补充 DNS 规则
