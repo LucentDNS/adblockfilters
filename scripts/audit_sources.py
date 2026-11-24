@@ -127,7 +127,7 @@ def audit_one(rule, resolver, download):
         "samples_unparsed": [], "samples_filter_domain_unresolved": []
     }
     if not download.get("ok"):
-        return result, set()
+        return result, set(), set()
 
     lines = Path(download["path"]).read_text(encoding="utf-8", errors="replace").splitlines()
     result["source_sha256"] = hashlib.sha256(Path(download["path"]).read_bytes()).hexdigest()
@@ -209,7 +209,7 @@ def audit_one(rule, resolver, download):
     result["unique_allow_domains"] = len(allows)
     result["unique_filter_rules"] = len(filters)
     result["unique_extracted_domains"] = len(extracted)
-    return result, blocks
+    return result, blocks, allows
 
 
 def render_report(results, production_names, browser_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps):
@@ -343,10 +343,10 @@ def main():
     candidate_names = {rule.name for rule in candidate_rules}
     downloads = asyncio.run(download_all(rules, candidate_names))
     resolver = Resolver(str(SOURCE_DIR))
-    results, domain_sets = [], {}
+    results, domain_sets, allow_sets = [], {}, {}
 
     for rule in rules:
-        row, domains = audit_one(rule, resolver, downloads.get(rule.name, {}))
+        row, domains, allows = audit_one(rule, resolver, downloads.get(rule.name, {}))
         if rule.name in production_names:
             row["role"] = "正式 DNS/Hosts 来源"
         elif rule.name in browser_names:
@@ -355,6 +355,7 @@ def main():
             row["role"] = "候选源（不集成）"
         results.append(row)
         domain_sets[rule.name] = domains
+        allow_sets[rule.name] = allows
 
     production_sets = {name: domain_sets.get(name, set()) for name in production_names}
     project_whitelist = load_project_whitelist()
