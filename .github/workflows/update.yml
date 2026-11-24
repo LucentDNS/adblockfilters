@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - lucentdns-dev
-    paths:
-      - '.github/workflows/update.yml'
   schedule:
   - cron: 0 */8 * * *
 
