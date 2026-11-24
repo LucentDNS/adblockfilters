@@ -243,7 +243,7 @@ jobs:
                   if not path.is_file():
                       continue
                   if path.suffix == ".txt" and path.stat().st_size == 0:
-                      path.write_text("! No entries matched this report.\\n", encoding="utf-8")
+                      path.write_text("! No entries matched this report.\n", encoding="utf-8")
                   elif path.suffix in {".md", ".json"} and path.stat().st_size == 0:
                       raise SystemExit(f"Required report is empty: {path}")
                   if path.suffix == ".json":
