@@ -284,6 +284,7 @@ jobs:
             .cache/audit/baseline-only-current-dns-source-overlap.txt
             .cache/audit/baseline-only-current-blacklist-overlap.txt
             .cache/audit/baseline-only-current-whitelist-covered.txt
+            .cache/audit/baseline-only-current-source-unexplained.txt
             .cache/audit/baseline-only-not-current-dns-source.txt
             .cache/report/comparison.md
             .cache/report/comparison.json
