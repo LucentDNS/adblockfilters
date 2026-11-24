@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timezone
 from collections import defaultdict
 from itertools import combinations
 from pathlib import Path
@@ -337,7 +338,7 @@ def main():
 
     (OUT_DIR / "source-audit.json").write_text(
         json.dumps({
-            "audit_generated_at_utc": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(timespec="seconds"),
+            "audit_generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "production_sources": len(production_names),
             "candidate_sources": len(candidate_names),
             "sources": results,
