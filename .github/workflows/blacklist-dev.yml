@@ -145,9 +145,9 @@ jobs:
               "SELECT 1 FROM sqlite_master WHERE type='table' AND name='T_DOMAIN'"
           ).fetchone()
           if table_exists:
-              cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0")
+              cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0, isChina = 0")
               connection.commit()
-              print(f"Reset inherited isBlock flags: {cursor.rowcount}")
+              print(f"Reset inherited block/China flags: {cursor.rowcount}")
           else:
               print("Fresh empty database: no inherited blacklist flags to reset.")
           connection.close()
