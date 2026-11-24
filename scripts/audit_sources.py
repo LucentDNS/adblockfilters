@@ -22,6 +22,7 @@ from readme import ReadMe, Rule
 from resolver import Resolver
 SOURCE_DIR = ROOT / ".cache" / "source"
 OUT_DIR = ROOT / ".cache" / "audit"
+CANDIDATE_SOURCE_DIR = OUT_DIR / "candidate-source"
 TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 
 
@@ -43,8 +44,9 @@ def ignored_line(line, source_type):
     return s.startswith("#") and not s.startswith(("##", "#%#"))
 
 
-async def download_all(rules):
+async def download_all(rules, candidate_names):
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
+    CANDIDATE_SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     sem = asyncio.Semaphore(5)
     results = {}
     async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True,
@@ -52,7 +54,8 @@ async def download_all(rules):
         async def one(rule):
             async with sem:
                 try:
-                    path = SOURCE_DIR / rule.filename
+                    target_dir = CANDIDATE_SOURCE_DIR if rule.name in candidate_names else SOURCE_DIR
+                    path = target_dir / rule.filename
                     # Reuse the exact snapshots already downloaded by the normal build.
                     # This avoids a second network download and keeps audit/build inputs identical.
                     if path.exists() and path.stat().st_size:
@@ -288,7 +291,7 @@ def main():
     production_names = {rule.name for rule in production_rules}
     browser_names = {rule.name for rule in browser_rules}
     candidate_names = {rule.name for rule in candidate_rules}
-    downloads = asyncio.run(download_all(rules))
+    downloads = asyncio.run(download_all(rules, candidate_names))
     resolver = Resolver(str(SOURCE_DIR))
     results, domain_sets = [], {}
 
