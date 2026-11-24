@@ -90,14 +90,14 @@ class ReadMe(object):
 
             f.write("## 说明\n")
             f.write("1. 定时从上游各规则源获取更新，合并去重。\n")
-            f.write("2. DNS / Hosts 来源参与 DNS 域名拦截；filter-only 来源只进入浏览器规则，不会把网页过滤列表中的纯域名规则混入 DNS 黑名单。\\n")
-            f.write("3. DNS 域名经过连通性检查、黑名单与白名单处理；浏览器过滤规则保留原始过滤语法。\\n")
-            f.write("4. 规则文件通过本仓库 GitHub Releases 与 dist 分支分发；订阅地址指向本仓库。\\n")
+            f.write("2. DNS / Hosts 来源参与 DNS 域名拦截；filter-only 来源只进入浏览器规则，不会把网页过滤列表中的纯域名规则混入 DNS 黑名单。\n")
+            f.write("3. DNS 域名经过连通性检查、黑名单与白名单处理；浏览器过滤规则保留原始过滤语法。\n")
+            f.write("4. 规则文件通过本仓库 GitHub Releases 与 dist 分支分发；订阅地址指向本仓库。\n")
             f.write("\n")
 
             f.write("## 订阅链接\n")
             f.write("1. 规则x’为规则x的 Lite 版，仅针对国内域名拦截，体积较小（如添加完整规则报错数量限制，请尝试 Lite 规则）\n")
-            f.write("2. AdGuard 等浏览器插件使用规则1 + 规则2；规则2仅包含浏览器专用补充，不参与 DNS 拦截。\\n")
+            f.write("2. AdGuard 等浏览器插件使用规则1 + 规则2；规则2仅包含浏览器专用补充，不参与 DNS 拦截。\n")
             f.write("\n")
             tmp = "| 规则 | 原始链接 |"
             for i in range(1, len(self.proxyList)):
@@ -143,9 +143,9 @@ class ReadMe(object):
             f.write("\n")
 
             f.write("## 上游规则源\n")
-            f.write("1. 来源分层：dns 用于 DNS 拦截；filter-only 只进入浏览器规则，不污染 DNS 域名黑名单。\\n")
-            f.write("2. 上游来源按用途、维护状态和增量价值筛选，不以规则数量作为质量标准。\\n")
-            f.write("3. 历史排除记录：anti-AD、yhosts、Notracking、ADgk、SmartTV Blocklist、1024 hosts、ad-wars、NEO DEV HOST、xinggsf rule、1Hosts Lite、Hblock；排除记录可按新证据重新审查。\\n")
+            f.write("1. 来源分层：dns 用于 DNS 拦截；filter-only 只进入浏览器规则，不污染 DNS 域名黑名单。\n")
+            f.write("2. 上游来源按用途、维护状态和增量价值筛选，不以规则数量作为质量标准。\n")
+            f.write("3. 历史排除记录：anti-AD、yhosts、Notracking、ADgk、SmartTV Blocklist、1024 hosts、ad-wars、NEO DEV HOST、xinggsf rule、1Hosts Lite、Hblock；排除记录可按新证据重新审查。\n")
             f.write("\n")
 
             tmp = "| 规则 | 类型 | 原始链接 |"
