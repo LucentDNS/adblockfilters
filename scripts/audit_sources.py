@@ -519,8 +519,8 @@ def main():
     input_provenance = {}
     if provenance_path.exists():
         for raw in provenance_path.read_text(encoding="utf-8", errors="replace").splitlines():
-            if "\\t" in raw:
-                key, value = raw.split("\\t", 1)
+            if "\t" in raw:
+                key, value = raw.split("\t", 1)
                 input_provenance[key] = value
 
     browser_analysis.update({
@@ -533,29 +533,29 @@ def main():
         "blacklist_input_available": blacklist_path.exists(),
         "domain_input_provenance": input_provenance
     })
-    report += "\\n## 原作者基线差异与当前 DNS 来源、黑名单及白名单的关系\\n\\n"
-    report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}。\\n"
-    report += f"- 基线独有 block 中，可由当前 DNS 来源同域名或父域名覆盖：{len(current_source_covered)} 条。\\n"
-    report += f"- 与本次构建黑名单精确重合：{len(blacklist_overlap)} 条；被项目白名单父域名覆盖：{len(whitelist_covered)} 条。\\n"
-    report += f"- 已在当前 DNS 来源中，但不能由黑名单或白名单解释的差异：{len(source_covered_unexplained)} 条。\\n"
-    report += f"- 当前 DNS 来源无法覆盖的差异：{len(source_not_covered)} 条。\\n"
-    report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\\n"
-    report += "- 这组分类用于区分输入来源差异与排除规则，不代表黑名单判定本身已正确；若黑名单来自上游回退，它仍需由本项目自己的 DNS 检测重新验证。\\n"
+    report += "\n## 原作者基线差异与当前 DNS 来源、黑名单及白名单的关系\n\n"
+    report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}。\n"
+    report += f"- 基线独有 block 中，可由当前 DNS 来源同域名或父域名覆盖：{len(current_source_covered)} 条。\n"
+    report += f"- 与本次构建黑名单精确重合：{len(blacklist_overlap)} 条；被项目白名单父域名覆盖：{len(whitelist_covered)} 条。\n"
+    report += f"- 已在当前 DNS 来源中，但不能由黑名单或白名单解释的差异：{len(source_covered_unexplained)} 条。\n"
+    report += f"- 当前 DNS 来源无法覆盖的差异：{len(source_not_covered)} 条。\n"
+    report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
+    report += "- 这组分类用于区分输入来源差异与排除规则，不代表黑名单判定本身已正确；若黑名单来自上游回退，它仍需由本项目自己的 DNS 检测重新验证。\n"
 
     (OUT_DIR / "baseline-only-current-dns-source-overlap.txt").write_text(
-        "\\n".join(sorted(current_source_covered)) + ("\\n" if current_source_covered else ""), encoding="utf-8"
+        "\n".join(sorted(current_source_covered)) + ("\n" if current_source_covered else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-only-current-blacklist-overlap.txt").write_text(
-        "\\n".join(sorted(blacklist_overlap)) + ("\\n" if blacklist_overlap else ""), encoding="utf-8"
+        "\n".join(sorted(blacklist_overlap)) + ("\n" if blacklist_overlap else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-only-current-whitelist-covered.txt").write_text(
-        "\\n".join(sorted(whitelist_covered)) + ("\\n" if whitelist_covered else ""), encoding="utf-8"
+        "\n".join(sorted(whitelist_covered)) + ("\n" if whitelist_covered else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-only-not-current-dns-source.txt").write_text(
-        "\\n".join(sorted(source_not_covered)) + ("\\n" if source_not_covered else ""), encoding="utf-8"
+        "\n".join(sorted(source_not_covered)) + ("\n" if source_not_covered else ""), encoding="utf-8"
     )
     (OUT_DIR / "baseline-browser-analysis.json").write_text(
-        json.dumps(browser_analysis, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8"
+        json.dumps(browser_analysis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
 
     (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
