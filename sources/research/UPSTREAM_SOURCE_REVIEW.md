@@ -150,6 +150,15 @@ AWAvenue 自 1.7.6 起将规则拆分为广告、隐私、不受欢迎三类，�
 - 其余 23 条原作者 allow 规则未被当前 block 规则覆盖，无需额外例外。
 
 本节的 1,360 条差异是上游成品集合差异，不等同于 1,360 条已证实误杀或失效域名。白名单新增后，最终比较数字以本轮重新构建产物为准。
+
+### 最终白名单调整后的发布构建
+
+在增加 `sobot.com` 和 `wan.douyu.com` 白名单后，最终发布构建为 **254,599 条 DNS 规则，完全重复 0 条**。与原作者基线 255,960 条比较：共同 254,598 条、当前独有 1 条、基线独有 1,362 条，其中 29 条为原作者 allow、1,333 条为原作者 block。
+
+基线独有从白名单调整前的 1,360 条变为 1,362 条，是因为当前构建直接移除了 `sobot.com` 与 `wan.douyu.com` 的拦截规则，而原作者成品保留了 block 并另加 allow；当前输出没有这两个域名的 block，也不需要再输出对应 allow，实际行为是放行。
+
+最终输出仍保留唯一新增例外 `@@||cdn.branch.io^`。`pay.sboot.cn`、`a0.app.xiaomi.com`、`sobot.com`、`wan.douyu.com` 均不在最终拦截规则中。其余基线 allow 中的分析跟踪/联盟跳转域名不照搬放行。
+
 ## 参考依据
 
 - AdGuard DNS filter 组成说明：https://github.com/AdguardTeam/AdGuardSDNSFilter
