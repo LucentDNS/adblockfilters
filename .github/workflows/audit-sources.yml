@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'scripts/**'
-      - '.github/workflows/**'
+      - '.github/workflows/audit-sources.yml'
       - 'README.md'
       - 'resolver.py'
       - 'readme.py'
