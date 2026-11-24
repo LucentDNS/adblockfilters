@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import re
 import sys
 from collections import defaultdict
 from itertools import combinations
@@ -171,7 +172,7 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         ("unique_block_domains", "唯一拦截域名"),
         ("unique_only_domains", "精确独有域名"),
         ("shared_domains", "精确重复域名"),
-        ("effective_unique_domains", "有效独有覆盖域名"),
+        ("effective_unique_domains", "父级去重后独有候选"),
         ("parent_covered_domains", "被其他来源父域名覆盖"),
         ("unique_allow_domains", "唯一放行域名"),
         ("unique_filter_rules", "过滤规则"),
@@ -208,8 +209,9 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         "- 解析接受：当前解析器识别为拦截、放行或过滤规则的行。",
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
         "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
-        "- 跨来源重复拦截域名：仅统计解析为 block 的域名，和 AdGuard Home DNS 输出口径一致；不把浏览器过滤规则中提取出的域名混入。"
-        , "- 过滤规则的域名提取统计单独保留，不计入 AdGuard Home DNS 拦截域名交集。"
+        "- 跨来源重复拦截域名：仅统计解析为 block 的域名，和 AdGuard Home DNS 输出口径一致；不把浏览器过滤规则中提取出的域名混入。",
+        "- 父级去重后独有候选：仅排除其他来源中相同域名或父域名已覆盖的条目；当前为来源贡献初筛，尚未扣除全局 allow/白名单例外，也不代表这些域名都应拦截。",
+        "- 过滤规则的域名提取统计单独保留，不计入 AdGuard Home DNS 拦截域名交集。"
     ])
     return "\n".join(out) + "\n"
 
@@ -256,6 +258,19 @@ def main():
             pairwise.append((left, right, count))
     pairwise.sort(key=lambda item: item[2], reverse=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    unique_dir = OUT_DIR / "effective-unique"
+    unique_dir.mkdir(parents=True, exist_ok=True)
+    for row in results:
+        name = row["name"]
+        own = domain_sets.get(name, set())
+        other_domains = set().union(*(domains for other, domains in domain_sets.items() if other != name))
+        unique_domains = []
+        for domain in own:
+            labels = domain.split(".")
+            if not any(".".join(labels[index:]) in other_domains for index in range(len(labels))):
+                unique_domains.append(domain)
+        safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("_.")
+        (unique_dir / f"{safe_name}.txt").write_text("\\n".join(sorted(unique_domains)) + ("\\n" if unique_domains else ""), encoding="utf-8")
     (OUT_DIR / "source-audit.json").write_text(
         json.dumps({"sources": results, "cross_source_duplicate_domains": overlap,
                     "unique_domains_all_sources": len(memberships),
