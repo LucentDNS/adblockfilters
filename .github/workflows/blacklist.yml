@@ -10,6 +10,8 @@ concurrency:
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
   push:
     branches:
       - main
