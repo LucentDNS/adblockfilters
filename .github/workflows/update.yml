@@ -2,6 +2,11 @@ name: Update Filters
 
 permissions:
   contents: write
+
+# 避免连续提交触发多个发布任务并发覆盖 Releases 和 dist。
+concurrency:
+  group: update-filters-${{ github.ref }}
+  cancel-in-progress: true
 on:
   workflow_dispatch:
   push:
