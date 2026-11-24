@@ -12,6 +12,7 @@ class Rule(object):
         self.url = url
         self.latest = latest
         self.update = update
+        self.download_ok = False
 
 # redme文件操作
 class ReadMe(object):
