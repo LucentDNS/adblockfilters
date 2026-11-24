@@ -275,8 +275,8 @@ def main():
     except Exception as exc:
         print(f"Warning: public suffix list update failed: {exc}")
 
-    # 本审计只回答 DNS 上游是否值得进入 DNS 规则：仅审计 host/dns/dnsfilter。
-    # 浏览器 filter 来源不应被解析成 DNS 域名，也不应让大量路径型规则污染 DNS 来源报告。
+    # DNS/Hosts 来源作为正式候选进行贡献审计；浏览器 filter 单独审计其可提取域名，
+    # 仅用于解释原作者旧版 DNS 输出差异，绝不将这些域名计入本项目 DNS 正式来源。
     all_rules = ReadMe(str(ROOT / "README.md")).getRules()
     production_rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
     browser_rules = [rule for rule in all_rules if rule.type == "filter"]
