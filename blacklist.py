@@ -37,6 +37,7 @@ class DomainDatabase(object):
             return self.__conn.execute(sql)
         except (sqlite3.OperationalError, sqlite3.IntegrityError) as e:
             logger.exception(e)
+            raise
 
     def __checkTableExists(self, tableName:str) -> bool: # 检查TABLE是否存在
         try:
@@ -52,6 +53,7 @@ class DomainDatabase(object):
             return False
 
     def __updateData(self, sql:str, dataListTuple:list=None): # 批量更新
+        c = None
         try:
             c = self.__conn.cursor() #获取游标
             if dataListTuple:
@@ -59,10 +61,13 @@ class DomainDatabase(object):
             else:
                 c.execute(sql)
             self.__conn.commit()
-        except  (sqlite3.OperationalError, sqlite3.IntegrityError) as e:
+        except (sqlite3.OperationalError, sqlite3.IntegrityError) as e:
+            self.__conn.rollback()
             logger.exception(e)
+            raise
         finally:
-            c.close()
+            if c is not None:
+                c.close()
 
     def __init_db(self):
         isExists = self.__checkTableExists(self.__table_domain)
@@ -110,8 +115,10 @@ class DomainDatabase(object):
             # 提交事务
             self.__conn.commit()
         except Exception as e:
-            # 出现异常则回滚
+            # 出现异常则回滚并中止构建，不能把未完成的数据库更新当作成功。
             self.__conn.rollback()
+            logger.exception(e)
+            raise
 
         return total_deleted
 
@@ -288,7 +295,7 @@ class BlackList(object):
             return domainDict
         except Exception as e:
             logger.error("%s"%(e))
-            return domainDict
+            raise
         
     def __getDomainSet_CN(self) -> Tuple[Set]:
         logger.info("resolve China domain list...")
