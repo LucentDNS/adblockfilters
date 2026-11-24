@@ -125,7 +125,7 @@ class ReadMe(object):
             f.write("以下为本项目实际使用的上游源；本表仅用于来源追溯，不是客户端订阅地址。\n\n")
             f.write("| 来源 | 类型 | 上游地址 | 更新信息 |\n|---|---|---|---|\n")
             for rule in self.ruleList:
-                f.write(f"| {rule.name} | {rule.type} | {rule.url} | {rule.latest} |\n")
+                f.write(f"| {rule.name} | {rule.type} | [upstream]({rule.url}) | {rule.latest} |\n")
             f.write("\n")
             f.write("## 维护与反馈\n\n")
             f.write("- 规则产物由 GitHub Actions 自动构建，发布在 dist 分支及 Releases。\n")
