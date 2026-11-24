@@ -322,3 +322,8 @@ heads-fa.spotify.com
 
 # AdGuard HTTPS filtering self-test endpoint; keep it available for accurate diagnostics.
 https-filtering-check.adtidy.org
+# Preserve exact allow exceptions from the original published DNS baseline
+pgpartner.com
+puma.112.2o7.net
+s.optnx.com
+vitacost.122.2o7.net
