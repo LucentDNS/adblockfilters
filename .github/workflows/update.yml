@@ -118,7 +118,7 @@ jobs:
           }
           Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           Path(".cache/report/optimized-only.txt").write_text(
-              "\n".join(optimized_only) + ("\n" if optimized_only else "! No NobleDNS-only rules in this comparison.\n"),
+              "\n".join(optimized_only) + ("\n" if optimized_only else "! No LucentDNS-only rules in this comparison.\n"),
               encoding="utf-8")
           Path(".cache/report/baseline-only.txt").write_text(
               "\n".join(baseline_only) + ("\n" if baseline_only else "! No upstream-only rules in this comparison.\n"),
@@ -231,7 +231,7 @@ jobs:
           retention-days: 14
 
       - name: Upload rules to release
-                uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: rule
           files: .cache/out/*
@@ -239,7 +239,7 @@ jobs:
           fail_on_unmatched_files: false
 
       - name: Upload sources to release
-                uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: source
           files: .cache/source/*
@@ -247,7 +247,7 @@ jobs:
           fail_on_unmatched_files: false
 
       - name: Remove obsolete source release assets
-                env:
+        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # These files belonged to removed source configurations or audit-only candidates.
@@ -258,7 +258,7 @@ jobs:
           done
 
       - name: Publish source audit and baseline comparison reports
-                uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: audit
           files: |
@@ -281,7 +281,7 @@ jobs:
           fail_on_unmatched_files: false
 
       - name: Upload domain backup
-                uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: domain
           files: .cache/domain/domain.txt
@@ -294,7 +294,7 @@ jobs:
           commit_message: ${{ steps.update.outputs.message }}
 
       - name: Publish to dist branch
-                # 必须放在 Commit Changes 之后：孤儿分支切换会清空工作区（含刚生成的 README），
+        # 必须放在 Commit Changes 之后：孤儿分支切换会清空工作区（含刚生成的 README），
         # 若放前面，README 更新会丢失。dist 为孤儿分支，每轮 force-push 单提交，不产生历史。
         run: |
           cp -r .cache/out /tmp/dist-out
