@@ -12,6 +12,9 @@ from loguru import logger
 
 from readme import Rule
 
+DOWNLOAD_TIMEOUT = httpx.Timeout(90.0, connect=30.0)
+METADATA_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+
 # 上游规则更新
 class Updater(object):
     def __init__(self, ruleList:List[Rule]):
@@ -90,7 +93,7 @@ class Updater(object):
             if sem is not None:
                 await sem.acquire()
             try:
-                async with httpx.AsyncClient() as client:
+                async with httpx.AsyncClient(timeout=METADATA_TIMEOUT, follow_redirects=True) as client:
                     resp = await client.get(api, headers=headers)
                     if resp.status_code == 200:
                         data = resp.json()
@@ -112,7 +115,7 @@ class Updater(object):
     async def __QueryAtomDate(self, owner: str, repo: str, branch: str, path: str) -> str:
         url = "https://github.com/%s/%s/commits/%s/%s.atom" % (owner, repo, branch, path)
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=METADATA_TIMEOUT, follow_redirects=True) as client:
                 resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
                 if resp.status_code == 200:
                     m = re.search(r"<updated>([^<]+)</updated>", resp.text)
@@ -134,7 +137,7 @@ class Updater(object):
             if os.path.exists(fileName_download):
                 os.remove(fileName_download)
 
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, follow_redirects=True) as client:
                 response = await client.get(rule.url)
                 response.raise_for_status()
                 contentType = response.headers.get("Content-Type") or ""
