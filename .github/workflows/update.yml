@@ -8,10 +8,9 @@ concurrency:
   group: update-filters-${{ github.ref }}
   cancel-in-progress: true
 on:
+  # Production builds are started only after the DNS-validation workflow
+  # has published and verified its source snapshot and then dispatches this workflow.
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 env:
   TZ: Asia/Shanghai
