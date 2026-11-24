@@ -5,13 +5,14 @@ from typing import List
 from loguru import logger
 
 class Rule(object):
-    def __init__(self, name:str, type:str, url:str, latest:str, update:bool=False):
+    def __init__(self, name:str, type:str, url:str, latest:str, update:bool=False, purpose:str=""):
         self.name = name
         self.filename = self.name.replace(' ', '_') + '.txt'
         self.type = type
         self.url = url
         self.latest = latest
         self.update = update
+        self.purpose = purpose
 
 # redme文件操作
 class ReadMe(object):
@@ -38,7 +39,7 @@ class ReadMe(object):
                         url = rule[2][rule[2].find('(')+1:rule[2].find(')')]
                         matchObj1 = re.match(r'(http|https)://[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?', url)
                         if matchObj1:
-                            self.ruleList.append(Rule(rule[0], rule[1], url, rule[-1]))
+                            self.ruleList.append(Rule(rule[0], rule[1], url, rule[-1], purpose=rule[-2] if len(rule) > 4 else ""))
         return self.ruleList
 
     def getRulesNames(self) -> str:
@@ -151,12 +152,12 @@ class ReadMe(object):
             tmp = "| 规则 | 类型 | 原始链接 |"
             for i in range(1, len(self.proxyList)):
                 tmp += " 加速链接%d |" % (i)
-            tmp += " 更新日期 |\n"
+            tmp += " 用途 | 更新日期 |\n"
             f.write(tmp)
-            tmp = "|" + ":-|" * ( 2 + len(self.proxyList) + 1) + "\n"
+            tmp = "|" + ":-|" * ( 2 + len(self.proxyList) + 2) + "\n"
             f.write(tmp)
             for rule in self.ruleList:
-                f.write("| %s | %s |%s %s |\n" % (rule.name, rule.type, self.__subscribeLink(rule.filename, "source", rule.url), rule.latest))
+                f.write("| %s | %s |%s %s | %s |\n" % (rule.name, rule.type, self.__subscribeLink(rule.filename, "source", rule.url), rule.purpose, rule.latest))
             f.write("\n")
 
             f.write("## Star History\n")
