@@ -81,6 +81,47 @@ StevenBlack 的基础 hosts 列表面向广告、恶意软件、跟踪等用途�
 4. 按用途分离 DNS 输出与浏览器内容过滤输出，避免把浏览器规则误算成 DNS 拦截能力。
 5. 在差异报告和回归检查通过后再调整来源；任何删除都保留来源、理由和前后产物对比。
 
+
+## 2026-11-24 逐源 DNS 贡献审计与 AWAvenue 变体选择
+
+本轮使用仓库当前 Resolver 对 6 个 DNS/Hosts 来源的同一轮下载快照逐源解析；6 个来源全部下载成功。统计只针对可解析的 block 域名，不把浏览器过滤语法提取的域名混入 DNS 覆盖。
+
+| 来源 | 可解析拦截域名 | 父级压缩后独有覆盖候选 | 决策 |
+|---|---:|---:|---|
+| AdGuard DNS filter | 193,466 | 8,419 | 保留。官方 DNS 专用聚合源，仍有独立覆盖 |
+| AdRules DNS List | 214,254 | 19,364 | 保留。与 AdGuard DNS 高度重合，但仍有明显独立覆盖 |
+| AWAvenue Ads Rule (Only.Ads) | 651 | 7 | 保留纯广告变体；其中 a0.app.xiaomi.com 已在白名单，pay.sboot.cn 本轮新增白名单，剩余约 5 个独有候选 |
+| HaGeZi DNS-Blocklists PRO mini | 98,219 | 50,764 | 保留。独立覆盖贡献最大，使用 Pro mini 单一层级 |
+| OISD Basic（当前 URL 实际返回 oisd small） | 62,659 | 2,242 | 保留观察。边际覆盖较小，但该变体以广告为主，且持续维护 |
+| StevenBlack hosts | 81,675 | 20,753 | 保留基础 hosts；另有 21,882 个子域条目被本来源自身父域名覆盖，可由最终父级压缩消除 |
+
+全来源合并后的唯一拦截域名为 357,761 个；跨来源精确重复域名为 204,526 个。AdGuard DNS filter 与 AdRules DNS List 两两重合 179,653 个，但两者仍分别贡献 8,419 和 19,364 个父级压缩后独有候选，因此不能只因重合度高就删除其中之一。
+
+### AWAvenue 变体调整
+
+AWAvenue 自 1.7.6 起将规则拆分为广告、隐私、不受欢迎三类，并提供 Only.Ads、No.Privacy、No.Unwelcome 变体。为避免把隐私上报、强制更新或 PCDN 等非广告功能规则一并当作广告拦截，本项目改用作者的 AdGuard Only.Ads 文件：
+
+`https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt`
+
+与默认混合版相比，当前解析器识别的拦截域名由 978 降至 651，减少 327 个。该变体仍有 4 条带通配符的规则无法作为普通 DNS 域名规则解析；这些条目不会被猜测性转换或混入 DNS 输出。
+
+### 白名单复核
+
+- `a0.app.xiaomi.com`：已存在于项目白名单，不会进入最终拦截。
+- `pay.sboot.cn`：新增白名单，避免影响长虹电视支付功能。
+- AWAvenue Only.Ads 不再包含此前混合版中的 `tnc3-aliec1.toutiaoapi.com`、`api.statsig.com`、`mobile.events.data.microsoft.com` 等候选，因此本轮不需要为这些域名新增例外。
+
+### 重复与未识别条目处理
+
+- 完全相同的域名在构建器中按集合合并，最终输出只保留一份；保留上游原始来源和审计数据以便追溯，不通过破坏原始来源文件来“去重”。
+- 父域名已覆盖的子域名按最终父级压缩逻辑消除。StevenBlack 本来源内有 21,882 个子域条目可由其自身父域名覆盖。
+- AdRules 的 4 条未识别候选为 `localhost.localdomain` 及 3 条无公共后缀的 `tnc3-*.zijieapi` 名称；AWAvenue 的 4 条未识别候选为通配符模式；StevenBlack 的 15 条未识别候选为 localhost、loopback、broadcast 等本机/保留地址记录。均不凭猜测生成 DNS 域名规则。
+- 上述独有覆盖统计尚未扣除项目黑名单、白名单和上游 allow 例外，属于来源贡献上限估计，不代表每一条都已经完成误杀验证。
+
+### 本轮来源决策
+
+本轮没有新增或删除来源。保留 6 个来源，但将 AWAvenue 从默认混合版调整为 Only.Ads 变体；为已知功能域名补充白名单。当前数据不支持仅凭重复比例删除 AdGuard DNS、AdRules、HaGeZi、OISD 或 StevenBlack 中的任何一个。OISD 与 AWAvenue 的边际贡献较小，列入后续反馈观察，不盲目扩展来源数量。
+
 ## 参考依据
 
 - AdGuard DNS filter 组成说明：https://github.com/AdguardTeam/AdGuardSDNSFilter

@@ -307,3 +307,6 @@ dig.bdurl.net
 360.cn
 www.360.cn
 bce.baidu.com
+
+# AWAvenue Ads Rule upstream notes: Changhong Smart TV payment endpoint; keep payment functionality available.
+pay.sboot.cn
