@@ -254,3 +254,8 @@ Evidence: https://gist.github.com/abiudrn/e5c7de98fbf68958753137200e164db0 and h
 
 同一质量门禁还限制最终 adblockdns.txt 的有效规则数不超过 500,000 条，超出即阻止构建，避免为了扩大覆盖而突破 DNS 服务端资源预算。
 
+
+
+## 原作者基线 allow 例外的精确保留
+
+原作者基线中有 4 条 allow 例外仍会被当前独立 DNS 黑名单覆盖：`pgpartner.com`、`puma.112.2o7.net`、`s.optnx.com`、`vitacost.122.2o7.net`。为延续原作者对兼容性的显式例外，本项目将这 4 条按原始精确主机名加入 `rules/white.txt`；不把 `optnx.com` 或 `2o7.net` 整个父域名放入白名单，避免扩大放行范围。
