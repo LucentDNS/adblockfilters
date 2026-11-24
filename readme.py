@@ -108,4 +108,4 @@ class ReadMe(object):
             f.write("- 规则产物由 GitHub Actions 自动构建，发布在 dist 分支及 Releases。\n")
             f.write("- 构建审计、来源贡献及与上游基线的差异报告见 audit Release。规则数量差异不等同于质量优劣证明。\n")
             f.write("- 如遇误拦截，请提交反馈并提供被影响的域名、客户端及复现情况；不要直接扩大白名单范围。\n\n")
-            f.write("## License\n\nGPL-3.0. 上游规则遵循各自原始许可证及使用条款。\n"
+            f.write("## License\n\nGPL-3.0. 上游规则遵循各自原始许可证及使用条款。\n")
