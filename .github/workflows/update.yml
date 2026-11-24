@@ -91,6 +91,35 @@ jobs:
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
 
+      - name: Compare with upstream published DNS baseline
+        run: |
+          mkdir -p .cache/baseline .cache/report
+          curl -fsSL --retry 3 --retry-all-errors \\
+            -o .cache/baseline/upstream-adblockdns.txt \\
+            https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          def read(path):
+              return {line.strip() for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines() if line.strip() and not line.lstrip().startswith("!")}
+          current = read(".cache/out/adblockdns.txt")
+          baseline = read(".cache/baseline/upstream-adblockdns.txt")
+          report = {
+              "baseline": "217heidai/adblockfilters release rule/adblockdns.txt",
+              "baseline_rules": len(baseline),
+              "optimized_rules": len(current),
+              "shared_rules": len(current & baseline),
+              "optimized_only": len(current - baseline),
+              "baseline_only": len(baseline - current),
+              "optimized_only_sample": sorted(current - baseline)[:100],
+              "baseline_only_sample": sorted(baseline - current)[:100],
+          }
+          Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          lines = ["# DNS output comparison", "", f"- Baseline rules: {len(baseline)}", f"- Optimized rules: {len(current)}", f"- Shared: {len(current & baseline)}", f"- Optimized-only: {len(current - baseline)}", f"- Baseline-only: {len(baseline - current)}", ""]
+          Path(".cache/report/comparison.md").write_text("\\n".join(lines), encoding="utf-8")
+          print("\\n".join(lines))
+          PY
+
       - name: Check whitelist regression
         run: |
           # 白名单里的域名不应出现在产物中，否则说明生成逻辑改坏了
@@ -150,6 +179,15 @@ jobs:
           cp domain-list-community/dlc.dat .cache/out/adblockv2raylite.dat
           rm -rf domain-list-community
       
+      - name: Upload build and comparison artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lucentdns-optimized-build
+          path: |
+            .cache/out/*
+            .cache/report/*
+          retention-days: 14
+
       - name: Upload rules to release
         uses: softprops/action-gh-release@v3
         with:
