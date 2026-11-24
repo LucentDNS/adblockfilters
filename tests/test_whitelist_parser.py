@@ -6,14 +6,24 @@ def parse_whitelist(entries):
     return instance._Filter__getWhiteDict(set(entries))
 
 
-def test_adguard_domain_exception_is_normalized_to_domain():
-    result = parse_whitelist({"||nimiq.com^$third-party"})
+def test_plain_domain_exception_is_normalized_to_domain():
+    result = parse_whitelist({"nimiq.com"})
     assert result == {"nimiq.com": {""}}
 
 
-def test_subdomain_exception_is_normalized_to_subdomain():
-    result = parse_whitelist({"||pool.nimiq.watch^$third-party"})
+def test_adguard_domain_exception_without_modifiers_is_normalized():
+    result = parse_whitelist({"||nimiq.com^"})
+    assert result == {"nimiq.com": {""}}
+
+
+def test_subdomain_exception_without_modifiers_is_normalized():
+    result = parse_whitelist({"||pool.nimiq.watch^"})
     assert result == {"nimiq.watch": {"pool"}}
+
+
+def test_modifier_bearing_browser_exception_is_not_a_dns_whitelist():
+    result = parse_whitelist({"||nimiq.com^$third-party"})
+    assert result == {}
 
 
 def test_browser_path_and_wildcard_patterns_are_not_dns_whitelist_domains():
