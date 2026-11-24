@@ -316,3 +316,6 @@ sobot.com
 
 # Douyu web-game portal; preserve wan.douyu.com game access.
 wan.douyu.com
+
+# Spotify audio-ad edge; blocking may cause playback gaps or disconnects.
+heads-fa.spotify.com
