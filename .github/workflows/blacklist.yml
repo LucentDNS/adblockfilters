@@ -21,6 +21,7 @@ on:
       - resolver.py
       - updater.py
       - scripts/generate_domain_input.py
+      - scripts/validated_sources.py
       - scripts/verify_critical_domains.py
       - tests/test_critical_domains.py
       - rules/myblock.txt
@@ -143,6 +144,8 @@ jobs:
           test -s .cache/domain/domain.txt || { echo "LucentDNS domain input is missing or empty"; exit 1; }
           cp .cache/domain/domain.txt domain.txt
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
+          python -m py_compile scripts/validated_sources.py
+          python scripts/validated_sources.py package
 
       - name: Run DNS validation and generate independent blacklist
         id: generate
@@ -189,6 +192,7 @@ jobs:
             domain.db
             domain.txt
             domain-input-provenance.json
+            validated-dns-sources.tar.gz
             black.txt
             china.txt
             nobledns-bootstrap-complete.txt
@@ -201,7 +205,7 @@ jobs:
         run: |
           set -euo pipefail
           assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
-          for name in domain.db domain.txt domain-input-provenance.json black.txt china.txt nobledns-bootstrap-complete.txt; do
+          for name in domain.db domain.txt domain-input-provenance.json validated-dns-sources.tar.gz black.txt china.txt nobledns-bootstrap-complete.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
               echo "::error::dev-domain-noble release is missing $name"
               exit 1
