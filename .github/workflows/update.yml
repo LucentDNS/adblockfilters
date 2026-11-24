@@ -23,26 +23,26 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       
       - name: Checkout domain-list-community
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: v2fly/domain-list-community
           path: domain-list-community
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: '3.14'
       
       - name: Setup Go
-        uses: actions/setup-go@v7
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
         with:
           go-version-file: domain-list-community/go.mod
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/update.yml') }}
@@ -229,7 +229,7 @@ jobs:
           rm -f .cache/out/adblockv2ray.txt .cache/out/adblockv2raylite.txt
       
       - name: Upload build and comparison artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: lucentdns-optimized-build
           path: |
@@ -240,7 +240,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload rules to release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: rule
           files: .cache/out/*
@@ -248,7 +248,7 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: Upload sources to release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: source
           files: .cache/source/*
@@ -267,7 +267,7 @@ jobs:
           done
 
       - name: Publish source audit and baseline comparison reports
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: audit
           files: |
@@ -290,7 +290,7 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: Upload domain backup
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: domain
           files: .cache/domain/domain.txt
@@ -298,7 +298,7 @@ jobs:
           fail_on_unmatched_files: true
 
       - name: Commit Changes
-        uses: stefanzweifel/git-auto-commit-action@v7
+        uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7
         with:
           commit_message: ${{ steps.update.outputs.message }}
 
