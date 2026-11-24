@@ -27,28 +27,42 @@ class Filter(object):
 
         thread_pool = ThreadPoolExecutor(max_workers=os.cpu_count() if os.cpu_count() > 4 else 4)
         resolver = Resolver(self.sourcePath)
-        # 线程池解析
+        # 按来源类型分别解析。DNS/Hosts 来源进入 DNS 域名集合；
+        # 浏览器 filter 来源只进入补充过滤规则，禁止把启发式提取的域名
+        # 混入 DNS 输出，避免把页面过滤语法误当成可靠的 DNS 拦截依据。
         taskList = []
         for rule in self.ruleList:
             logger.info("resolve %s..."%(rule.name))
             if rule.type == "host":
-                taskList.append(thread_pool.submit(resolver.resolveHost, rule))
+                taskList.append(("domain", thread_pool.submit(resolver.resolveHost, rule)))
             if rule.type == "dns":
-                taskList.append(thread_pool.submit(resolver.resolveDNS, rule))
+                taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
             if rule.type == "filter":
-                taskList.append(thread_pool.submit(resolver.resolveFilter, rule))
-        # 添加收集的补充规则
+                taskList.append(("filter", thread_pool.submit(resolver.resolveFilter, rule)))
+        # 添加用户维护的补充 DNS 规则
         rule = Rule("myblock", "dns", "", "")
-        taskList.append(thread_pool.submit(resolver.resolveDNS, rule))
+        taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
         
         # 获取解析结果
         blockDict:Dict[str,Set[str]] = dict()
         unblockDict:Dict[str,Set[str]] = dict()
         filterDict:Dict[str,str] = dict()
-        for future in as_completed(taskList):
+        for source_type, future in taskList:
             __blockDict,__unblockDict,__filterDict = future.result()
-            blockDict = dictadd(blockDict, __blockDict)
-            unblockDict = dictadd(unblockDict, __unblockDict)
+            if source_type == "domain":
+                blockDict = dictadd(blockDict, __blockDict)
+                unblockDict = dictadd(unblockDict, __unblockDict)
+            else:
+                # filter 解析器识别出的纯域名规则也保留为标准 AdGuard 规则，
+                # 供浏览器过滤订阅使用，但不进入 DNS 域名订阅。
+                for suffix, subdomains in __blockDict.items():
+                    for subdomain in subdomains:
+                        domain = (subdomain + "." + suffix) if suffix else subdomain
+                        filterDict["||%s^" % domain] = domain
+                for suffix, subdomains in __unblockDict.items():
+                    for subdomain in subdomains:
+                        domain = (subdomain + "." + suffix) if suffix else subdomain
+                        filterDict["@@||%s^" % domain] = domain
             for filter,domain in __filterDict.items():
                 filterDict[filter] = domain
 
