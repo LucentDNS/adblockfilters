@@ -505,8 +505,17 @@ def main():
         if summary:
             with open(summary, "a", encoding="utf-8") as stream:
                 stream.write(report)
-        if not any(row["download_ok"] for row in results):
-            raise SystemExit("All upstream source downloads failed; audit cannot proceed.")
+        required_names = production_names | browser_names
+        failed_required = [row["name"] for row in results
+                           if row["name"] in required_names and not row["download_ok"]]
+        critical_candidates = {"OISD Basic (upstream snapshot; candidate only)"}
+        failed_candidates = [name for name in critical_candidates
+                             if not downloads.get(name, {}).get("ok")]
+        if failed_required or failed_candidates:
+            raise SystemExit(
+                "Audit incomplete; required source failures="
+                + ", ".join(failed_required + failed_candidates)
+            )
         return
 
     baseline_blocks = set()
@@ -638,6 +647,13 @@ def main():
     # snapshot separately from the current NobleDNS OISD Small source.
     baseline_candidate_analysis = {}
     for candidate in sorted(candidate_names):
+        candidate_row = next(row for row in results if row["name"] == candidate)
+        if not candidate_row["download_ok"]:
+            baseline_candidate_analysis[candidate] = {
+                "available": False,
+                "reason": candidate_row.get("download_error") or "candidate source download failed",
+            }
+            continue
         candidate_domains = domain_sets.get(candidate, set())
         exact = baseline_blocks & candidate_domains
         parent_covered = {
@@ -646,6 +662,7 @@ def main():
                    for index in range(1, len(domain.split("."))))
         }
         baseline_candidate_analysis[candidate] = {
+            "available": True,
             "candidate_unique_domains": len(candidate_domains),
             "baseline_only_exact_overlap": len(exact),
             "baseline_only_parent_covered": len(parent_covered),
@@ -685,6 +702,9 @@ def main():
     report += "- OISD Basic 仅作为审计候选，不进入 NobleDNS 正式来源或构建。\n"
     report += "| 候选来源 | 可解析域名 | 基线独有精确重合 | 父域名覆盖 | 合计覆盖 | 未覆盖 |\n|---|---:|---:|---:|---:|---:|\n"
     for candidate, stats in sorted(baseline_candidate_analysis.items()):
+        if not stats.get("available"):
+            report += f"| {candidate} | 不可用 | 不可用 | 不可用 | 不可用 | 不可用 |\n"
+            continue
         report += (
             f"| {candidate} | {stats['candidate_unique_domains']} | "
             f"{stats['baseline_only_exact_overlap']} | "
@@ -736,8 +756,17 @@ def main():
         with open(summary, "a", encoding="utf-8") as stream:
             stream.write(report)
 
-    if not any(row["download_ok"] for row in results):
-        raise SystemExit("All upstream source downloads failed; audit cannot proceed.")
+    required_names = production_names | browser_names
+    failed_required = [row["name"] for row in results
+                       if row["name"] in required_names and not row["download_ok"]]
+    critical_candidates = {"OISD Basic (upstream snapshot; candidate only)"}
+    failed_candidates = [name for name in critical_candidates
+                         if not downloads.get(name, {}).get("ok")]
+    if failed_required or failed_candidates:
+        raise SystemExit(
+            "Audit incomplete; required source failures="
+            + ", ".join(failed_required + failed_candidates)
+        )
 
 
 if __name__ == "__main__":
