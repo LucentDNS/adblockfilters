@@ -92,7 +92,7 @@ jobs:
           if [[ "${GITHUB_REF}" == "refs/heads/lucentdns-dev" ]]; then
             # Development builds must consume the independently DNS-validated
             # NobleDNS data set. Never silently fall back to the upstream blacklist.
-            for name in black.txt china.txt; do
+            for name in black.txt china.txt domain.txt domain-input-provenance.json; do
               curl -fsSL --retry 3 --retry-all-errors \
                 -o ".cache/domain/$name" \
                 "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/$name"
