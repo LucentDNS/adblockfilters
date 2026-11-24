@@ -149,7 +149,7 @@ def audit_one(rule, resolver, download):
     result["unique_allow_domains"] = len(allows)
     result["unique_filter_rules"] = len(filters)
     result["unique_extracted_domains"] = len(extracted)
-    return result, blocks | extracted
+    return result, blocks
 
 
 def render_report(results, overlap, total_rules, unique_total, pairwise):
@@ -167,7 +167,7 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         f"- 来源总数：{total_rules}",
         f"- 下载成功：{sum(1 for r in results if r['download_ok'])}",
         f"- 下载失败：{sum(1 for r in results if not r['download_ok'])}",
-        f"- 跨来源重复域名：{overlap}",
+        f"- 跨来源重复拦截域名：{overlap}",
         f"- 所有来源合并后的唯一域名：{unique_total}",
         "- 解析口径：调用仓库当前 Resolver 的原始解析方法；未识别候选不等同于规则无效，需结合规则语法复核。",
         "",
@@ -193,7 +193,8 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
         "- 解析接受：当前解析器识别为拦截、放行或过滤规则的行。",
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
         "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
-        "- 跨来源重复域名：同一规范化域名出现在两个或更多来源中。"
+        "- 跨来源重复拦截域名：仅统计解析为 block 的域名，和 AdGuard Home DNS 输出口径一致；不把浏览器过滤规则中提取出的域名混入。"
+        , "- 过滤规则的域名提取统计单独保留，不计入 AdGuard Home DNS 拦截域名交集。"
     ])
     return "\n".join(out) + "\n"
 
