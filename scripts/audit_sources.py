@@ -16,7 +16,7 @@ from tld.utils import update_tld_names
 
 from readme import ReadMe
 from resolver import Resolver
-SOURCE_DIR = ROOT / ".cache" / "audit-source"
+SOURCE_DIR = ROOT / ".cache" / "source"
 OUT_DIR = ROOT / ".cache" / "audit"
 TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 
@@ -48,6 +48,18 @@ async def download_all(rules):
         async def one(rule):
             async with sem:
                 try:
+                    path = SOURCE_DIR / rule.filename
+                    # Reuse the exact snapshots already downloaded by the normal build.
+                    # This avoids a second network download and keeps audit/build inputs identical.
+                    if path.exists() and path.stat().st_size:
+                        content = path.read_text(encoding="utf-8", errors="replace")
+                        if not content.strip() or content.lstrip().lower().startswith(("<!doctype html", "<html")):
+                            raise ValueError("cached source is empty or HTML")
+                        results[rule.name] = {
+                            "ok": True, "path": str(path), "bytes": path.stat().st_size,
+                            "status": "reused-build-snapshot", "url": rule.url
+                        }
+                        return
                     response = await client.get(rule.url)
                     response.raise_for_status()
                     content = response.text
@@ -55,7 +67,6 @@ async def download_all(rules):
                         raise ValueError("empty response")
                     if content.lstrip().lower().startswith(("<!doctype html", "<html")):
                         raise ValueError("HTML response instead of a filter list")
-                    path = SOURCE_DIR / rule.filename
                     path.write_text(content, encoding="utf-8", errors="replace")
                     results[rule.name] = {
                         "ok": True, "path": str(path), "bytes": len(response.content),
