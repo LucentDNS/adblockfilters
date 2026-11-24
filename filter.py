@@ -121,10 +121,12 @@ class Filter(object):
                     domain = domain[4:]
                 elif domain.startswith("||"):
                     domain = domain[2:]
+                # Modifier-bearing filter exceptions (e.g. $third-party) are
+                # exact browser-rule exceptions, not domain-wide DNS whitelists.
+                if "$" in domain:
+                    continue
                 if "^" in domain:
                     domain = domain.split("^", 1)[0]
-                if "$" in domain:
-                    domain = domain.split("$", 1)[0]
                 if (not domain or domain.endswith(".") or
                         any(char in domain for char in "*/#|?^$")):
                     continue
@@ -227,8 +229,18 @@ class Filter(object):
             
         return domanList,domanSet_all
 
-    def __filterSort(self, filterDict:Dict[str,str], blockSet:Set[str], unblockSet:Set[str], blackSet:Set[str], whiteSet:Set[str]) -> Tuple[list[str], Set[str]]:
-        filterList = list(set(filterDict) - whiteSet) # 剔除白名单
+    def __filterSort(self, filterDict:Dict[str,str], blockSet:Set[str], unblockSet:Set[str], blackSet:Set[str], whiteSet:Set[str], whiteDict:Dict[str,Set[str]]) -> Tuple[list[str], Set[str]]:
+        filterList = list(set(filterDict) - whiteSet) # 剔除精确浏览器规则例外
+        whiteDomains = {
+            (f"{subdomain}.{fld}" if subdomain else fld)
+            for fld, subdomains in whiteDict.items()
+            for subdomain in subdomains
+        }
+
+        def is_domain_whitelisted(domain):
+            labels = domain.split(".")
+            return any(".".join(labels[index:]) in whiteDomains
+                       for index in range(len(labels)))
         filterList.sort() # 排序
         # 与 adblockdns 去重
         filterList_var = []
@@ -241,6 +253,8 @@ class Filter(object):
             
             domain = filterDict[filter]
             if domain:
+                if is_domain_whitelisted(domain): # 白名单域名及其子域名不进入浏览器拦截规则
+                    continue
                 if domain in blackSet: # 剔除黑名单
                     continue
                 try:
@@ -295,7 +309,9 @@ class Filter(object):
         whiteExceptions = self.__getWhiteExceptions(whiteDict, blockList)
         unblockList = sorted(set(unblockList) | set(whiteExceptions))
         unblockSet_unblock |= set(whiteExceptions)
-        filterList_var, filterList, domainSet_filter = self.__filterSort(filterDict, set(blockList), set(unblockList), blackSet, whiteSet)
+        filterList_var, filterList, domainSet_filter = self.__filterSort(
+            filterDict, set(blockList), set(unblockList), blackSet, whiteSet, whiteDict
+        )
 
         # 生成合并规则 AdGuard, AdGuardHome, DNSMasq, InviZible, SmartDNS等
         generaterList:List[APPBase] = [
