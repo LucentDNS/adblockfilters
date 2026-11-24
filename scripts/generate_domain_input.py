@@ -75,6 +75,7 @@ def main():
 
     output = DOMAIN_DIR / "domain.txt"
     output.write_text("\n".join(sorted(all_domains)) + "\n", encoding="utf-8")
+    domain_file_sha256 = hashlib.sha256(output.read_bytes()).hexdigest()
 
     provenance = {
         "generator": "NobleDNS selected DNS/Hosts sources",
@@ -92,6 +93,7 @@ def main():
         "myblock_sha256": hashlib.sha256(MYBLOCK_SOURCE.read_bytes()).hexdigest(),
         "myblock_parsed_block_domains": source_counts["myblock"],
         "unique_validation_domains": len(all_domains),
+        "domain_file_sha256": domain_file_sha256,
     }
     (DOMAIN_DIR / "domain-input-provenance.json").write_text(
         json.dumps(provenance, ensure_ascii=False, indent=2) + "\n",
