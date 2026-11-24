@@ -164,9 +164,9 @@ def audit_one(rule, resolver, download):
     return result, blocks
 
 
-def render_report(results, overlap, total_rules, unique_total, pairwise):
+def render_report(results, production_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps):
     cols = [
-        ("name", "来源"), ("type", "类型"), ("total_lines", "总行数"),
+        ("name", "来源"), ("role", "身份"), ("type", "类型"), ("total_lines", "总行数"),
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
         ("unparsed_candidate_lines", "未识别候选"),
         ("unique_block_domains", "唯一拦截域名"),
@@ -181,15 +181,17 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
     ]
     out = [
         "# 上游规则源基线审计", "",
-        f"- 来源总数：{total_rules}",
+        f"- 正式集成来源数：{len(production_names)}",
+        f"- 额外候选来源数：{len(candidate_names)}（仅用于评估，不参与正式构建）",
         f"- 下载成功：{sum(1 for r in results if r['download_ok'])}",
         f"- 下载失败：{sum(1 for r in results if not r['download_ok'])}",
-        f"- 跨来源重复拦截域名：{overlap}",
-        f"- 所有来源合并后的唯一域名：{unique_total}",
+        f"- 正式来源跨来源重复拦截域名：{overlap}",
+        f"- 正式来源合并后的唯一域名：{unique_total}",
+        "- 候选来源不计入正式来源的交集、独有贡献或最终规则。",
         "- 解析口径：调用仓库当前 Resolver 的原始解析方法；未识别候选不等同于规则无效，需结合规则语法复核。",
         "",
         "| " + " | ".join(label for _, label in cols) + " |",
-        "|" + "|".join("---:" if key not in ("name", "type") else "---" for key, _ in cols) + "|"
+        "|" + "|".join("---:" if key not in ("name", "role", "type") else "---" for key, _ in cols) + "|"
     ]
     for row in results:
         out.append("| " + " | ".join(str(row.get(key, "")) for key, _ in cols) + " |")
@@ -200,18 +202,24 @@ def render_report(results, overlap, total_rules, unique_total, pairwise):
             out.append(f"- {row['name']}: {row['download_error']} ({row['url']})")
     else:
         out.append("- 无")
-    out.extend(["", "## 来源两两重复（前 20 组）",
+    out.extend(["", "## 正式来源两两重复（前 20 组）",
                 "| 来源 A | 来源 B | 重复域名数 |", "|---|---|---:|"])
     for left, right, count in pairwise[:20]:
         out.append(f"| {left} | {right} | {count} |")
+    if candidate_overlaps:
+        out.extend(["", "## 候选来源与正式来源的精确重合",
+                    "| 候选来源 | 正式来源 | 重复域名数 |", "|---|---|---:|"])
+        for candidate, source, count in candidate_overlaps:
+            out.append(f"| {candidate} | {source} | {count} |")
     out.extend([
         "", "## 指标说明",
         "- 候选行：排除空行、注释和列表头后的行。",
         "- 解析接受：当前解析器识别为拦截、放行或过滤规则的行。",
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
         "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
-        "- 跨来源重复拦截域名：仅统计解析为 block 的域名，和 AdGuard Home DNS 输出口径一致；不把浏览器过滤规则中提取出的域名混入。",
-        "- 最终父级压缩后独有域名：先排除其他来源的相同域名/父域名覆盖，再按构建器规则排除本来源内被父域名覆盖的子域名；仍未扣除项目黑名单、白名单和全局 allow 例外，因此是来源贡献上限估计，不代表这些域名都应拦截。",
+        "- 跨来源重复拦截域名：仅统计正式集成来源中解析为 block 的域名；不把候选来源或浏览器过滤规则提取的域名混入。",
+        "- 最终父级压缩后独有域名：先排除其他正式来源的相同域名/父域名覆盖，再排除本来源内被父域名覆盖的子域名；仍未扣除项目黑名单、白名单和上游 allow 例外，因此是来源贡献上限估计，不代表这些域名都应拦截。",
+        "- 候选来源的独有贡献：仅与正式来源比较，不能反向减少正式来源的独有贡献。",
         "- 过滤规则的域名提取统计单独保留，不计入 AdGuard Home DNS 拦截域名交集。"
     ])
     return "\n".join(out) + "\n"
@@ -226,31 +234,53 @@ def main():
     # 本审计只回答 DNS 上游是否值得进入 DNS 规则：仅审计 host/dns/dnsfilter。
     # 浏览器 filter 来源不应被解析成 DNS 域名，也不应让大量路径型规则污染 DNS 来源报告。
     all_rules = ReadMe(str(ROOT / "README.md")).getRules()
-    rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
-    # Reference-only candidate from the original 217heidai source table; it is audited
-    # here for marginal contribution but is NOT added to the production README/build inputs.
-    rules.append(Rule("Pollock hosts (candidate only)", "host", "https://someonewhocares.org/hosts/hosts", "2026/11/22"))
+    production_rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
+    candidate_rules = [
+        Rule("Pollock hosts (candidate only)", "host",
+             "https://someonewhocares.org/hosts/hosts", "2026/11/22")
+    ]
+    rules = production_rules + candidate_rules
+    production_names = {rule.name for rule in production_rules}
+    candidate_names = {rule.name for rule in candidate_rules}
     downloads = asyncio.run(download_all(rules))
     resolver = Resolver(str(SOURCE_DIR))
-    results, memberships, domain_sets = [], defaultdict(set), {}
+    results, domain_sets = [], {}
 
     for rule in rules:
         row, domains = audit_one(rule, resolver, downloads.get(rule.name, {}))
+        row["role"] = "正式来源" if rule.name in production_names else "候选源（不集成）"
         results.append(row)
         domain_sets[rule.name] = domains
+
+    production_sets = {name: domain_sets.get(name, set()) for name in production_names}
+    memberships = defaultdict(set)
+    for name, domains in production_sets.items():
         for domain in domains:
             if domain:
-                memberships[domain].add(rule.name)
+                memberships[domain].add(name)
 
     overlap = sum(1 for names in memberships.values() if len(names) > 1)
+    unique_total = len(memberships)
+
     for row in results:
-        own = domain_sets.get(row["name"], set())
-        row["unique_only_domains"] = sum(1 for domain in own if memberships[domain] == {row["name"]})
+        name = row["name"]
+        own = domain_sets.get(name, set())
+        if name in production_names:
+            other_sets = [domains for other, domains in production_sets.items() if other != name]
+        else:
+            other_sets = list(production_sets.values())
+        other_domains = set().union(*other_sets) if other_sets else set()
+
+        if name in production_names:
+            row["unique_only_domains"] = sum(1 for domain in own if memberships[domain] == {name})
+        else:
+            row["unique_only_domains"] = sum(1 for domain in own if domain not in memberships)
         row["shared_domains"] = len(own) - row["unique_only_domains"]
-        other_domains = set().union(*(domains for name, domains in domain_sets.items() if name != row["name"]))
+
         def covered_by_other_parent(domain):
             labels = domain.split(".")
             return any(".".join(labels[index:]) in other_domains for index in range(len(labels)))
+
         after_external = {domain for domain in own if not covered_by_other_parent(domain)}
         effective_unique = {
             domain for domain in after_external
@@ -261,19 +291,33 @@ def main():
         row["external_parent_covered_domains"] = len(own) - len(after_external)
         row["internal_parent_covered_domains"] = len(after_external) - len(effective_unique)
         row["effective_unique_samples"] = sorted(effective_unique)[:100]
+
     pairwise = []
-    for left, right in combinations([rule.name for rule in rules], 2):
-        count = len(domain_sets.get(left, set()) & domain_sets.get(right, set()))
+    for left, right in combinations(sorted(production_names), 2):
+        count = len(production_sets.get(left, set()) & production_sets.get(right, set()))
         if count:
             pairwise.append((left, right, count))
     pairwise.sort(key=lambda item: item[2], reverse=True)
+
+    candidate_overlaps = []
+    for candidate in sorted(candidate_names):
+        for source in sorted(production_names):
+            count = len(domain_sets.get(candidate, set()) & production_sets.get(source, set()))
+            if count:
+                candidate_overlaps.append((candidate, source, count))
+    candidate_overlaps.sort(key=lambda item: item[2], reverse=True)
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     unique_dir = OUT_DIR / "effective-unique"
     unique_dir.mkdir(parents=True, exist_ok=True)
     for row in results:
         name = row["name"]
         own = domain_sets.get(name, set())
-        other_domains = set().union(*(domains for other, domains in domain_sets.items() if other != name))
+        if name in production_names:
+            other_sets = [domains for other, domains in production_sets.items() if other != name]
+        else:
+            other_sets = list(production_sets.values())
+        other_domains = set().union(*other_sets) if other_sets else set()
         after_external = set()
         for domain in own:
             labels = domain.split(".")
@@ -285,14 +329,30 @@ def main():
                        for index in range(1, len(domain.split("."))))
         ]
         safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("_.")
-        (unique_dir / f"{safe_name}.txt").write_text("\n".join(sorted(unique_domains)) + ("\n" if unique_domains else ""), encoding="utf-8")
+        (unique_dir / f"{safe_name}.txt").write_text(
+            "\n".join(sorted(unique_domains)) + ("\n" if unique_domains else ""), encoding="utf-8"
+        )
+
     (OUT_DIR / "source-audit.json").write_text(
-        json.dumps({"sources": results, "cross_source_duplicate_domains": overlap,
-                    "unique_domains_all_sources": len(memberships),
-                    "top_pairwise_overlaps": [{"source_a": a, "source_b": b, "shared_domains": n}
-                                              for a, b, n in pairwise[:20]]},
-                   ensure_ascii=False, indent=2), encoding="utf-8")
-    report = render_report(results, overlap, len(rules), len(memberships), pairwise)
+        json.dumps({
+            "production_sources": len(production_names),
+            "candidate_sources": len(candidate_names),
+            "sources": results,
+            "cross_source_duplicate_domains": overlap,
+            "unique_domains_all_production_sources": unique_total,
+            "candidate_overlaps": [
+                {"candidate": a, "production_source": b, "shared_domains": n}
+                for a, b, n in candidate_overlaps
+            ],
+            "top_pairwise_overlaps": [
+                {"source_a": a, "source_b": b, "shared_domains": n}
+                for a, b, n in pairwise[:20]
+            ]
+        }, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    report = render_report(
+        results, production_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps
+    )
     (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
     print(report)
 
