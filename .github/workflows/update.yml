@@ -117,18 +117,22 @@ jobs:
               return {line.strip() for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines() if line.strip() and not line.lstrip().startswith("!")}
           current = read(".cache/out/adblockdns.txt")
           baseline = read(".cache/baseline/upstream-adblockdns.txt")
+          optimized_only = sorted(current - baseline)
+          baseline_only = sorted(baseline - current)
           report = {
               "baseline": "217heidai/adblockfilters release rule/adblockdns.txt",
               "baseline_rules": len(baseline),
               "optimized_rules": len(current),
               "shared_rules": len(current & baseline),
-              "optimized_only": len(current - baseline),
-              "baseline_only": len(baseline - current),
-              "optimized_only_sample": sorted(current - baseline)[:100],
-              "baseline_only_sample": sorted(baseline - current)[:100],
+              "optimized_only": len(optimized_only),
+              "baseline_only": len(baseline_only),
+              "optimized_only_sample": optimized_only[:100],
+              "baseline_only_sample": baseline_only[:100],
           }
           Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          lines = ["# DNS output comparison", "", f"- Baseline rules: {len(baseline)}", f"- Optimized rules: {len(current)}", f"- Shared: {len(current & baseline)}", f"- Optimized-only: {len(current - baseline)}", f"- Baseline-only: {len(baseline - current)}", ""]
+          Path(".cache/report/optimized-only.txt").write_text("\n".join(optimized_only) + ("\n" if optimized_only else ""), encoding="utf-8")
+          Path(".cache/report/baseline-only.txt").write_text("\n".join(baseline_only) + ("\n" if baseline_only else ""), encoding="utf-8")
+          lines = ["# DNS output comparison", "", f"- Baseline rules: {len(baseline)}", f"- Optimized rules: {len(current)}", f"- Shared: {len(current & baseline)}", f"- Optimized-only: {len(optimized_only)}", f"- Baseline-only: {len(baseline_only)}", ""]
           Path(".cache/report/comparison.md").write_text("\n".join(lines), encoding="utf-8")
           print("\n".join(lines))
           PY
