@@ -95,6 +95,7 @@ class ReadMe(object):
             f.write("\n")
 
             f.write("## 订阅链接\n")
+            f.write("所有“规则订阅”均由 LucentDNS 自己的 `dist` 分支或 Releases 提供；不会把 217heidai 或其他上游作者的成品规则地址当作本项目订阅地址。下方“上游规则源”一节列出的原作者链接仅用于标明规则来源，不是本项目的订阅入口。\\n")
             f.write("1. 规则x’为规则x的 Lite 版，仅针对国内域名拦截，体积较小（如添加完整规则报错数量限制，请尝试 Lite 规则）\n")
             f.write("2. AdGuard 浏览器扩展可按需同时使用规则1（DNS 域名规则）和规则2（补充的浏览器过滤规则）；仅使用 DNS 过滤的场景通常只需规则1。\n")
             f.write("\n")
@@ -146,7 +147,7 @@ class ReadMe(object):
             f.write("2. 不再引用[anti-AD](https://anti-ad.net/adguard.txt)、[yhosts](https://raw.githubusercontent.com/VeleSila/yhosts/master/hosts.txt)，具体原因见[Mosney/anti-anti-AD](https://github.com/Mosney/anti-anti-AD)。\n")
             f.write("3. 移除[Notracking blocklist](https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt)，原项目[已停止维护](https://github.com/notracking/hosts-blocklists/issues/900)。\n")
             f.write("4. 移除[ADgk](https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt)、[SmartTV Blocklist](https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt)、[1024 hosts](https://raw.githubusercontent.com/Goooler/1024_hosts/master/hosts)、[ad-wars hosts](https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts)规则长时间未更新。\n")
-            f.write("5. 不再引用[NEO DEV HOST](https://github.com/neodevpro/neodevhost/blob/master/lite_adblocker)，原因见[Issues 85](https://github.com/217heidai/adblockfilters/issues/85)。\n")
+            f.write("5. 不再引用[NEO DEV HOST](https://github.com/neodevpro/neodevhost/blob/master/lite_adblocker)，原因见项目此前的来源审查记录。\n")
             f.write("6. 不再引用[xinggsf rule](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt)、[1Hosts (Lite)](https://raw.githubusercontent.com/badmojr/1Hosts/master/Lite/adblock.txt)、[Hblock](https://hblock.molinero.dev/hosts_adblock.txt)，误杀较多。\n")
             f.write("\n")
 
