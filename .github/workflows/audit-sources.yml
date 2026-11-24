@@ -5,32 +5,44 @@ on:
     branches:
       - main
     paths:
-      - 'scripts/audit_sources.py'
-      - '.github/workflows/audit-sources.yml'
+      - 'scripts/**'
+      - '.github/workflows/**'
       - 'README.md'
       - 'resolver.py'
       - 'readme.py'
       - 'blacklist.py'
+      - 'filter.py'
+      - 'rules/**'
       - 'tests/**'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: audit-upstream-sources-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.14'
+          cache: pip
       - name: Install dependencies
-        run: python -m pip install tld IPy loguru httpx dnspython pytest
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tld IPy loguru httpx dnspython pytest
       - name: Run regression tests
-        run: python -m pytest -q
+        run: |
+          python -m py_compile resolver.py blacklist.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/validated_sources.py scripts/verify_critical_domains.py
+          python -m pytest -q tests
       - name: Audit source lists with current resolver
         run: python scripts/audit_sources.py
       - name: Upload audit report
