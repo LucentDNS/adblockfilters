@@ -69,6 +69,7 @@ jobs:
       - name: Prepare domain inputs
         run: |
           mkdir -p .cache/domain .cache/source
+          : > .cache/domain/input-provenance.txt
           # black/china 是过滤阶段的关键输入。下载失败时必须停止，禁止用空文件继续生成看似成功的规则。
           download_required() {
             local name="$1"
@@ -78,11 +79,13 @@ jobs:
             local tmp="${dest}.download"
             if curl -fsSL --retry 3 --retry-all-errors -o "$tmp" "$own_url" && [ -s "$tmp" ]; then
               mv "$tmp" "$dest"
+              printf '%s\t%s\n' "$name" "LucentDNS release" >> .cache/domain/input-provenance.txt
               return 0
             fi
             rm -f "$tmp"
             if curl -fsSL --retry 3 --retry-all-errors -o "$tmp" "$upstream_url" && [ -s "$tmp" ]; then
               mv "$tmp" "$dest"
+              printf '%s\t%s\n' "$name" "217heidai upstream fallback" >> .cache/domain/input-provenance.txt
               return 0
             fi
             rm -f "$tmp"
