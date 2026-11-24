@@ -247,6 +247,16 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
 
+      - name: Remove internal V2Ray text assets from rule release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for asset in adblockv2ray.txt adblockv2raylite.txt; do
+            if gh release view rule --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
+              gh release delete-asset rule "$asset" --yes
+            fi
+          done
+
       - name: Upload sources to release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
