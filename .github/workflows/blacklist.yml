@@ -1,0 +1,214 @@
+name: Generate LucentDNS DNS State
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: noble-dns-dev-blacklist
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - blacklist.py
+      - smartdns.conf
+      - README.md
+      - readme.py
+      - resolver.py
+      - updater.py
+      - scripts/generate_domain_input.py
+      - scripts/verify_critical_domains.py
+      - tests/test_critical_domains.py
+      - rules/myblock.txt
+      - rules/direct.txt
+      - rules/ipv4_china.txt
+      - rules/white.txt
+      - .github/workflows/blacklist-dev.yml
+
+env:
+  TZ: Asia/Shanghai
+  SMARTDNS_URL: https://github.com/pymumu/smartdns/releases/download/Release46.1/smartdns-x86_64
+  SMARTDNS_PATH: /tmp/smartdns
+
+jobs:
+  Generate_Dev_Blacklist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout LucentDNS main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install Dependencies
+        run: |
+          set -euo pipefail
+          sudo timedatectl set-timezone "$TZ"
+          python -m pip install --upgrade pip
+          pip install -U tld IPy dnspython httpx loguru pytest
+
+      - name: Run DNS resolver regression tests
+        run: |
+          set -euo pipefail
+          python -m py_compile blacklist.py
+          python -m pytest -q tests
+
+      - name: Setup SmartDNS
+        run: |
+          set -euo pipefail
+          mkdir -p "$SMARTDNS_PATH"
+          wget "$SMARTDNS_URL" -O "$SMARTDNS_PATH/smartdns"
+          chmod +x "$SMARTDNS_PATH/smartdns"
+          cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
+          nohup "$SMARTDNS_PATH/smartdns" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > /dev/null 2>&1 &
+          ready=0
+          for i in $(seq 1 30); do
+            if python3 -c "import socket,sys; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.settimeout(2); s.sendto(bytes.fromhex('00000100000100000000000003777777076578616d706c6503636f6d0000010001'),('127.0.0.1',5053)); s.recvfrom(1024); sys.exit(0)" 2>/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" = "0" ]; then
+            echo "SmartDNS not ready after 30s"
+            exit 1
+          fi
+
+      - name: Verify SmartDNS can resolve valid and nonexistent domains
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import dns.resolver
+          from dns.resolver import NXDOMAIN
+
+          resolver = dns.resolver.Resolver(configure=False)
+          resolver.nameservers = ["127.0.0.1"]
+          resolver.port = 5053
+          resolver.timeout = 3.0
+          resolver.lifetime = 8.0
+
+          success = []
+          for domain in ("example.com", "cloudflare.com", "baidu.com"):
+              try:
+                  answer = resolver.resolve(domain, "A")
+                  if len(answer) > 0:
+                      success.append(domain)
+              except Exception as exc:
+                  print(f"Probe failed for {domain}: {type(exc).__name__}: {exc}")
+
+          if len(success) < 2:
+              raise SystemExit(f"SmartDNS health check failed: only {success} resolved")
+
+          try:
+              resolver.resolve("noble-dns-probe-20261124.example.invalid", "A")
+          except NXDOMAIN:
+              print("NXDOMAIN probe passed")
+          else:
+              raise SystemExit("SmartDNS failed to return NXDOMAIN for reserved .invalid domain")
+          print(f"Positive DNS probes passed: {', '.join(success)}")
+          PY
+
+      - name: Download database
+        run: |
+          set -euo pipefail
+          # The first NobleDNS run must not inherit upstream block/IP state.
+          # Reuse a database only after our own fresh-validation marker exists.
+          if curl -fsSL --retry 3 --retry-all-errors \
+              "https://github.com/${{ github.repository }}/releases/download/domain-state/nobledns-bootstrap-complete.txt" \
+              -o /tmp/nobledns-bootstrap-complete.txt; then
+            curl -fsSL --retry 3 --retry-all-errors -o domain.db \
+              "https://github.com/${{ github.repository }}/releases/download/domain-state/domain.db"
+            test -s domain.db || { echo "NobleDNS domain.db is missing or empty"; exit 1; }
+            echo "Using the previously generated NobleDNS DNS-validation database."
+          else
+            echo "No NobleDNS validation marker found; starting with an empty database for a full independent DNS pass."
+            : > domain.db
+          fi
+
+      - name: Generate DNS validation input from NobleDNS sources
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/generate_domain_input.py
+          python scripts/generate_domain_input.py
+          test -s .cache/domain/domain.txt || { echo "NobleDNS domain input is missing or empty"; exit 1; }
+          cp .cache/domain/domain.txt domain.txt
+          cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
+
+      - name: Run DNS validation and generate independent blacklist
+        id: generate
+        run: |
+          set -euo pipefail
+          python -m py_compile blacklist.py
+          python blacklist.py 2>&1 | tee blacklist.log
+          test -s domain.db || { echo "domain.db missing after blacklist generation"; exit 1; }
+          # Empty lists are represented by a comment-only file so GitHub can
+          # publish a non-empty asset while the parser still treats it as empty.
+          test -s black.txt || printf '! NobleDNS dev blacklist: no confirmed dead domains\n' > black.txt
+          test -s china.txt || printf '! NobleDNS dev China list: no validated China domains\n' > china.txt
+          printf 'NobleDNS fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
+          echo "message=$(date)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: noble-dns-dev-blacklist-log
+          path: blacklist.log
+          if-no-files-found: warn
+
+      - name: Write summary
+        if: always()
+        run: |
+          {
+            echo "### LucentDNS DNS State"
+            echo "- domain.txt: $(test -f domain.txt && wc -l < domain.txt || echo 0) lines"
+            echo "- black.txt: $(test -f black.txt && wc -l < black.txt || echo 0) lines"
+            echo "- china.txt: $(test -f china.txt && wc -l < china.txt || echo 0) lines"
+            echo "- database: $(test -s domain.db && du -h domain.db | cut -f1 || echo missing)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish validated domain state
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: domain-state
+          name: NobleDNS independent development domain state
+          body: Internal DNS-validation state used by the production rule build. Not a user-facing rule subscription.
+          prerelease: true
+          make_latest: false
+          files: |
+            domain.db
+            domain.txt
+            domain-input-provenance.json
+            black.txt
+            china.txt
+            nobledns-bootstrap-complete.txt
+          overwrite_files: true
+          fail_on_unmatched_files: true
+
+      - name: Verify domain-state release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          assets="$(gh release view domain-state --json assets --jq '.assets[].name')"
+          for name in domain.db domain.txt domain-input-provenance.json black.txt china.txt nobledns-bootstrap-complete.txt; do
+            if ! grep -Fxq "$name" <<< "$assets"; then
+              echo "::error::dev-domain release is missing $name"
+              exit 1
+            fi
+          done
+
+      - name: Trigger production rule build after domain-state publication
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run update.yml --ref main
