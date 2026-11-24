@@ -121,26 +121,26 @@ jobs:
       - name: Download database
         run: |
           set -euo pipefail
-          # The first NobleDNS run must not inherit upstream block/IP state.
+          # The first LucentDNS run must not inherit upstream block/IP state.
           # Reuse a database only after our own fresh-validation marker exists.
           if curl -fsSL --retry 3 --retry-all-errors \
               "https://github.com/${{ github.repository }}/releases/download/domain-state/nobledns-bootstrap-complete.txt" \
               -o /tmp/nobledns-bootstrap-complete.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
               "https://github.com/${{ github.repository }}/releases/download/domain-state/domain.db"
-            test -s domain.db || { echo "NobleDNS domain.db is missing or empty"; exit 1; }
-            echo "Using the previously generated NobleDNS DNS-validation database."
+            test -s domain.db || { echo "LucentDNS domain.db is missing or empty"; exit 1; }
+            echo "Using the previously generated LucentDNS DNS-validation database."
           else
             echo "No LucentDNS validation marker found; starting with an empty database for a full independent DNS pass."
             : > domain.db
           fi
 
-      - name: Generate DNS validation input from NobleDNS sources
+      - name: Generate DNS validation input from LucentDNS sources
         run: |
           set -euo pipefail
           python -m py_compile scripts/generate_domain_input.py
           python scripts/generate_domain_input.py
-          test -s .cache/domain/domain.txt || { echo "NobleDNS domain input is missing or empty"; exit 1; }
+          test -s .cache/domain/domain.txt || { echo "LucentDNS domain input is missing or empty"; exit 1; }
           cp .cache/domain/domain.txt domain.txt
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
 
@@ -181,7 +181,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: domain-state
-          name: NobleDNS independent development domain state
+          name: LucentDNS independent development domain state
           body: Internal DNS-validation state used by the production rule build. Not a user-facing rule subscription.
           prerelease: true
           make_latest: false
@@ -203,7 +203,7 @@ jobs:
           assets="$(gh release view domain-state --json assets --jq '.assets[].name')"
           for name in domain.db domain.txt domain-input-provenance.json black.txt china.txt nobledns-bootstrap-complete.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
-              echo "::error::dev-domain release is missing $name"
+              echo "::error::domain-state release is missing $name"
               exit 1
             fi
           done
