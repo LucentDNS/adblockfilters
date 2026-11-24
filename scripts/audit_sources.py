@@ -681,9 +681,15 @@ def main():
         if not covered_by_active_current_parent(domain)
     }
     source_absent = baseline_blocks - current_source_exact - current_source_parent_present
+    current_source_parent_inactive_unexplained = (
+        current_source_parent_inactive
+        - current_source_parent_inactive_blacklisted
+        - current_source_parent_inactive_whitelisted
+        - current_source_parent_inactive_upstream_allowed
+    )
     source_unexplained = (
         source_presence_unexplained
-        | current_source_parent_inactive
+        | current_source_parent_inactive_unexplained
         | source_absent
     )
     current_effective_coverage = (
