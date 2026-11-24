@@ -5,6 +5,7 @@ import json
 import os
 import sys
 from collections import defaultdict
+from itertools import combinations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -144,7 +145,7 @@ def audit_one(rule, resolver, download):
     return result, blocks | extracted
 
 
-def render_report(results, overlap, total_rules):
+def render_report(results, overlap, total_rules, unique_total, pairwise):
     cols = [
         ("name", "来源"), ("type", "类型"), ("total_lines", "总行数"),
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
@@ -160,6 +161,7 @@ def render_report(results, overlap, total_rules):
         f"- 下载成功：{sum(1 for r in results if r['download_ok'])}",
         f"- 下载失败：{sum(1 for r in results if not r['download_ok'])}",
         f"- 跨来源重复域名：{overlap}",
+        f"- 所有来源合并后的唯一域名：{unique_total}",
         "- 解析口径：调用仓库当前 Resolver 的原始解析方法；未识别候选不等同于规则无效，需结合规则语法复核。",
         "",
         "| " + " | ".join(label for _, label in cols) + " |",
@@ -174,6 +176,10 @@ def render_report(results, overlap, total_rules):
             out.append(f"- {row['name']}: {row['download_error']} ({row['url']})")
     else:
         out.append("- 无")
+    out.extend(["", "## 来源两两重复（前 20 组）",
+                "| 来源 A | 来源 B | 重复域名数 |", "|---|---|---:|"])
+    for left, right, count in pairwise[:20]:
+        out.append(f"| {left} | {right} | {count} |")
     out.extend([
         "", "## 指标说明",
         "- 候选行：排除空行、注释和列表头后的行。",
@@ -194,21 +200,31 @@ def main():
     rules = ReadMe(str(ROOT / "README.md")).getRules()
     downloads = asyncio.run(download_all(rules))
     resolver = Resolver(str(SOURCE_DIR))
-    results, memberships = [], defaultdict(set)
+    results, memberships, domain_sets = [], defaultdict(set), {}
 
     for rule in rules:
         row, domains = audit_one(rule, resolver, downloads.get(rule.name, {}))
         results.append(row)
+        domain_sets[rule.name] = domains
         for domain in domains:
             if domain:
                 memberships[domain].add(rule.name)
 
     overlap = sum(1 for names in memberships.values() if len(names) > 1)
+    pairwise = []
+    for left, right in combinations([rule.name for rule in rules], 2):
+        count = len(domain_sets.get(left, set()) & domain_sets.get(right, set()))
+        if count:
+            pairwise.append((left, right, count))
+    pairwise.sort(key=lambda item: item[2], reverse=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "source-audit.json").write_text(
-        json.dumps({"sources": results, "cross_source_duplicate_domains": overlap},
+        json.dumps({"sources": results, "cross_source_duplicate_domains": overlap,
+                    "unique_domains_all_sources": len(memberships),
+                    "top_pairwise_overlaps": [{"source_a": a, "source_b": b, "shared_domains": n}
+                                              for a, b, n in pairwise[:20]]},
                    ensure_ascii=False, indent=2), encoding="utf-8")
-    report = render_report(results, overlap, len(rules))
+    report = render_report(results, overlap, len(rules), len(memberships), pairwise)
     (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
     print(report)
 
