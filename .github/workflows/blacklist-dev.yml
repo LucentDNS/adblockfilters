@@ -21,6 +21,8 @@ on:
       - resolver.py
       - updater.py
       - scripts/generate_domain_input.py
+      - scripts/verify_critical_domains.py
+      - tests/test_critical_domains.py
       - rules/myblock.txt
       - rules/direct.txt
       - rules/ipv4_china.txt
