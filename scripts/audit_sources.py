@@ -219,6 +219,10 @@ def main():
                 memberships[domain].add(rule.name)
 
     overlap = sum(1 for names in memberships.values() if len(names) > 1)
+    for row in results:
+        own = domain_sets.get(row["name"], set())
+        row["unique_only_domains"] = sum(1 for domain in own if memberships[domain] == {row["name"]})
+        row["shared_domains"] = len(own) - row["unique_only_domains"]
     pairwise = []
     for left, right in combinations([rule.name for rule in rules], 2):
         count = len(domain_sets.get(left, set()) & domain_sets.get(right, set()))
