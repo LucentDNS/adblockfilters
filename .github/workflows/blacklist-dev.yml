@@ -133,6 +133,19 @@ jobs:
             "https://github.com/${{ github.repository }}/releases/download/domain/domain.txt"
           test -s domain.txt || { echo "NobleDNS domain input is missing or empty"; exit 1; }
 
+      - name: Reset inherited upstream blacklist decisions
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import sqlite3
+
+          connection = sqlite3.connect("domain.db")
+          cursor = connection.execute("UPDATE T_DOMAIN SET isBlock = 0")
+          connection.commit()
+          print(f"Reset inherited isBlock flags: {cursor.rowcount}")
+          connection.close()
+          PY
+
       - name: Run DNS validation and generate independent blacklist
         id: generate
         run: |
