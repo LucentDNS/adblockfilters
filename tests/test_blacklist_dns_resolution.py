@@ -2,7 +2,12 @@ import asyncio
 
 from dns.resolver import NXDOMAIN, NoAnswer
 
-from blacklist import BlackList
+from blacklist import (
+    BlackList,
+    DNS_NEGATIVE_RECHECK_SECONDS,
+    DNS_POSITIVE_REFRESH_SECONDS,
+    _needs_dns_validation,
+)
 
 
 class FakeResolver:
@@ -115,6 +120,31 @@ def test_unknown_dns_result_preserves_previous_state():
     )
     assert domain.blocked is True
 
+
+
+
+def test_new_domains_are_validated_immediately():
+    assert _needs_dns_validation([], 100, 100, is_new=True) is True
+
+
+def test_recent_negative_answers_are_not_repeated_in_duplicate_runs():
+    assert _needs_dns_validation([], 100, 100 + 300, is_new=False) is False
+
+
+def test_negative_answers_are_rechecked_after_cooldown():
+    assert _needs_dns_validation(
+        [], 100, 100 + DNS_NEGATIVE_RECHECK_SECONDS + 1, is_new=False
+    ) is True
+
+
+def test_positive_answers_are_refreshed_after_36_days():
+    assert _needs_dns_validation(
+        ["192.0.2.1"], 100, 100 + DNS_POSITIVE_REFRESH_SECONDS + 1
+    ) is True
+
+
+def test_recent_positive_answers_are_not_rechecked():
+    assert _needs_dns_validation(["192.0.2.1"], 100, 100 + 3600) is False
 
 
 def test_domain_input_normalizes_leading_dots_and_ip_literals(tmp_path):
