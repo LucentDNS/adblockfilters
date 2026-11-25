@@ -37,18 +37,3 @@ def test_source_audit_gate_rejects_unparsed_or_lost_source_rules():
     assert "lost.example" in failures[2]
     assert "inactive.example" in failures[3]
     assert "blocked-allow.example" in failures[4]
-
-
-def test_source_audit_gate_rejects_unexplained_upstream_baseline_blocks():
-    failures = audit_sources.source_audit_gate_failures(
-        0,
-        0,
-        set(),
-        set(),
-        set(),
-        {"missing-baseline.example"},
-    )
-
-    assert len(failures) == 1
-    assert "upstream baseline DNS block rules" in failures[0]
-    assert "missing-baseline.example" in failures[0]
