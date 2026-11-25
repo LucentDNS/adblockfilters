@@ -50,4 +50,5 @@ class Loon(APPBase):
             else:
                 logger.info("adblock Loon: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception("%s"%(e))
+            raise
