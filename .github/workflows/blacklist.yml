@@ -76,6 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m ruff check --no-cache .
+          python -m ruff check --no-cache --select F401 scripts tests
 
       - name: Run DNS resolver regression tests
         run: |
