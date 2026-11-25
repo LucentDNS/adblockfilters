@@ -32,7 +32,9 @@ optimizely.com
 obs.cn-north-4.myhuaweicloud.com
 file-contents-abc.obs.cn-north-4.myhuaweicloud.com
 # https://github.com/217heidai/adblockfilters/issues/231
-browser.miui.com
+httpdns.browser.miui.com
+r.browser.miui.com
+security.browser.miui.com
 api.browser.miui.com
 # https://github.com/217heidai/adblockfilters/issues/230
 px.ucweb.com
@@ -85,7 +87,7 @@ appdownload.alicdn.com
 # https://github.com/217heidai/adblockfilters/issues/180
 youtube.com#%#//scriptlet('json-prune-fetch-response', 'playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots', '', '/playlist\?list=|player\?|watch\?[tv]=/')
 # https://github.com/217heidai/adblockfilters/issues/179
-apps.coloros.com
+iwisdom.apps.coloros.com
 # https://github.com/217heidai/adblockfilters/issues/178
 wximg.wxs.qq.com
 # https://github.com/217heidai/adblockfilters/issues/175
@@ -186,7 +188,7 @@ dui88.com
 # https://github.com/217heidai/adblockfilters/issues/118
 biligame.com
 # https://github.com/217heidai/adblockfilters/issues/117
-17u.cn
+wx.17u.cn
 # https://github.com/217heidai/adblockfilters/issues/116
 alimama.com
 # https://github.com/217heidai/adblockfilters/issues/114
@@ -260,7 +262,6 @@ sentry.io
 ||ad.
 */ad.
 # https://github.com/217heidai/adblockfilters/issues/39
-go.sohu.com
 txt.go.sohu.com
 # https://uprising.kip.pro/join?ref=6Q4ARF 
 uprising.kip.pro
