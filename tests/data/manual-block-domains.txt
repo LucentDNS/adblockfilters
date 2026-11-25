@@ -3,3 +3,7 @@ easywebtd-authenticate.com
 arbitrum-one.com
 com-polybets-a1.com
 google-store.cn
+trustwallet-eng.com
+trustwallet-eng.org
+official-trustwallet.com
+en-trustwallet.org

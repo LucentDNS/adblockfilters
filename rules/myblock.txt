@@ -29,6 +29,12 @@
 ! Newly registered Google-lookalike domain resolving to a Spamhaus DROP address; certificate cluster also contains multiple impersonation hosts.
 ! https://domainspoof.com/brands/google
 ||google-store.cn^
+! Trust Wallet impersonation cluster; domains are recently registered and hosted confirmed phishing.
+! https://domainspoof.com/brands/trust-wallet
+||trustwallet-eng.com^
+||trustwallet-eng.org^
+||official-trustwallet.com^
+||en-trustwallet.org^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
