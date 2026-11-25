@@ -51,7 +51,7 @@ ozone.10jqka.com.cn
 stat.10jqka.com.cn
 vaserviece.10jqka.com.cn
 # https://github.com/217heidai/adblockfilters/issues/216
-upqzfile.com
+v6.pic.upqzfile.com
 # https://github.com/217heidai/adblockfilters/issues/215
 imasdk.googleapis.com
 # https://github.com/217heidai/adblockfilters/issues/214
