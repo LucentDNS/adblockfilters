@@ -46,4 +46,5 @@ class SingBox(APPBase):
             else:
                 logger.info("adblock sing-box: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception("%s"%(e))
+            raise
