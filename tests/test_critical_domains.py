@@ -76,3 +76,30 @@ def test_critical_service_regression_list_is_unique_and_broad():
     assert "microsoft.com" in domains
     assert "github.com" in domains
     assert "qq.com" in domains
+
+
+def test_manual_phishing_regression_domains_are_present_in_project_block_rules():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    expected_path = root / "tests" / "data" / "manual-block-domains.txt"
+    rules_path = root / "rules" / "myblock.txt"
+    expected = {
+        line.strip().lower()
+        for line in expected_path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    rules = {
+        line.strip().lower()
+        for line in rules_path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("||") and line.strip().endswith("^")
+    }
+    actual = {rule[2:-1] for rule in rules}
+
+    assert expected
+    assert len(expected) == len([
+        line.strip().lower()
+        for line in expected_path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ])
+    assert expected <= actual
