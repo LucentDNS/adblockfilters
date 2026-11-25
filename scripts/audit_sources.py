@@ -331,10 +331,12 @@ def main():
     candidate_rules = [
         Rule("Pollock hosts (candidate only)", "host",
              "https://someonewhocares.org/hosts/hosts", "2026/11/22"),
-        # The upstream author's current source table uses OISD Basic, while
-        # This repository currently evaluates OISD Small. Audit the exact upstream
-        # cached snapshot as a candidate; do not add it to production inputs.
-        Rule("OISD Basic (upstream snapshot; candidate only)", "dns",
+        # The upstream README labels this asset OISD Basic, but the downloaded payload
+        # metadata identifies itself as "oisd small" and its normalized domain
+        # set exactly matches the production OISD Small snapshot in this build.
+        # Keep it audit-only and label the discrepancy explicitly; do not infer
+        # a distinct Basic-vs-Small quality advantage from the README label.
+        Rule("OISD upstream release snapshot (README says Basic; payload title says Small)", "dns",
              "https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt",
              "upstream release snapshot")
     ]
