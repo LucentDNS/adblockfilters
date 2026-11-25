@@ -128,3 +128,8 @@ uk-mobile.events.data.microsoft.com
 us-mobile.events.data.microsoft.com
 consent.dropbox.com
 device-provisioning.googleapis.com
+content.canadiantire.ca
+content.discover.com
+content22.online.citi.com
+contents1.00110.citi.com
+contents2.00110.citi.com
