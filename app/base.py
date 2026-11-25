@@ -57,14 +57,30 @@ class APPBase(ABC):
                 if domain:
                     if domain in ChinaSet:
                         liteList.append(filter)
-                else:
-                    # Generic browser filters without a target domain remain in Lite,
-                    # matching the upstream project's original behavior.
+                elif self.__isChinaFilter(filter, ChinaSet):
                     liteList.append(filter)
             return liteList
         except Exception as e:
             logger.exception(e)
             raise
+
+    # Generic $ rules may carry a domain= scope even when the resolver
+    # cannot extract one from the rule's leading pattern.
+    def __isChinaFilter(self, filter:str, ChinaSet:Set[str]) -> bool:
+        m = re.search(r'domain=([^,]+)', filter)
+        if not m:
+            return True
+        domains = [d for d in m.group(1).split('|') if not d.startswith('~')]
+        if not domains:
+            return True
+        return any(self.__isChinaDomain(domain, ChinaSet) for domain in domains)
+
+    def __isChinaDomain(self, domain:str, ChinaSet:Set[str]) -> bool:
+        labels = domain.split('.')
+        for index in range(len(labels)):
+            if '.'.join(labels[index:]) in ChinaSet:
+                return True
+        return False
 
     @abstractmethod
     def generate(self, isLite=False):
