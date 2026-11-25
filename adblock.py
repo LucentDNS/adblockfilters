@@ -168,6 +168,7 @@ class ADBlock(object):
         readme.regenerate()
 
 if __name__ == '__main__':
+    configure_logging()
     '''
     # for test
     logFile = os.getcwd() + "/adblock.log"
