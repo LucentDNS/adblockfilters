@@ -33,6 +33,7 @@ jobs:
         with:
           repository: v2fly/domain-list-community
           path: domain-list-community
+          ref: 98c43cad27fa8f02043858763709fe4a95432ffb
 
       - name: Setup Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
@@ -58,11 +59,12 @@ jobs:
           sudo apt-get install -y wget gzip
           sudo timedatectl set-timezone "$TZ"
           python -m pip install --upgrade pip
-          pip install -U tld IPy dnspython httpx loguru pytest
+          python -m pip install -r requirements.txt
 
       - name: Run unit tests
         run: |
           python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py
+          python -m compileall -q app
           python -m pytest -q tests
 
       - name: Prepare domain inputs
@@ -196,6 +198,7 @@ jobs:
       - name: Compile Sing-Box filters
         run: |
           wget https://github.com/SagerNet/sing-box/releases/download/v${{env.SINGBOX_VERSION}}/sing-box-${{env.SINGBOX_VERSION}}-linux-amd64.tar.gz
+          echo '7c103cb2f9a7dc54cb82962043596718ed27989a478d6405f0939a9b775f889f  sing-box-${{env.SINGBOX_VERSION}}-linux-amd64.tar.gz' | sha256sum -c -
           tar -zxvf sing-box-${{env.SINGBOX_VERSION}}-linux-amd64.tar.gz
           chmod +x sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box
           ./sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box rule-set compile --output .cache/out/adblocksingbox.srs     .cache/out/adblocksingbox.json
@@ -205,6 +208,7 @@ jobs:
       - name: Compile mihomo filters
         run: |
           wget https://github.com/MetaCubeX/mihomo/releases/download/v${{env.MIHOMO_VERSION}}/mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz
+          echo 'd06f37a21df275bc36002b98ad35835caf9ac1b1c4cb3fad750fd2b3f94617fe  mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz' | sha256sum -c -
           gzip -d mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz
           chmod +x mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}
           ./mihomo-linux-amd64-v${{env.MIHOMO_VERSION}} convert-ruleset domain yaml .cache/out/adblockmihomo.yaml     .cache/out/adblockmihomo.mrs
