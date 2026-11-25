@@ -45,9 +45,12 @@ def test_manual_dns_supplement_rules_use_dns_label_syntax():
         line = raw.strip()
         if not line or line.startswith("!") or line.startswith("#"):
             continue
+        if line.startswith("@@||") and line.endswith("^") and ("*" in line or "/" in line):
+            # Wildcard/path-scoped exceptions are browser-filter rules, not DNS names.
+            continue
         if line.startswith("@@||") and line.endswith("^"):
             domain = line[4:-1]
-        elif line.startswith("||") and line.endswith("^"):
+        elif line.startswith("||") and line.endswith("^") and "*" not in line and "/" not in line:
             domain = line[2:-1]
         else:
             raise AssertionError(f"Unsupported manual DNS rule syntax: {line}")
