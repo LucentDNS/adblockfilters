@@ -895,13 +895,17 @@ def main():
             for line in china_input_path.read_text(encoding="utf-8", errors="replace").splitlines()
             if line.strip() and not line.lstrip().startswith(("#", "!"))
         }
-        lite_blocks, lite_allows = set(), set()
+        lite_blocks_exact, lite_blocks_suffix, lite_allows = set(), set(), set()
         for raw in lite_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = raw.strip()
+            if not line or line.startswith(("!", "#")):
+                continue
             if line.startswith("@@||") and line.endswith("^"):
                 lite_allows.add(line[4:-1].lower())
             elif line.startswith("||") and line.endswith("^"):
-                lite_blocks.add(line[2:-1].lower())
+                lite_blocks_suffix.add(line[2:-1].lower())
+            elif "." in line and not any(char in line for char in " /\t^$*"):
+                lite_blocks_exact.add(line.lower())
 
         source_block_domains = set().union(
             *(domain_sets.get(name, set()) for name in production_names)
@@ -918,15 +922,18 @@ def main():
 
         known_non_china_covered = {
             domain for domain in validated_non_china_source_blocks
-            if covered_by_rule_domain(domain, lite_blocks)
+            if (domain in lite_blocks_exact or covered_by_rule_domain(domain, lite_blocks_suffix))
             and not covered_by_rule_domain(domain, lite_allows)
         }
         china_source_missing = {
             domain for domain in china_source_blocks
-            if not covered_by_rule_domain(domain, lite_blocks)
+            if domain not in lite_blocks_exact
+            and not covered_by_rule_domain(domain, lite_blocks_suffix)
             and not covered_by_rule_domain(domain, lite_allows)
         }
-        lite_rules_not_classified_china = lite_blocks - china_domains
+        # Exact-host Lite output must not contain suffix rules; those would broaden
+        # the match to unclassified/non-domestic child hostnames.
+        lite_rules_not_classified_china = (lite_blocks_exact - china_domains) | lite_blocks_suffix
 
         lite_scope = {
             "available": True,
@@ -936,7 +943,9 @@ def main():
             "china_classified_source_block_domains": len(china_source_blocks),
             "validated_non_china_source_block_domains": len(validated_non_china_source_blocks),
             "unvalidated_current_source_block_domains": len(unvalidated_source_blocks),
-            "lite_block_rules": len(lite_blocks),
+            "lite_block_rules": len(lite_blocks_exact) + len(lite_blocks_suffix),
+            "lite_exact_block_rules": len(lite_blocks_exact),
+            "lite_suffix_block_rules": len(lite_blocks_suffix),
             "lite_allow_rules": len(lite_allows),
             "lite_rules_not_classified_china": len(lite_rules_not_classified_china),
             "known_non_china_source_domains_effectively_blocked_by_lite": len(known_non_china_covered),
@@ -968,11 +977,11 @@ def main():
     )
     if lite_scope["available"]:
         report += "\n## Lite 国内域名范围审计\n\n"
-        report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
+        report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条（精确主机：{lite_scope['lite_exact_block_rules']}；后缀规则：{lite_scope['lite_suffix_block_rules']}）；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
         report += f"- 已验证但未归类为国内的来源域名中，仍被 Lite 有效拦截：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条。\n"
         report += f"- 已归类为国内的来源拦截域名，未被 Lite 拦截或放行规则覆盖：{lite_scope['china_classified_source_domains_missing_from_lite']} 条。\n"
         report += f"- 当前来源中尚未进入验证状态、暂无法判定国内属性：{lite_scope['unvalidated_current_source_block_domains']} 条。\n"
-        report += "- 注：本审计按 AdGuard DNS 后缀匹配语义计算已知覆盖；它不推断未出现在来源中的任意子域名。\n"
+        report += "- 注：Lite DNS 拦截项使用精确主机名匹配；上游/白名单放行例外保留其原有匹配范围。\n"
     else:
         report += f"\n## Lite 国内域名范围审计\n\n- 未执行：{lite_scope['reason']}。\n"
 

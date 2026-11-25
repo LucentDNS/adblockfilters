@@ -28,7 +28,7 @@ class Surge(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("#!name=AdBlock Surge Lite\n")
-                    f.write("#!desc=适用于 Surge 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("#!desc=适用于 Surge 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用精确域名条目。\n"%(self.sourceRule))
                 else:
                     f.write("#!name=AdBlock Surge\n")
                     f.write("#!desc=适用于 Surge 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -46,7 +46,10 @@ class Surge(APPBase):
                 f.write("#!proxy-select=REJECT\n")
                 f.write("#\n")
                 for domain in blockList:
-                    f.write(f".{domain}\n")
+                    if isLite:
+                        f.write(f"{domain}\n")
+                    else:
+                        f.write(f".{domain}\n")
 
             if isLite:
                 logger.info("adblock Surge Lite: block=%d" % (len(blockList)))

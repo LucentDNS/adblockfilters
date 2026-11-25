@@ -48,7 +48,7 @@ class ShadowrocketModule(APPBase):
                 if isLite:
                     f.write("#!name=AdBlock Shadowrocket Module Lite\n")
                     f.write(
-                        "#!desc=每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"
+                        "#!desc=每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用 DOMAIN 精确匹配。\n"
                         % (self.sourceRule)
                     )
                 else:
@@ -66,7 +66,10 @@ class ShadowrocketModule(APPBase):
 
                 f.write("[Rule]\n")
                 for domain in blockList:
-                    f.write("DOMAIN-SUFFIX,%s,REJECT-DROP\n" % (domain))
+                    if isLite:
+                        f.write("DOMAIN,%s,REJECT-DROP\n" % (domain))
+                    else:
+                        f.write("DOMAIN-SUFFIX,%s,REJECT-DROP\n" % (domain))
 
             if isLite:
                 logger.info("adblock Shadowrocket Module Lite: block=%d" % (len(blockList)))

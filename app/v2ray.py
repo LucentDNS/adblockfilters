@@ -28,7 +28,7 @@ class V2ray(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock V2ray/Xray Lite\n")
-                    f.write("# Description: 适用于 V2ray、Xray 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("# Description: 适用于 V2ray、Xray 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用 full 精确匹配。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock V2ray/Xray\n")
                     f.write("# Description: 适用于 V2ray、Xray 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -40,7 +40,10 @@ class V2ray(APPBase):
                 f.write("#\n")
                 for domain in blockList:
                     if domain.find('_') < 0: # domain-list-community 工具在生成 geosite.dat 时，会进行严格的主机名校验
-                        f.write("%s @ads\n"%(domain))
+                        if isLite:
+                            f.write("full:%s @ads\n" % (domain))
+                        else:
+                            f.write("%s @ads\n" % (domain))
 
             if isLite:
                 logger.info("adblock V2ray/Xray Lite: block=%d" % (len(blockList)))

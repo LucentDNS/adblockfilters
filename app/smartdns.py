@@ -30,7 +30,7 @@ class SmartDNS(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock SmartDNS Lite\n")
-                    f.write("# Description: 适用于 SmartDNS 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("# Description: 适用于 SmartDNS 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用仅匹配主机名的规则。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock SmartDNS\n")
                     f.write("# Description: 适用于 SmartDNS 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -42,9 +42,12 @@ class SmartDNS(APPBase):
                 f.write("# unBlocked domains: %s\n"%(len(unblockList)))
                 f.write("#\n")
                 for domain in blockList:
-                    f.write("address /%s/#\n"%(domain))
+                    if isLite:
+                        f.write("address /-.%s/#\n" % (domain))
+                    else:
+                        f.write("address /%s/#\n" % (domain))
                 for domain in unblockList:
-                    f.write("address /%s/-\n"%(domain))
+                    f.write("address /%s/-\n" % (domain))
             
             if isLite:
                 logger.info("adblock SmartDNS Lite: block=%d, unblock=%d"%(len(blockList), len(unblockList)))

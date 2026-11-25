@@ -28,7 +28,7 @@ class Hosts(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock Hosts Lite\n")
-                    f.write("# Description: 适用于 hosts 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("# Description: 适用于 hosts 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，hosts 条目只映射精确主机名。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock Hosts\n")
                     f.write("# Description: 适用于 hosts 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))

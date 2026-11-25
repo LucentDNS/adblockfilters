@@ -28,7 +28,7 @@ class Loon(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("#!name=AdBlock Loon Lite\n")
-                    f.write("#!desc=适用于 Loon 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("#!desc=适用于 Loon 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用 DOMAIN 精确匹配。\n"%(self.sourceRule))
                 else:
                     f.write("#!name=AdBlock Loon\n")
                     f.write("#!desc=适用于 Loon 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -43,7 +43,10 @@ class Loon(APPBase):
                 f.write("#!proxy-select=REJECT\n")
                 f.write("#\n")
                 for domain in blockList:
-                    f.write("DOMAIN-SUFFIX,%s\n"%(domain))
+                    if isLite:
+                        f.write("DOMAIN,%s,REJECT\n" % (domain))
+                    else:
+                        f.write("DOMAIN-SUFFIX,%s\n" % (domain))
 
             if isLite:
                 logger.info("adblock Loon Lite: block=%d"%(len(blockList)))

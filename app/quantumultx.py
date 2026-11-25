@@ -28,7 +28,7 @@ class QuantumultX(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock QuantumultX Lite\n")
-                    f.write("# Description: 适用于 QuantumultX 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("# Description: 适用于 QuantumultX 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用 host 精确匹配。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock QuantumultX\n")
                     f.write("# Description: 适用于 QuantumultX 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -39,7 +39,10 @@ class QuantumultX(APPBase):
                 f.write("# Blocked domains: %s\n"%(len(blockList)))
                 f.write("#\n")
                 for domain in blockList:
-                    f.write("host-suffix,%s,reject\n"%(domain))
+                    if isLite:
+                        f.write("host,%s,reject\n" % (domain))
+                    else:
+                        f.write("host-suffix,%s,reject\n" % (domain))
             
             if isLite:
                 logger.info("adblock QuantumultX Lite: block=%d"%(len(blockList)))

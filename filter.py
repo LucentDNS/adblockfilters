@@ -25,6 +25,22 @@ def _is_ip_literal(value: str) -> bool:
         return False
 
 
+def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklist):
+    """Build an exact-host Lite list from raw source domains before suffix compression."""
+    allow_domains = set(allow_domains)
+    blacklist = set(blacklist)
+    lite_domains = set(block_domains) & set(china_domains)
+    result = []
+    for domain in lite_domains:
+        if domain in blacklist:
+            continue
+        labels = domain.lower().split(".")
+        if any(".".join(labels[index:]) in allow_domains for index in range(len(labels))):
+            continue
+        result.append(domain)
+    return sorted(result)
+
+
 class Filter(object):
     def __init__(self, ruleList:List[Rule], path:str, outPath:str=None, sourcePath:str=None):
         self.ruleList = ruleList
@@ -331,7 +347,13 @@ class Filter(object):
             Surge             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblocksurge.list",            dnsRuleNames),
             V2ray             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockv2ray.txt",             dnsRuleNames),
         ]
+        # Lite uses raw DNS-validated domestic hostnames, not the already-compressed Full list.
+        # Each client adapter emits its own exact-host syntax for these entries.
+        liteBlockList = _build_lite_block_list(
+            blockSet_block, ChinaSet, unblockSet_unblock, blackSet
+        )
         for g in generaterList:
+            g.blockListLite = liteBlockList
             g.generateAll()
         
         # 生成用于域名连通性检测的全域名清单

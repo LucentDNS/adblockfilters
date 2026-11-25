@@ -32,7 +32,8 @@ class SingBox(APPBase):
                 f.write('  "version": 3,\n')
                 f.write('  "rules": [\n')
                 f.write('    {\n')
-                f.write('      "domain_suffix": [\n')
+                match_key = "domain" if isLite else "domain_suffix"
+                f.write('      "%s": [\n' % match_key)
                 for i, domain in enumerate(blockList):
                     comma = "," if i < len(blockList) - 1 else ""
                     f.write('        "%s"%s\n' % (domain, comma))

@@ -28,7 +28,7 @@ class DNSMasq(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock DNSMasq Lite\n")
-                    f.write("# Description: 适用于 DNSMasq 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("# Description: 适用于 DNSMasq 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用精确主机记录，不扩展到子域名。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock DNSMasq\n")
                     f.write("# Description: 适用于 DNSMasq 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -39,7 +39,10 @@ class DNSMasq(APPBase):
                 f.write("# Blocked domains: %s\n"%(len(blockList)))
                 f.write("#\n")
                 for domain in blockList:
-                    f.write("local=/%s/\n"%(domain))
+                    if isLite:
+                        f.write("host-record=%s,0.0.0.0,::\n" % (domain))
+                    else:
+                        f.write("local=/%s/\n" % (domain))
             
             if isLite:
                 logger.info("adblock DNSMasq Lite: block=%d"%(len(blockList)))

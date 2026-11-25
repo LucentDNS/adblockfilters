@@ -28,7 +28,7 @@ class MosDNS(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock MosDNS Lite\n")
-                    f.write("# Description: 适用于 MosDNS 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
+                    f.write("# Description: 适用于 MosDNS 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选，使用 full 精确匹配。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock MosDNS\n")
                     f.write("# Description: 适用于 MosDNS 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
@@ -39,7 +39,10 @@ class MosDNS(APPBase):
                 f.write("# Blocked domains: %s\n"%(len(blockList)))
                 f.write("#\n")
                 for domain in blockList:
-                    f.write("%s\n"%(domain))
+                    if isLite:
+                        f.write("full:%s\n" % (domain))
+                    else:
+                        f.write("%s\n" % (domain))
             
             if isLite:
                 logger.info("adblock MosDNS Lite: block=%d"%(len(blockList)))

@@ -189,19 +189,29 @@ jobs:
           for output_name in ("adblockdns.txt", "adblockdnslite.txt"):
               output_path = Path(".cache/out") / output_name
               output = output_path.read_text(encoding="utf-8")
-              blocked = {
-                  line[2:-1].strip()
-                  for line in output.splitlines()
-                  if line.startswith("||") and line.endswith("^")
-              }
-              allowed = {
-                  line[4:-1].strip()
-                  for line in output.splitlines()
-                  if line.startswith("@@||") and line.endswith("^")
-              }
+              blocked_exact, blocked_suffix = set(), set()
+              allowed_exact, allowed_suffix = set(), set()
+              for raw in output.splitlines():
+                  line = raw.strip()
+                  if not line or line.startswith(("!", "#")):
+                      continue
+                  if line.startswith("@@||") and line.endswith("^"):
+                      allowed_suffix.add(line[4:-1].strip())
+                  elif line.startswith("@@"):
+                      allowed_exact.add(line[2:].strip())
+                  elif line.startswith("||") and line.endswith("^"):
+                      blocked_suffix.add(line[2:-1].strip())
+                  elif "." in line and not any(ch in line for ch in " /\t^$*"):
+                      blocked_exact.add(line)
               for domain in whitelist:
-                  covered = any(domain == item or domain.endswith("." + item) for item in blocked)
-                  excepted = any(domain == item or domain.endswith("." + item) for item in allowed)
+                  covered = (
+                      domain in blocked_exact
+                      or any(domain == item or domain.endswith("." + item) for item in blocked_suffix)
+                  )
+                  excepted = (
+                      domain in allowed_exact
+                      or any(domain == item or domain.endswith("." + item) for item in allowed_suffix)
+                  )
                   if covered and not excepted:
                       failures.append((output_name, domain))
 
