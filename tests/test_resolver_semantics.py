@@ -77,19 +77,12 @@ def test_bare_wildcard_from_dns_source_is_preserved_as_browser_filter_only():
     assert unblock is None
     assert filt == (rule, None)
 
-def test_exact_legacy_facebook_trojan_host_is_blocked_without_parent_domain():
+def test_stale_legacy_blogspot_trojan_hosts_are_not_kept_without_current_evidence():
     from pathlib import Path
 
     root = Path(__file__).parents[1]
     rules = (root / "rules" / "myblock.txt").read_text(encoding="utf-8")
-    expected = "||girlownedbypolicelike.blogspot.com^"
 
-    assert expected in rules
+    assert "||2006mindfreaklike.blogspot.com^" not in rules
+    assert "||girlownedbypolicelike.blogspot.com^" not in rules
     assert "||blogspot.com^" not in rules
-
-    resolver = Resolver(".")
-    block, unblock, filt = resolver._Resolver__resolveDNS(expected)
-
-    assert block is not None
-    assert unblock is None
-    assert filt is None
