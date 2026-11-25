@@ -73,3 +73,45 @@ def test_v2ray_lite_uses_full_exact_domain_rule(tmp_path):
     output = generate_lite(V2ray, tmp_path, "adblockv2ray.txt")
     assert "full:cn.example.com @ads" in output
     assert "\ncn.example.com @ads\n" not in output
+
+
+def test_loon_lite_uses_exact_domain_rule(tmp_path):
+    from app.loon import Loon
+    output = generate_lite(Loon, tmp_path, "adblockloon.list")
+    assert "DOMAIN,cn.example.com,REJECT" in output
+    assert "DOMAIN-SUFFIX,cn.example.com" not in output
+
+
+def test_mihomo_lite_uses_exact_domain_payload(tmp_path):
+    from app.mihomo import Mihomo
+    output = generate_lite(Mihomo, tmp_path, "adblockmihomo.yaml")
+    assert "  - 'cn.example.com'" in output
+    assert "  - '+.cn.example.com'" not in output
+
+
+def test_quantumultx_lite_uses_exact_host_rule(tmp_path):
+    from app.quantumultx import QuantumultX
+    output = generate_lite(QuantumultX, tmp_path, "adblockqx.conf")
+    assert "host,cn.example.com,reject" in output
+    assert "host-suffix,cn.example.com,reject" not in output
+
+
+def test_shadowrocket_lite_uses_exact_domain_rule(tmp_path):
+    from app.shadowrocket import Shadowrocket
+    output = generate_lite(Shadowrocket, tmp_path, "adblockclash.list")
+    assert "DOMAIN,cn.example.com,REJECT-DROP" in output
+    assert "DOMAIN-SUFFIX,cn.example.com,REJECT-DROP" not in output
+
+
+def test_shadowrocket_module_lite_uses_exact_domain_rule(tmp_path):
+    from app.shadowrocket_module import ShadowrocketModule
+    output = generate_lite(ShadowrocketModule, tmp_path, "adblockshadowrocket.sgmodule")
+    assert "DOMAIN,cn.example.com,REJECT-DROP" in output
+    assert "DOMAIN-SUFFIX,cn.example.com,REJECT-DROP" not in output
+
+
+def test_surge_lite_uses_exact_domain_set_entry(tmp_path):
+    from app.surge import Surge
+    output = generate_lite(Surge, tmp_path, "adblocksurge.list")
+    assert "\ncn.example.com\n" in output
+    assert "\n.cn.example.com\n" not in output
