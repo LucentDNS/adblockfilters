@@ -1,4 +1,7 @@
-from scripts.audit_sources import covered_by_whitelist
+from scripts.audit_sources import (
+    covered_by_whitelist,
+    unexplained_absent_baseline_domains,
+)
 
 
 def test_project_whitelist_covers_exact_domain_and_children():
@@ -7,7 +10,6 @@ def test_project_whitelist_covers_exact_domain_and_children():
     assert covered_by_whitelist("cdn.example.com", whitelist)
     assert not covered_by_whitelist("api.spotify.com", whitelist)
     assert not covered_by_whitelist("example.net", whitelist)
-from scripts.audit_sources import unexplained_absent_baseline_domains
 
 
 def test_absent_baseline_domains_already_whitelisted_are_not_reported_unexplained():
