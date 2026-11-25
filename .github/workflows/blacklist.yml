@@ -266,6 +266,15 @@ jobs:
             fi
           fi
 
+          # The QA branch's only unique regression test has been copied into main.
+          if git ls-remote --exit-code --heads origin qa/independent-dns-group-regression >/dev/null 2>&1; then
+            if git push origin --delete qa/independent-dns-group-regression; then
+              echo "Removed merged QA branch qa/independent-dns-group-regression."
+            else
+              echo "::warning::Could not delete merged QA branch; DNS validation and production build will continue."
+            fi
+          fi
+
       - name: Trigger production rule build after dns-validation-state publication
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
