@@ -263,7 +263,19 @@ class Filter(object):
         return domanList,domanSet_all
 
     def __filterSort(self, filterDict:Dict[str,str], blockSet:Set[str], unblockSet:Set[str], blackSet:Set[str], whiteSet:Set[str], whiteDict:Dict[str,Set[str]]) -> Tuple[list[str], Set[str]]:
-        filterList = list(set(filterDict) - whiteSet) # 剔除精确浏览器规则例外
+        # Exclude only explicitly reviewed, exact browser rules. This is separate
+        # from domain-wide white.txt so path-specific ad rules on the same host
+        # remain active.
+        exclusion_path = os.path.join(os.path.dirname(__file__), "rules", "filter-exclude.txt")
+        filter_exclude_set = set()
+        if os.path.isfile(exclusion_path):
+            with open(exclusion_path, "r", encoding="utf-8") as stream:
+                filter_exclude_set = {
+                    line.strip()
+                    for line in stream
+                    if line.strip() and not line.lstrip().startswith(("!", "#"))
+                }
+        filterList = list(set(filterDict) - whiteSet - filter_exclude_set)
         whiteDomains = {
             (f"{subdomain}.{fld}" if subdomain else fld)
             for fld, subdomains in whiteDict.items()
