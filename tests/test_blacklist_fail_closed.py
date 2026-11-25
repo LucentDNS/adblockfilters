@@ -48,3 +48,25 @@ def test_blacklist_abnormal_threshold_blocks_mass_dns_failure():
     assert _blacklist_abnormal(195000, 390000) is False
     assert _blacklist_abnormal(61000, 390000) is False
     assert _blacklist_abnormal(0, 0) is False
+
+
+def test_empty_blacklist_overwrites_stale_previous_state(tmp_path):
+    path = tmp_path / "black.txt"
+    path.write_text("stale.example\n", encoding="utf-8")
+    instance = BlackList.__new__(BlackList)
+    instance._BlackList__blacklistFile = str(path)
+
+    instance._BlackList__generateBlackList([])
+
+    assert path.read_text(encoding="utf-8") == ""
+
+
+def test_empty_china_list_overwrites_stale_previous_state(tmp_path):
+    path = tmp_path / "china.txt"
+    path.write_text("stale.example.cn\n", encoding="utf-8")
+    instance = BlackList.__new__(BlackList)
+    instance._BlackList__ChinalistFile = str(path)
+
+    instance._BlackList__generateChinaList([])
+
+    assert path.read_text(encoding="utf-8") == ""
