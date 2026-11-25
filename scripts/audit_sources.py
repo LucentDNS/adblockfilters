@@ -725,11 +725,6 @@ def main():
         | baseline_only_source_allow_covered
     )
     source_not_effectively_covered = source_unexplained
-    blacklist_overlap = baseline_blocks & blacklist_domains
-    whitelist_covered = {
-        domain for domain in baseline_blocks
-        if covered_by_whitelist(domain, project_whitelist)
-    }
     provenance_path = ROOT / ".cache" / "domain" / "input-provenance.txt"
     input_provenance = {}
     if provenance_path.exists():
