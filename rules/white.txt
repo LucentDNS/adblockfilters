@@ -327,3 +327,9 @@ pgpartner.com
 puma.112.2o7.net
 s.optnx.com
 vitacost.122.2o7.net
+
+# Preserve upstream DNS exception: ING Bank content endpoint.
+@@||content.ingbank.pl^
+
+# Preserve upstream DNS exception: all-law endpoint under the shared 2o7.net parent.
+@@||alllaw.112.2o7.net^
