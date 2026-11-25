@@ -108,3 +108,31 @@ def test_microsoft_defender_core_mobile_endpoints_are_exact_whitelist_entries():
         for subdomain in subdomains
     }
     assert expected <= normalized
+
+
+def test_service_whitelist_entries_are_scoped_to_confirmed_hosts():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    entries = {
+        line.strip()
+        for line in (root / "rules" / "white.txt").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith(("#", "!"))
+    }
+    expected_360_hosts = {
+        "sdk.live.360.cn",
+        "video-cloudcontrol.iot.360.cn",
+        "mdm.openapi.360.cn",
+        "fastconn-api.iot.360.cn",
+        "app.home.360.cn",
+        "video-licenseauth.iot.360.cn",
+        "dp.push.dc.360.cn",
+    }
+
+    assert expected_360_hosts <= entries
+    assert "ai.shouji.360.cn" in entries
+    assert "sms.ads.heytapmobi.com" in entries
+    assert "360.cn" not in entries
+    assert "shouji.360.cn" not in entries
+    assert "ads.heytapmobi.com" not in entries
+    assert "tanx.com" not in entries
