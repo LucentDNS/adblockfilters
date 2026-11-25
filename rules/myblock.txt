@@ -1,13 +1,12 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! 收集补充规则
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! 项目维护补充规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 拦截规则
 ! EasyPrivacy: third-party tracking endpoint on Akamai CDN; block only this hostname.
 ! https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty_international.txt
 ||fb_servpub-a.akamaihd.net^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! High-confidence phishing domains verified by multiple independent reputation providers (2026-11-23/25).
+! Phishing and brand-impersonation indicators reviewed 2026-11-23/25; evidence links are listed per domain.
 ! https://gridinsoft.com/online-virus-scanner/url/easywebtd_authenticate-com
 ||easywebtd-authenticate.com^
 ! Arbitrum brand-impersonation phishing host; multiple phishing/Spamhaus-related signals.
@@ -20,7 +19,7 @@
 ! Newly registered Google-lookalike domain resolving to a Spamhaus DROP address; certificate cluster also contains multiple impersonation hosts.
 ! https://domainspoof.com/brands/google
 ||google-store.cn^
-! Trust Wallet impersonation cluster; domains are recently registered and hosted confirmed phishing.
+! DomainSpoof identifies these domains as a Trust Wallet impersonation cluster.
 ! https://domainspoof.com/brands/trust-wallet
 ||trustwallet-eng.com^
 ||trustwallet-eng.org^
@@ -31,34 +30,34 @@
 ! https://es.gridinsoft.com/online-virus-scanner/url/swifttrustcb-com
 ||swifttrustcb.com^
 
-! Goldman Sachs impersonation; Gridinsoft phishing and three external provider warnings.
+! Gridinsoft classifies this Goldman Sachs lookalike as phishing.
 ! https://gridinsoft.com/online-virus-scanner/url/goldmansachjp-net
 ||goldmansachjp.net^
-! Habib Card phishing; Gridinsoft and three external provider warnings.
+! Gridinsoft classifies this Habib Card lookalike as phishing.
 ! https://gridinsoft.com/online-virus-scanner/url/habib_card-com
 ||habib-card.com^
 ! ClearFake payload-delivery IOC, ThreatFox confidence 90%.
 ! https://threatfox.abuse.ch/ioc/2033151/
 ||intuit-office-login.com^
-! WhatsApp lookalike; phishing-host infrastructure and PhishDestroy community listing.
+! DomainSpoof identifies this as a WhatsApp-lookalike domain.
 ! https://domainspoof.com/brands/whatsapp
 ||m-whatsapp.net^
-! Newly registered WhatsApp lookalike campaign; 1/100 trust score, two phishing-provider warnings, same IP as related fake login domains.
+! Gridinsoft reports a very low trust score for this WhatsApp-lookalike domain.
 ! https://gridinsoft.com/online-virus-scanner/url/smswhatsapp-com
 ! https://detect.dmarc-expert.com/?is_third_party=false&page=18
 ||smswhatsapp.com^
-! WhatsApp impersonation domain; 1/100 trust score and four external security warnings (DNS8, SOCRadar phishing; alphaMountain, Fortinet spam).
+! Gridinsoft reports a very low trust score for this WhatsApp-lookalike domain.
 ! https://gridinsoft.com/online-virus-scanner/url/whatsappdns-com
 ||whatsappdns.com^
 
 ! Established DNS/adblock rule source identifies this exact host as advertising tracking infrastructure.
 ! https://github.com/vhvg/Surge-2/blob/master/Module/Ad%20Block.sgmodule
 ||apxadtracking.net^
-! PhishDestroy critical verdict (95/100), VirusTotal 18/91, Cloudflare Radar malware classification.
+! PhishDestroy marks this domain as a critical phishing indicator.
 ! https://phishdestroy.io/domain/antrenbitapptech.com/
 ||antrenbitapptech.com^
 
-! Gridinsoft phishing verdict with 17 external provider warnings; ScamAdviser also reports iQ Abuse Scan and IPQS phishing flags.
+! Gridinsoft reports phishing; ScamAdviser also references iQ Abuse Scan and IPQS flags.
 ! https://gridinsoft.com/online-virus-scanner/url/iplog-co
 ! https://www.scamadviser.com/check-website/iplog.co
 ||iplog.co^
@@ -66,7 +65,7 @@
 ! https://github.com/fmz200/wool_scripts/blob/main/Shadowrocket/module/blockAds.srmodule
 ! https://github.com/zqzess/rule_for_quantumultX/blob/master/Loon/Plugin/AdBlock.plugin
 ||iqiyim.adtrack.enlightent.cn^
-! Gridinsoft phishing verdict (1/100) with DNS8 and SOCRadar external phishing warnings.
+! Gridinsoft reports a very low trust score and phishing classification.
 ! https://gridinsoft.com/online-virus-scanner/url/atlasfaktow-com
 ||atlasfaktow.com^
 ! Fake WhatsApp login page; PhishDestroy listing and multiple Gridinsoft detections.
@@ -86,16 +85,18 @@
 ! Listed as an active Phantom wallet phishing domain (2026-11-17).
 ! https://thecryptoguardian.com/crypto-phishing-checker/phantom/
 ||official-phantom.com^
+! Tencent MDT telemetry/tracking endpoint is listed in two maintained hosts blocklists.
+! https://github.com/TonyRL/blocklist/blob/master/hosts
+! https://github.com/ultranity/ultranity.github.io/blob/master/hosts0.txt
+! Exact-host scope only; the parent qq.com namespace is never blocked.
+||oth.str.mdt.qq.com^
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! The following wildcard/path-scoped exceptions are browser-filter rules, not DNS-domain rules.
 ! 部分邮件确认按钮跳转
 @@||r.*.awstrack.me^
 ! https://github.com/217heidai/adblockfilters/issues/131
 @@||clients2.googleusercontent.com/crx/blobs/Ad_*^
 
-! Tencent MDT telemetry/tracking endpoint independently listed by multiple maintained hosts blocklists.
-! https://github.com/TonyRL/blocklist/blob/master/hosts
-! https://github.com/ultranity/ultranity.github.io/blob/master/hosts0.txt
-! Exact-host scope only; the parent qq.com namespace is never blocked.
-||oth.str.mdt.qq.com^

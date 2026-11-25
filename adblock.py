@@ -8,6 +8,7 @@ from tld.utils import update_tld_names
 from readme import ReadMe
 from updater import Updater
 from filter import Filter
+from resolver import configure_logging
 
 
 def _sha256_file(path):

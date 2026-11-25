@@ -214,6 +214,31 @@ jobs:
           printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > dns-validation-bootstrap-complete-v2.txt
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
+      - name: Review legacy upstream-only domains with both DNS groups
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/baseline-review
+          curl --fail --location --silent --show-error --retry 3 --retry-all-errors \\
+            --connect-timeout 20 --max-time 120 \\
+            -o .cache/baseline-review/baseline-only-unexplained-after-manual.txt \\
+            https://github.com/LucentDNS/adblockfilters/releases/download/audit/baseline-only-unexplained-after-manual.txt
+          test -s .cache/baseline-review/baseline-only-unexplained-after-manual.txt
+          python -m py_compile scripts/review_baseline_only.py
+          python scripts/review_baseline_only.py \\
+            --input .cache/baseline-review/baseline-only-unexplained-after-manual.txt \\
+            --output-dir .cache/baseline-review \\
+            --concurrency 100
+          cat .cache/baseline-review/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload legacy baseline review
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: legacy-baseline-review
+          path: .cache/baseline-review/
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Upload log on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

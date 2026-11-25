@@ -1,4 +1,4 @@
-﻿import re
+import re
 from typing import List
 
 from loguru import logger
@@ -23,7 +23,7 @@ class ReadMe(object):
     def getRules(self) -> List[Rule]:
         logger.info("resolve readme...")
         self.ruleList = []
-        with open(self.filename, "r") as f:
+        with open(self.filename, "r", encoding="utf-8-sig") as f:
             for line in f:
                 line = line.replace('\r', '').replace('\n', '')
                 if line.find('|')==0 and line.rfind('|')==len(line)-1:
@@ -106,12 +106,12 @@ class ReadMe(object):
         with open(self.filename, "w", encoding="utf-8", newline="\n") as f:
             f.write("# AdBlock DNS Filters\n")
             f.write("去广告合并规则，每8个小时更新一次。\n")
-            f.write("个人收藏了不少广告过滤规则，但是每次往新设备添加的时候很是头疼，于是写了这个项目，定时自动获取各规则源更新，生成合并规则库。\n\n")
+            f.write("本项目聚合多个公开维护的广告、跟踪及浏览器过滤规则源，自动更新、去重并生成适配多种客户端的 Full/Lite 规则。\n\n")
             f.write("本仓库基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 持续维护，保留原作者的规则组织和 Full/Lite 设计，并加强来源校验、双组 DNS 交叉验证与构建回归检查。\n\n")
             f.write("## 说明\n")
             f.write("1. 定时从上游各规则源获取更新，合并去重。\n")
             f.write("2. 使用国内、国际两组相互独立的 DNS 验证组，每组配置 3 个非拦截公共 DNS 上游，分别解析上游规则中的域名。仅当两组均确认 NXDOMAIN 时才剔除；解析超时、无地址、SERVFAIL 或两组结果不一致时保留，避免把临时故障误判为失效域名。\n")
-            f.write("3. 本项目以合并、去重和去除经双组 DNS 确认的无效域名为主，不随意改写上游规则语义；项目自维护的 myblock.txt（补充拦截）和 white.txt（放行例外）单独管理，并纳入来源校验与误拦截回归检查。如发现误拦截，请反馈上游；经复现验证后再调整项目白名单。\n")
+            f.write("3. 本项目以合并、去重和去除经双组 DNS 确认的无效域名为主，不随意改写上游规则语义；项目自维护的 myblock.txt（补充拦截及浏览器例外）和 white.txt（误拦截放行例外）分别管理，并纳入来源校验与误拦截回归检查。误拦截修正以可复现证据为准，优先使用精确主机或路径例外，避免扩大父域名放行范围。\n")
             f.write("4. 规则文件托管于 GitHub Releases 和 dist 分支，加速通道为 gh-proxy.com / ghfast.top / ghproxy.net，请根据网络情况选择可用订阅地址。\n\n")
             f.write("## 正式订阅（仅列出构建验证通过的产物）\n\n")
             f.write("1. 规则1' 为规则1的 Lite 版，依据双组 DNS 验证的国内域名集合筛选；AdGuard DNS Lite 沿用 `||domain^` 语义（主域名及其子域名）；其他 DNS 客户端按各自格式输出精确域名或主机匹配，体积较小。\n")

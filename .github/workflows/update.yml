@@ -15,9 +15,6 @@ on:
   push:
     branches: [main]
     paths:
-      - ".editorconfig"
-      - "pyproject.toml"
-      - "requirements-dev.txt"
       - "adblock.py"
       - "filter.py"
       - "app/**"

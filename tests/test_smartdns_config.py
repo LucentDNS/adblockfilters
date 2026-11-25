@@ -115,3 +115,15 @@ def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
     assert "127\\.0\\.0\\.1:5054" in workflow
     assert "sock.recvfrom(1024)" not in workflow
     assert 'cat "$SMARTDNS_LOG"' in workflow
+
+
+
+def test_legacy_baseline_only_domains_are_reviewed_with_both_dns_groups():
+    workflow = (
+        Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "baseline-only-unexplained-after-manual.txt" in workflow
+    assert "python scripts/review_baseline_only.py" in workflow
+    assert "nxdomain-both-groups.txt" in workflow
+    assert "Upload legacy baseline review" in workflow

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from resolver import Resolver
+from resolver import Resolver, configure_logging
 
 CRITICAL_FILE = ROOT / "tests" / "data" / "critical-domains.txt"
 MANUAL_BLOCK_FILE = ROOT / "tests" / "data" / "manual-block-domains.txt"
@@ -212,4 +212,5 @@ def main():
 
 
 if __name__ == "__main__":
+    configure_logging()
     main()

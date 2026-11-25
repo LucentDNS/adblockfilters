@@ -12,8 +12,8 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
     assert "20261120" not in generated
     assert "217heidai/adblockfilters" in generated
     assert "## 正式订阅（仅列出构建验证通过的产物）" in generated
-    assert "myblock.txt（补充拦截）" in generated
-    assert "white.txt（放行例外）" in generated
+    assert "myblock.txt（补充拦截及浏览器例外）" in generated
+    assert "white.txt（误拦截放行例外）" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
     # The raw subscription URL is also embedded inside each of the three
@@ -23,6 +23,8 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
         "[原始链接](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt)"
     ) == 1
     assert "每 8 小时自动构建" in generated
+    assert "本项目聚合多个公开维护的广告、跟踪及浏览器过滤规则源" in generated
+    assert "精确主机或路径例外" in generated
     import re
     subscriptions = re.findall(
         r"\[原始链接\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",

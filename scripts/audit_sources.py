@@ -20,7 +20,7 @@ from tld import get_tld
 from tld.utils import update_tld_names
 
 from readme import ReadMe, Rule
-from resolver import Resolver
+from resolver import Resolver, configure_logging
 SOURCE_DIR = ROOT / ".cache" / "source"
 OUT_DIR = ROOT / ".cache" / "audit"
 CANDIDATE_SOURCE_DIR = OUT_DIR / "candidate-source"
@@ -1410,4 +1410,5 @@ def main():
 
 
 if __name__ == "__main__":
+    configure_logging()
     main()

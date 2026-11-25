@@ -48,6 +48,7 @@ def test_dns_validation_has_priority_in_shared_production_concurrency_group():
 def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     update_paths = _push_paths("update.yml")
     dns_paths = _push_paths("blacklist.yml")
+    audit_paths = _push_paths("audit-sources.yml")
 
     assert len(update_paths) == len(set(update_paths))
     assert len(dns_paths) == len(set(dns_paths))
@@ -61,7 +62,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "README.md",
         "requirements.txt",
         "rules/myblock.txt",
-        "rules/white.txt",
+        "rules/myblock.txt",
     } <= set(dns_paths)
 
     assert {
@@ -70,4 +71,13 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "app/**",
         "rules/filter-exclude.txt",
         "scripts/audit_sources.py",
+        "rules/white.txt",
     } <= set(update_paths)
+    assert "rules/white.txt" not in dns_paths
+    assert "scripts/review_baseline_only.py" in dns_paths
+    assert not any(path.startswith("tests/") for path in dns_paths)
+
+    ci_only_paths = {".editorconfig", "pyproject.toml", "requirements-dev.txt"}
+    assert ci_only_paths.isdisjoint(update_paths)
+    assert ci_only_paths.isdisjoint(dns_paths)
+    assert ci_only_paths <= set(audit_paths)

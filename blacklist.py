@@ -120,7 +120,7 @@ class DomainDatabase(object):
                                                     tld TEXT)'%(self.__table_domain))
             self.__execute('CREATE UNIQUE INDEX INDEX_%s_UNIQUE on %s (domain)'%(self.__table_domain, self.__table_domain))
             self.__execute('CREATE INDEX index_%s on %s (isBlock, isChina, timeStamp, tld, fld, domain, ip, port)'%(self.__table_domain, self.__table_domain))
-    
+
     def getAll(self) -> List[Tuple]:
         sql = "SELECT domain,tld,fld,subdomain,ip,port,isBlock,isChina,timeStamp,ipList FROM %s"%(self.__table_domain)
         return self.__execute(sql)
@@ -181,7 +181,7 @@ class DOMAIN(object):
             self.__isChina = 0
             self.__timeStamp = int(time.time())
             self.__ipList = []
-        
+
     def __ip_or_domain(self, address:str) -> Tuple[str]: # ip, fld, subdomain
         tld, fld, subdomain, ip, port = None, None, None, None, None
         try:
@@ -205,7 +205,7 @@ class DOMAIN(object):
             except Exception as e:
                 logger.error('"%s": not domain or ip'%(address))
                 return tld, fld, subdomain, ip, port
-    
+
     def getTimeStamp(self) -> int:
         return self.__timeStamp
 
@@ -215,17 +215,17 @@ class DOMAIN(object):
             self.__isBlock = f
             self.__timeStamp = int(time.time())
             self.__update = True
-    
+
     def getBlock(self) -> bool:
         return True if self.__isBlock else False
-    
+
     def setChina(self, isChina:bool):
         f = 1 if isChina else 0
         if self.__isChina != f:
             self.__isChina = f
             self.__timeStamp = int(time.time())
             self.__update = True
-    
+
     def getChina(self) -> bool:
         return True if self.__isChina else False
 
@@ -234,7 +234,7 @@ class DOMAIN(object):
         self.__ipList = ipList
         self.__timeStamp = int(time.time())
         self.__update = True
-    
+
     def getIPList(self) -> List[str]:
         return self.__ipList
 
@@ -270,7 +270,7 @@ class BlackList(object):
         self.__maxTask = 200
 
         self.__db = DomainDatabase(self.__databaseFile)
-    
+
     def close(self):
         self.__db.close()
 
@@ -287,7 +287,7 @@ class BlackList(object):
             fileNameDownload = fileName + ".download"
             if os.path.exists(fileNameDownload):
                 os.remove(fileNameDownload)
-            
+
             with httpx.Client() as client:
                 logger.info(f'download %s[%s]' % (os.path.basename(fileName), url))
                 response = client.get(url)
@@ -308,7 +308,7 @@ class BlackList(object):
                     return False
                 with open(fileNameDownload, 'wb') as f:
                     f.write(response.content)
-            
+
             # Atomic replacement preserves the last known-good cache if the final move fails.
             os.replace(fileNameDownload, fileName)
 
@@ -322,7 +322,7 @@ class BlackList(object):
         domainDict = dict()
         try:
             if os.path.exists(self.__domainlistFile):
-                with open(self.__domainlistFile, 'r') as f:
+                with open(self.__domainlistFile, 'r', encoding='utf-8-sig') as f:
                     for line in f.readlines():
                         # 去掉换行符
                         line = line.replace('\r', '').replace('\n', '').strip().lower().strip(".")
@@ -332,7 +332,7 @@ class BlackList(object):
                             continue
                         # 去掉注释
                         if line.startswith('#'):
-                            continue                        
+                            continue
                         domainDict[line] = DOMAIN(line)
 
             logger.info("domain dict: %d"%(len(domainDict)))
@@ -340,7 +340,7 @@ class BlackList(object):
         except Exception as e:
             logger.error("%s"%(e))
             raise
-        
+
     def __getDomainSet_CN(self) -> Tuple[Set]:
         logger.info("resolve China domain list...")
         fullSet,domainSet,regexpSet,keywordSet = set(),set(),set(),set()
@@ -350,7 +350,7 @@ class BlackList(object):
                 raise RuntimeError("China direct-domain source is missing or empty")
             if not downloaded:
                 logger.warning("Using previously cached China direct-domain source")
-            with open(self.__directlistFile, 'r') as f:
+            with open(self.__directlistFile, 'r', encoding='utf-8-sig') as f:
                     for line in f.readlines():
                         # 去掉换行符
                         line = line.replace('\r', '').replace('\n', '').strip()
@@ -374,7 +374,7 @@ class BlackList(object):
                         if line.startswith('domain:'):
                             domainSet.add(line[len('domain:'):])
                             continue
-            
+
             if not (fullSet or domainSet or regexpSet or keywordSet):
                 raise RuntimeError("China direct-domain source contains no usable rules")
             logger.info("China domain list: full[%d], domain[%d], regexp[%d], keyword[%d]"%(len(fullSet),len(domainSet),len(regexpSet),len(keywordSet)))
@@ -382,7 +382,7 @@ class BlackList(object):
         except Exception as e:
             logger.error("%s"%(e))
             raise
-        
+
     def __getIPDict_CN(self) -> Tuple[List[int], List[int]]:
         logger.info("resolve China IP list...")
         starts, ends = [], []
@@ -392,7 +392,7 @@ class BlackList(object):
                 raise RuntimeError("China IPv4 range source is missing or empty")
             if not downloaded:
                 logger.warning("Using previously cached China IPv4 range source")
-            with open(self.__IPlistFile, 'r') as f:
+            with open(self.__IPlistFile, 'r', encoding='utf-8-sig') as f:
                     for line in f.readlines():
                         row = line.replace('\r', '').replace("\n", "").split("/")
                         if len(row) != 2:
@@ -414,7 +414,7 @@ class BlackList(object):
         except Exception as e:
             logger.error("%s"%(e))
             raise
-    
+
     async def __resolve(self, dnsresolvers, domain) -> Tuple[List[str], str]:
         """Resolve through independent domestic/global SmartDNS groups.
 
@@ -465,7 +465,7 @@ class BlackList(object):
             return [], "no_address"
         return [], "unknown"
 
-    
+
     async def __pingx(self, dnsresolver:List[DNSResolver], domain:DOMAIN, semaphore):
         async def connect_with_timeout(ip, port, timeout=5):
             writer = None
@@ -475,7 +475,7 @@ class BlackList(object):
                     asyncio.open_connection(ip, port),
                     timeout=timeout
                 )
-                return True                
+                return True
             except asyncio.TimeoutError:
                 logger.error('"%s": connect time out' % (ip))
                 return False
@@ -532,22 +532,22 @@ class BlackList(object):
         try:
             if os.path.exists(self.__blacklistFile):
                 os.remove(self.__blacklistFile)
-            
-            with open(self.__blacklistFile, "w") as f:
+
+            with open(self.__blacklistFile, "w", encoding="utf-8", newline="\n") as f:
                 for domain in blackList:
                     f.write("%s\n"%(domain))
             logger.info("black domain: %d"%(len(blackList)))
         except Exception as e:
             logger.error("%s"%(e))
             raise
-    
+
     def __generateChinaList(self, ChinaList):
         logger.info("generate China list...")
         try:
             if os.path.exists(self.__ChinalistFile):
                 os.remove(self.__ChinalistFile)
-            
-            with open(self.__ChinalistFile, "w") as f:
+
+            with open(self.__ChinalistFile, "w", encoding="utf-8", newline="\n") as f:
                 for domain in ChinaList:
                     f.write("%s\n"%(domain))
             logger.info("China domain: %d"%(len(ChinaList)))
@@ -571,7 +571,7 @@ class BlackList(object):
             semaphore = asyncio.Semaphore(self.__maxTask)
 
             tasks = []
-            now = int(time.time()) 
+            now = int(time.time())
             for _,v in domainDict.items():
                 ipList = v.getIPList()
                 if _needs_dns_validation(ipList, v.getTimeStamp(), now, v.getUpdate()):
@@ -628,10 +628,10 @@ class BlackList(object):
                 if _ip_in_ranges(IPy.parseAddress(ip)[0], ip_starts, ip_ends):
                     domain.setChina(True)
                     return domain
-            
+
             domain.setChina(False)
             return domain
-        except Exception as e: 
+        except Exception as e:
             logger.error('"%s": not domain'%(domain))
             domain.setChina(False)
             return domain
@@ -650,7 +650,7 @@ class BlackList(object):
         except Exception as e:
             logger.error("%s"%(e))
             raise
-    
+
     def __updateDomainDict_db(self, domainDict:Dict[str, DOMAIN]):
         logger.info("update domain list to db...")
         try:
@@ -658,7 +658,7 @@ class BlackList(object):
             for _,v in domainDict.items():
                 if v.getUpdate():
                     L.append(v.toTuple())
-            
+
             if len(L):
                 self.__db.updateALL(L)
         except Exception as e:
@@ -679,16 +679,16 @@ class BlackList(object):
             domainDict = self.__getDomainDict()
             if len(domainDict) < 1:
                 raise RuntimeError("Domain input is missing or contains no usable domains")
-            
+
             # 获取数据库域名清单
             domainDict, deleteList = self.__getDomainDict_db(domainDict)
-            
+
             # 获取直连域名清单 https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/direct.txt
             fullSet_CN,domainSet_CN,regexpSet_CN,keywordSet_CN = self.__getDomainSet_CN()
 
             # 获取国内 IP 清单 https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/ipv4_china.txt
             IPRanges_CN = self.__getIPDict_CN()
-            
+
             # 域名解析
             '''
             #################################################################
@@ -711,7 +711,7 @@ class BlackList(object):
                 domain:DOMAIN = future.result()
                 if domain.getChina():
                     domainDict[domain.domain] = domain
-            
+
             # 生成 Black 域名列表
             blackList = []
             for k,v in domainDict.items():
@@ -738,14 +738,14 @@ class BlackList(object):
             ChinaList.sort()
             # 同样必须覆盖空结果，不能把过期国内域名清单带入下一轮构建。
             self.__generateChinaList(ChinaList)
-            
+
             # 更新数据库域名清单
             self.__updateDomainDict_db(domainDict)
 
             # 移除多余域名
             if len(deleteList):
                 self.__deleteDomian_db(deleteList)
-            
+
         except Exception as e:
             logger.error("%s"%(e))
             raise
@@ -764,7 +764,7 @@ if __name__ == "__main__":
 
     # 更新 tld
     update_tld_names()
-    
+
     blackList = BlackList(path)
     blackList.generate()
     blackList.close()

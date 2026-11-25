@@ -7,12 +7,22 @@ from tld import get_tld
 import IPy
 from loguru import logger
 
+
+def configure_logging():
+    logger.remove()
+    logger.add(
+        sys.stderr,
+        level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+        backtrace=False,
+        diagnose=False,
+    )
+
 from readme import Rule
 
 class Resolver(object):
     def __init__(self, path:str):
         self.path = path
-    
+
     def __ip_or_domain(self, address:str) -> Tuple[str]: # ip, fld, subdomain
         ip, fld, subdomain = None, None, None
         try:
@@ -28,7 +38,7 @@ class Resolver(object):
             except Exception as e:
                 pass
             return ip, fld, subdomain
-    
+
     def __analysis(self, address:str) -> Tuple[str]:
         address_tmp = address
         if address.rfind(":") > 0:
@@ -52,10 +62,10 @@ class Resolver(object):
                     break
 
                 line = line.replace('\t', ' ')
-                
+
                 if line.find('#') > 0:
                     line = line[:line.find('#')].strip()
-                
+
                 if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
                     row = line.split(' ')
                     domain = row[-1]
@@ -143,7 +153,7 @@ class Resolver(object):
                 if match(r'.*\^$', filter):
                     domain_tmp = filter[:-1]
                     break
-                
+
                 # ##
                 # example.com##selector
                 # ~example.com##selector
@@ -199,7 +209,7 @@ class Resolver(object):
                     if domain_tmp.find(',') > 0:
                         domain_tmp = None
                     break
-                
+
                 # a[href^="http://sarcasmadvisor.com/"]
                 if match(r'.*http:\/\/.*', filter):
                     domain_tmp = filter[filter.find('http://') + len('http://'):]
@@ -229,10 +239,10 @@ class Resolver(object):
                     if domain_tmp.find(',') > 0:
                         domain_tmp = None
                     break
-                
+
                 # 其它规则
                 raise Exception('"%s": can not resolve domain or ip'%(filter))
-            
+
             if domain_tmp:
                 if domain_tmp.find('"') > 0:
                     domain_tmp = domain_tmp[:domain_tmp.find('"')]
@@ -339,7 +349,7 @@ class Resolver(object):
                     break
                 # other
                 raise Exception('"%s": not keep'%(line))
-            
+
             if filter:
                 filter = self.__resolveFilterDomain(filter)
             return block,unblock,filter
@@ -438,7 +448,7 @@ class Resolver(object):
         if not os.path.exists(filename):
             return blockDict,unblockDict,filterDict
 
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8-sig") as f:
             for line in f:
                 # 去掉换行符
                 line = line.replace('\r', '').replace('\n', '').strip()
@@ -447,7 +457,7 @@ class Resolver(object):
                     continue
 
                 block = self.__resolveHost(line)
-                
+
                 if block:
                     if block[0] not in blockDict:
                         blockDict[block[0]] = {block[1],}
@@ -466,7 +476,7 @@ class Resolver(object):
         if not os.path.exists(filename):
             return blockDict,unblockDict,filterDict
 
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8-sig") as f:
             for line in f:
                 # 去掉换行符
                 line = line.replace('\r', '').replace('\n', '').strip()
@@ -475,7 +485,7 @@ class Resolver(object):
                     continue
 
                 block,unblock,filter = self.__resolveDNS(line)
-                
+
                 if block:
                     if block[0] not in blockDict:
                         blockDict[block[0]] = {block[1],}
@@ -490,7 +500,7 @@ class Resolver(object):
                     filterDict[filter[0]] = filter[1]
         logger.info("%s: block=%d, unblock=%d, filter=%d"%(rule.name,len(blockDict),len(unblockDict),len(filterDict)))
         return blockDict,unblockDict,filterDict
-    
+
     def resolveFilter(self, rule:Rule) -> Tuple[Dict[str,Set[str]],Dict[str,Set[str]],Dict[str,str]]:
         blockDict:Dict[str,Set[str]] = dict()
         unblockDict:Dict[str,Set[str]] = dict()
@@ -501,7 +511,7 @@ class Resolver(object):
         if not os.path.exists(filename):
             return blockDict,unblockDict,filterDict
 
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8-sig") as f:
             for line in f:
                 # 去掉换行符
                 line = line.replace('\r', '').replace('\n', '').strip()
@@ -510,7 +520,7 @@ class Resolver(object):
                     continue
 
                 block,unblock,filter = self.__resolveFilter(line)
-                
+
                 if block:
                     if block[0] not in blockDict:
                         blockDict[block[0]] = {block[1],}

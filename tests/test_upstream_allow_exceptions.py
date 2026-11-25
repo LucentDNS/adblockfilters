@@ -61,3 +61,20 @@ def test_manual_dns_supplement_rules_use_dns_label_syntax():
         labels = domain.split(".")
         assert len(labels) >= 2, domain
         assert all(1 <= len(label) <= 63 and pattern.fullmatch(label) for label in labels), domain
+
+
+
+def test_manual_block_rules_precede_browser_allow_exceptions():
+    path = Path(__file__).parents[1] / "rules" / "myblock.txt"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    allow_section = lines.index("! 放行规则")
+
+    assert all(
+        index < allow_section
+        for index, line in enumerate(lines)
+        if line.strip().startswith("||")
+    )
+    assert (
+        "! The following wildcard/path-scoped exceptions are browser-filter rules, "
+        "not DNS-domain rules."
+    ) in lines

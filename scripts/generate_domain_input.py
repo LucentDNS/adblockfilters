@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from readme import ReadMe, Rule
-from resolver import Resolver
+from resolver import Resolver, configure_logging
 from updater import Updater
 SOURCE_DIR = ROOT / ".cache" / "source"
 DOMAIN_DIR = ROOT / ".cache" / "domain"
@@ -109,4 +109,5 @@ def main():
 
 
 if __name__ == "__main__":
+    configure_logging()
     main()
