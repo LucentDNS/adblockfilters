@@ -59,7 +59,7 @@ def test_invizible_lite_uses_dnscrypt_exact_domain_prefix(tmp_path):
 
 def test_hosts_lite_uses_exact_host_mapping(tmp_path):
     output = generate_lite(Hosts, tmp_path, "adblockhosts.txt")
-    assert "0.0.0.0\\tcn.example.com" in output
+    assert "0.0.0.0\tcn.example.com" in output
 
 
 def test_singbox_lite_uses_exact_domain_key(tmp_path):

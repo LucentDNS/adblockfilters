@@ -30,3 +30,13 @@ def test_lite_does_not_promote_a_non_domestic_parent_or_allowlisted_host():
     assert _build_lite_block_list(
         block_domains, china_domains, allow_domains, blacklist
     ) == ["api.example.com"]
+
+
+
+def test_lite_respects_project_whitelist_parent_and_case_insensitive_domains():
+    assert _build_lite_block_list(
+        {"tracker.example.com", "ads.example.net"},
+        {"TRACKER.EXAMPLE.COM", "ads.example.net"},
+        {"example.com"},
+        set(),
+    ) == ["ads.example.net"]

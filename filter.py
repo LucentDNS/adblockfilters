@@ -26,15 +26,21 @@ def _is_ip_literal(value: str) -> bool:
 
 
 def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklist):
-    """Build an exact-host Lite list from raw source domains before suffix compression."""
-    allow_domains = set(allow_domains)
-    blacklist = set(blacklist)
-    lite_domains = set(block_domains) & set(china_domains)
+    """Build exact-host Lite rules from validated source domains before suffix compression."""
+    allow_domains = {str(domain).strip().lower() for domain in allow_domains if str(domain).strip()}
+    blacklist = {str(domain).strip().lower() for domain in blacklist if str(domain).strip()}
+    china_domains = {str(domain).strip().lower() for domain in china_domains if str(domain).strip()}
+    lite_domains = {
+        str(domain).strip().lower()
+        for domain in block_domains
+        if str(domain).strip()
+    } & china_domains
     result = []
     for domain in lite_domains:
         if domain in blacklist:
             continue
-        labels = domain.lower().split(".")
+        labels = domain.split(".")
+        # A source allow rule OR project whitelist parent must protect descendants too.
         if any(".".join(labels[index:]) in allow_domains for index in range(len(labels))):
             continue
         result.append(domain)
@@ -349,8 +355,13 @@ class Filter(object):
         ]
         # Lite uses raw DNS-validated domestic hostnames, not the already-compressed Full list.
         # Each client adapter emits its own exact-host syntax for these entries.
+        whiteDomainSet = {
+            (f"{subdomain}.{fld}" if subdomain else fld)
+            for fld, subdomains in whiteDict.items()
+            for subdomain in subdomains
+        }
         liteBlockList = _build_lite_block_list(
-            blockSet_block, ChinaSet, unblockSet_unblock, blackSet
+            blockSet_block, ChinaSet, unblockSet_unblock | whiteDomainSet, blackSet
         )
         for g in generaterList:
             g.blockListLite = liteBlockList
