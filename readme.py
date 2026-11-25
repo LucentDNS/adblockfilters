@@ -35,6 +35,25 @@ class ReadMe(object):
                         matchObj1 = re.match(r'(http|https)://[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?', url)
                         if matchObj1:
                             self.ruleList.append(Rule(rule[0], rule[1], url, rule[-1]))
+
+        allowed_types = {"filter", "dnsfilter", "dns", "host"}
+        seen_names = set()
+        seen_filenames = set()
+        seen_urls = set()
+        for rule in self.ruleList:
+            if rule.type not in allowed_types:
+                raise ValueError(f"Unsupported upstream source type: {rule.type!r} ({rule.name})")
+            if not rule.url.startswith("https://"):
+                raise ValueError(f"Upstream source must use HTTPS: {rule.name} -> {rule.url}")
+            if rule.name in seen_names:
+                raise ValueError(f"Duplicate upstream source name: {rule.name}")
+            if rule.filename in seen_filenames:
+                raise ValueError(f"Duplicate upstream source filename: {rule.filename}")
+            if rule.url in seen_urls:
+                raise ValueError(f"Duplicate upstream source URL: {rule.url}")
+            seen_names.add(rule.name)
+            seen_filenames.add(rule.filename)
+            seen_urls.add(rule.url)
         return self.ruleList
 
     def getRulesNames(self) -> str:
