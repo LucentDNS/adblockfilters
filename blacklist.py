@@ -418,8 +418,8 @@ class BlackList(object):
     async def __resolve(self, dnsresolvers, domain) -> Tuple[List[str], str]:
         """Resolve through independent domestic/global SmartDNS groups.
 
-        A domain is marked nonexistent only when every configured group returns
-        NXDOMAIN. Any valid address from either group wins; disagreement or
+        A domain is marked nonexistent only when both A and AAAA queries in
+        every configured group return NXDOMAIN. Any valid address from either group wins; disagreement or
         transient failures are inconclusive and must not create blacklist entries.
         """
         if not isinstance(dnsresolvers, (list, tuple)):
@@ -430,7 +430,7 @@ class BlackList(object):
         for dnsresolver in dnsresolvers:
             ip_list = []
             no_answer_count = 0
-            saw_nxdomain = False
+            nxdomain_count = 0
             for rdtype in ("A", "AAAA"):
                 try:
                     query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
@@ -439,7 +439,7 @@ class BlackList(object):
                         if ip not in ("0.0.0.0", "::") and ip not in ip_list:
                             ip_list.append(ip)
                 except NXDOMAIN:
-                    saw_nxdomain = True
+                    nxdomain_count += 1
                 except NoAnswer:
                     # NOERROR/NODATA only applies to this RR type.
                     no_answer_count += 1
@@ -450,7 +450,7 @@ class BlackList(object):
             if ip_list:
                 group_statuses.append("resolved")
                 all_ips.extend(ip for ip in ip_list if ip not in all_ips)
-            elif saw_nxdomain:
+            elif nxdomain_count == 2:
                 group_statuses.append("not_found")
             elif no_answer_count == 2:
                 group_statuses.append("no_address")

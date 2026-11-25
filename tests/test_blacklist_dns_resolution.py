@@ -85,10 +85,14 @@ def test_two_successful_nodata_responses_are_definitive():
     assert resolve({"A": NoAnswer(), "AAAA": NoAnswer()}) == ([], "no_address")
 
 
-def test_nxdomain_is_definitive_even_if_other_family_times_out():
+def test_nxdomain_and_timeout_for_different_record_types_are_inconclusive():
     assert resolve({"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}) == (
-        [], "not_found"
+        [], "unknown"
     )
+
+
+def test_nxdomain_requires_both_record_types_in_one_dns_group():
+    assert resolve({"A": NXDOMAIN(), "AAAA": NXDOMAIN()}) == ([], "not_found")
 
 
 def test_two_transient_failures_are_unknown_not_dead():
@@ -113,8 +117,8 @@ def test_nodata_for_a_and_aaaa_does_not_blacklist_a_valid_name():
     assert domain.blocked is False
 
 
-def test_nxdomain_is_blacklisted():
-    domain = pingx({"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")})
+def test_nxdomain_is_blacklisted_only_when_both_record_types_are_nxdomain():
+    domain = pingx({"A": NXDOMAIN(), "AAAA": NXDOMAIN()})
     assert domain.blocked is True
 
 
@@ -188,11 +192,18 @@ def resolve_groups(domestic_answers, global_answers):
     return asyncio.run(instance._BlackList__resolve(resolvers, "example.test"))
 
 
-def test_nxdomain_requires_agreement_from_both_dns_groups():
+def test_nxdomain_requires_both_record_types_in_both_dns_groups():
+    assert resolve_groups(
+        {"A": NXDOMAIN(), "AAAA": NXDOMAIN()},
+        {"A": NXDOMAIN(), "AAAA": NXDOMAIN()},
+    ) == ([], "not_found")
+
+
+def test_matching_nxdomain_and_nodata_mixtures_remain_inconclusive():
     assert resolve_groups(
         {"A": NXDOMAIN(), "AAAA": NoAnswer()},
         {"A": NXDOMAIN(), "AAAA": NoAnswer()},
-    ) == ([], "not_found")
+    ) == ([], "unknown")
 
 
 def test_one_resolving_group_prevents_blacklisting():
