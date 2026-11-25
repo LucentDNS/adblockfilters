@@ -92,7 +92,7 @@ jobs:
           python -m pytest -q tests
 
       - name: Wait for a complete DNS state matching current inputs
-        timeout-minutes: 35
+        timeout-minutes: 55
         run: |
           set -euo pipefail
           mkdir -p .cache/domain
@@ -105,7 +105,7 @@ jobs:
             validated-dns-sources.tar.gz
           )
           state_ready=0
-          for attempt in $(seq 1 50); do
+          for attempt in $(seq 1 90); do
             for name in "${state_files[@]}"; do
               rm -f ".cache/domain/$name"
             done
@@ -126,11 +126,11 @@ jobs:
               state_ready=1
               break
             fi
-            echo "Waiting for a complete DNS state matching the current source manifest, validation logic, and myblock.txt ($attempt/50)"
+            echo "Waiting for a complete DNS state matching the current source manifest, validation logic, and myblock.txt ($attempt/90)"
             sleep 30
           done
           if [ "$state_ready" -ne 1 ]; then
-            echo "::error::No complete, current DNS validation state was published within 25 minutes."
+            echo "::error::No complete, current DNS validation state was published within 45 minutes."
             exit 1
           fi
           git fetch origin main
