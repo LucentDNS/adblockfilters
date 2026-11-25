@@ -49,6 +49,13 @@
 ! WhatsApp lookalike; phishing-host infrastructure and PhishDestroy community listing.
 ! https://domainspoof.com/brands/whatsapp
 ||m-whatsapp.net^
+! Newly registered WhatsApp lookalike campaign; 1/100 trust score, two phishing-provider warnings, same IP as related fake login domains.
+! https://gridinsoft.com/online-virus-scanner/url/smswhatsapp-com
+! https://detect.dmarc-expert.com/?is_third_party=false&page=18
+||smswhatsapp.com^
+! WhatsApp impersonation domain; 1/100 trust score and four external security warnings (DNS8, SOCRadar phishing; alphaMountain, Fortinet spam).
+! https://gridinsoft.com/online-virus-scanner/url/whatsappdns-com
+||whatsappdns.com^
 ! Fake WhatsApp login page; PhishDestroy listing and multiple Gridinsoft detections.
 ! https://phishdestroy.io/domain/whatsappcore.com/
 ! https://gridinsoft.com/online-virus-scanner/url/whatsappcore-com
