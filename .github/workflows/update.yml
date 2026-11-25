@@ -8,8 +8,19 @@ concurrency:
   group: update-filters-${{ github.ref }}
   cancel-in-progress: false
 on:
-  # Production builds are started only after the DNS-validation workflow
-  # has published and verified its source snapshot and then dispatches this workflow.
+  # Run a full production build after a quality-relevant change on main.
+  # The build publishes only after all regression and audit gates pass.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/update.yml'
+      - 'README.md'
+      - 'readme.py'
+      - 'rules/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - '*.py'
+      - 'requirements.txt'
   workflow_dispatch:
   schedule:
     - cron: '0 */8 * * *'
