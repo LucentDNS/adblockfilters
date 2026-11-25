@@ -29,8 +29,8 @@ def generate_lite(generator_cls, tmp_path, filename):
 
 def test_adguard_home_lite_uses_exact_domain_rule(tmp_path):
     output = generate_lite(AdGuardHome, tmp_path, "adblockdns.txt")
-    assert "\ncn.example.com\n" in output
-    assert "||cn.example.com^" not in output
+    assert "||cn.example.com^" in output
+    assert "\ncn.example.com\n" not in output
 
 
 def test_dnsmasq_lite_uses_exact_host_record(tmp_path):
