@@ -27,9 +27,9 @@ class QuantumultX(APPBase):
             with open(fileName, 'a') as f:
                 f.write("#\n")
                 if isLite:
-                    f.write("# Title: LucentDNS AdBlock QuantumultX Lite\n")
+                    f.write("# Title: AdBlock QuantumultX Lite\n")
                 else:
-                    f.write("# Title: LucentDNS AdBlock QuantumultX\n")
+                    f.write("# Title: AdBlock QuantumultX\n")
                 f.write("# Homepage: %s\n"%(self.homepage))
                 f.write("# Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("# Version: %s\n"%(self.version))
