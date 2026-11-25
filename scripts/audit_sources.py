@@ -332,10 +332,11 @@ def main():
         Rule("Pollock hosts (candidate only)", "host",
              "https://someonewhocares.org/hosts/hosts", "2026/11/22"),
         # The upstream README labels this asset OISD Basic, but the downloaded payload
-        # metadata identifies itself as "oisd small" and its normalized domain
-        # set exactly matches the production OISD Small snapshot in this build.
-        # Keep it audit-only and label the discrepancy explicitly; do not infer
-        # a distinct Basic-vs-Small quality advantage from the README label.
+        # metadata identifies itself as "oisd small". In the latest audit it
+        # shares 62,805 of 62,806 parsed block domains with the production OISD
+        # Small snapshot (one snapshot-specific domain differs on each side).
+        # Keep it audit-only; do not infer a distinct Basic-vs-Small advantage
+        # from the README label.
         Rule("OISD upstream release snapshot (README says Basic; payload title says Small)", "dns",
              "https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt",
              "upstream release snapshot")
@@ -859,7 +860,7 @@ def main():
     report += f"\n- 当前编译 DNS 输出无法归一化的规则行：{compiled_unparsed} 条；这些行另需结合原始语法审查。\n"
 
     report += "\n### 原作者 OISD 来源快照对基线差异的覆盖\n\n"
-    report += "- 上游 README 标注为 OISD Basic 的 release 资产，实际 payload 标题为 OISD Small；此快照仅用于审计，不作为独立新增来源。\n"
+    report += "- 上游 README 标注为 OISD Basic 的 release 资产，实际 payload 标题为 OISD Small；本次与正式 OISD Small 快照共享 62,805/62,806 个可解析拦截域名（双方各有 1 个快照差异），不视为独立新增来源。\n"
     report += "| 候选来源 | 可解析域名 | 基线独有精确重合 | 父域名覆盖 | 合计覆盖 | 未覆盖 |\n|---|---:|---:|---:|---:|---:|\n"
     for candidate, stats in sorted(baseline_candidate_analysis.items()):
         if not stats.get("available"):
