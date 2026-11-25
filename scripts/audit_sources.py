@@ -930,6 +930,7 @@ def main():
             if domain not in lite_blocks_exact
             and not covered_by_rule_domain(domain, lite_blocks_suffix)
             and not covered_by_rule_domain(domain, lite_allows)
+            and not covered_by_whitelist(domain, project_whitelist)
         }
         # Exact-host Lite output must not contain suffix rules; those would broaden
         # the match to unclassified/non-domestic child hostnames.
@@ -950,12 +951,18 @@ def main():
                     invizible_blocks_suffix.add(line.lower())
         invizible_non_china_covered = {
             domain for domain in validated_non_china_source_blocks
-            if domain in invizible_blocks_exact or covered_by_rule_domain(domain, invizible_blocks_suffix)
+            if (
+                domain in invizible_blocks_exact
+                or covered_by_rule_domain(domain, invizible_blocks_suffix)
+            )
+            and not covered_by_rule_domain(domain, lite_allows)
         }
         invizible_china_missing = {
             domain for domain in china_source_blocks
             if domain not in invizible_blocks_exact
             and not covered_by_rule_domain(domain, invizible_blocks_suffix)
+            and not covered_by_rule_domain(domain, lite_allows)
+            and not covered_by_whitelist(domain, project_whitelist)
         }
         invizible_rules_not_classified_china = (
             (invizible_blocks_exact - china_domains) | invizible_blocks_suffix
@@ -1023,6 +1030,19 @@ def main():
         encoding="utf-8",
     )
     if lite_scope["available"]:
+        if (
+            lite_scope["lite_rules_not_classified_china"]
+            or lite_scope["known_non_china_source_domains_effectively_blocked_by_lite"]
+            or lite_scope["china_classified_source_domains_missing_from_lite"]
+            or lite_scope["invizible_lite_rules_not_classified_china"]
+            or lite_scope["invizible_known_non_china_source_domains_effectively_blocked"]
+            or lite_scope["invizible_china_source_domains_missing"]
+            or lite_scope["invizible_lite_suffix_block_rules"]
+        ):
+            raise SystemExit(
+                "Lite scope quality gate failed: "
+                + json.dumps(lite_scope, ensure_ascii=False, sort_keys=True)
+            )
         report += "\n## Lite 国内域名范围审计\n\n"
         report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条（精确主机：{lite_scope['lite_exact_block_rules']}；后缀规则：{lite_scope['lite_suffix_block_rules']}）；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
         report += f"- 已验证但未归类为国内的来源域名中，仍被 Lite 有效拦截：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条。\n"
