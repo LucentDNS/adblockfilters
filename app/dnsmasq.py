@@ -43,4 +43,5 @@ class DNSMasq(APPBase):
             else:
                 logger.info("adblock DNSMasq: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception(e)
+            raise
