@@ -84,7 +84,7 @@ tongji.baidu.com
 # https://github.com/217heidai/adblockfilters/issues/182
 appdownload.alicdn.com
 # https://github.com/217heidai/adblockfilters/issues/180
-youtube.com#%#//scriptlet('json-prune-fetch-response', 'playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots', '', '/playlist\?list=|player\?|watch\?[tv]=/')
+youtube.com#%#//scriptlet('json-prune-fetch-response', 'playerResponse.adPlacements playerResponse.playerAds playerResponse.adSlots adPlacements playerAds adSlots', '', '/playlist\\?list=|player\\?|watch\\?[tv]=/')
 # https://github.com/217heidai/adblockfilters/issues/179
 apps.coloros.com
 # https://github.com/217heidai/adblockfilters/issues/178
@@ -342,3 +342,7 @@ vitacost.122.2o7.net
 
 # Preserve upstream DNS exception: all-law endpoint under the shared 2o7.net parent.
 @@||alllaw.112.2o7.net^
+
+# Dropbox documents consent.dropbox.com as an official verified service domain.
+# https://help.dropbox.com/security/official-domains
+consent.dropbox.com
