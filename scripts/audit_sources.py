@@ -942,6 +942,10 @@ def main():
                 "Manual block regression failed: "
                 + ", ".join(sorted(manual_block_missing))
             )
+    (OUT_DIR / "manual-block-audit.json").write_text(
+        json.dumps(manual_block_audit, ensure_ascii=False, indent=2) + "\\n",
+        encoding="utf-8",
+    )
 
     lite_scope = {"available": False, "reason": "validated-domain input, china.txt, or Lite output is unavailable"}
     validation_input_path = ROOT / ".cache" / "domain" / "validated-domain-input.txt"
