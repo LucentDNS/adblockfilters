@@ -20,5 +20,3 @@ smswhatsapp.com
 whatsappdns.com
 atlasfaktow.com
 iplog.co
-
-fb_servpub-a.akamaihd.net
