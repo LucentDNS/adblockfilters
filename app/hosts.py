@@ -28,12 +28,15 @@ class Hosts(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("# Title: AdBlock Hosts Lite\n")
+                    f.write("# Description: 适用于 hosts 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
                 else:
                     f.write("# Title: AdBlock Hosts\n")
+                    f.write("# Description: 适用于 hosts 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
                 f.write("# Homepage: %s\n"%(self.homepage))
                 f.write("# Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("# Version: %s\n"%(self.version))
                 f.write("# Last modified: %s\n"%(self.time))
+                f.write("# Blocked domains: %s\n"%(len(blockList)))
                 f.write("#\n")
                 f.write("127.0.0.1\tlocalhost\n")
                 f.write("127.0.0.1\tlocalhost.localdomain\n")
@@ -58,5 +61,4 @@ class Hosts(APPBase):
             else:
                 logger.info("adblock Hosts: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.exception(e)
-            raise
+            logger.error("%s"%(e))
