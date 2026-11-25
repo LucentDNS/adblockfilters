@@ -19,15 +19,15 @@ def test_python_maintenance_files_follow_editorconfig():
         content = path.read_bytes()
         relative_path = path.relative_to(ROOT).as_posix()
 
-        if not content.endswith(b"\\n"):
+        if not content.endswith(b"\n"):
             violations.append(f"{relative_path}: missing final newline")
-        if b"\\r" in content:
+        if b"\r" in content:
             violations.append(f"{relative_path}: CRLF or bare CR line ending")
 
         for line_number, line in enumerate(content.splitlines(), start=1):
-            if line.endswith((b" ", b"\\t")):
+            if line.endswith((b" ", b"\t")):
                 violations.append(f"{relative_path}:{line_number}: trailing whitespace")
-            if b"\\t" in line:
+            if b"\t" in line:
                 violations.append(f"{relative_path}:{line_number}: tab indentation")
 
-    assert not violations, "\\n".join(violations)
+    assert not violations, "\n".join(violations)
