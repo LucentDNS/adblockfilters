@@ -94,6 +94,9 @@ jobs:
           SMARTDNS_BIN="$(find "$SMARTDNS_PATH/root" -type f -name smartdns -print -quit)"
           test -n "$SMARTDNS_BIN" || { echo "Verified SmartDNS Debian package contains no smartdns executable"; exit 1; }
           chmod +x "$SMARTDNS_BIN"
+          file "$SMARTDNS_BIN"
+          readelf -l "$SMARTDNS_BIN" | grep -F "Requesting program interpreter" || true
+          ldd "$SMARTDNS_BIN" || true
           rm -f "$SMARTDNS_PATH/smartdns.deb"
           cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
           SMARTDNS_LOG="$SMARTDNS_PATH/smartdns.log"
