@@ -7,6 +7,9 @@ import json
 import os
 import re
 import sys
+import httpx
+from tld import get_tld
+from tld.utils import update_tld_names
 from collections import defaultdict
 from datetime import datetime, timezone
 from itertools import combinations
@@ -15,12 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-import httpx
-from tld import get_tld
-from tld.utils import update_tld_names
-
-from readme import ReadMe, Rule
-from resolver import Resolver, configure_logging
+from readme import ReadMe, Rule  # noqa: E402 - project-root bootstrap above
+from resolver import Resolver, configure_logging  # noqa: E402 - project-root bootstrap above
 SOURCE_DIR = ROOT / ".cache" / "source"
 OUT_DIR = ROOT / ".cache" / "audit"
 CANDIDATE_SOURCE_DIR = OUT_DIR / "candidate-source"
@@ -856,16 +855,6 @@ def main():
         source_presence_unexplained
         | current_source_parent_inactive_unexplained
         | source_absent_unexplained
-    )
-    current_effective_coverage = (
-        (current_source_exact_active - source_presence_unexplained)
-        | current_source_parent_covered
-        | current_source_exact_blacklisted
-        | current_source_exact_whitelisted
-        | current_source_exact_upstream_allowed
-        | blacklist_overlap
-        | whitelist_covered
-        | baseline_only_source_allow_covered
     )
     source_not_effectively_covered = source_unexplained
 

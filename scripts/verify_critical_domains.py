@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from resolver import Resolver, configure_logging
+from resolver import Resolver, configure_logging  # noqa: E402 - project-root bootstrap above
 
 CRITICAL_FILE = ROOT / "tests" / "data" / "critical-domains.txt"
 MANUAL_BLOCK_FILE = ROOT / "tests" / "data" / "manual-block-domains.txt"

@@ -9,9 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from readme import ReadMe, Rule
-from resolver import Resolver, configure_logging
-from updater import Updater
+from readme import ReadMe, Rule  # noqa: E402 - project-root bootstrap above
+from resolver import Resolver, configure_logging  # noqa: E402 - project-root bootstrap above
+from updater import Updater  # noqa: E402 - project-root bootstrap above
 SOURCE_DIR = ROOT / ".cache" / "source"
 DOMAIN_DIR = ROOT / ".cache" / "domain"
 MYBLOCK_SOURCE = ROOT / "rules" / "myblock.txt"

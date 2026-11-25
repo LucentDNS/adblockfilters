@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from readme import ReadMe
+from readme import ReadMe  # noqa: E402 - project-root bootstrap above
 
 SOURCE_DIR = ROOT / ".cache" / "source"
 DOMAIN_DIR = ROOT / ".cache" / "domain"
