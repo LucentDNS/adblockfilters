@@ -24,9 +24,15 @@ def test_exact_domain_wide_browser_block_is_detected():
     assert parse_domain_wide_browser_rule("||alipay.com") == ("alipay.com", False)
 
 
-def test_important_and_document_browser_blocks_are_domain_wide():
+def test_host_wide_browser_modifiers_are_domain_wide():
     assert parse_domain_wide_browser_rule("||alipay.com^$important") == ("alipay.com", False)
-    assert parse_domain_wide_browser_rule("||alipay.com^$document") == ("alipay.com", False)
+    assert parse_domain_wide_browser_rule("||alipay.com^$all") == ("alipay.com", False)
+
+
+def test_document_and_first_party_modifiers_are_not_domain_wide():
+    assert parse_domain_wide_browser_rule("||alipay.com^$document") is None
+    assert parse_domain_wide_browser_rule("||alipay.com^$~third-party") is None
+    assert parse_domain_wide_browser_rule("||alipay.com^$1p") is None
 
 
 def test_global_browser_allow_exception_is_detected():
