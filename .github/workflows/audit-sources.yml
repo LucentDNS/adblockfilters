@@ -57,6 +57,7 @@ jobs:
         run: |
           python -m ruff check --no-cache .
           python -m ruff check --no-cache --select F401 scripts tests
+          python -m ruff check --no-cache --select E4,E7,E9,F scripts tests
       - name: Run regression tests
         run: |
           python -m py_compile resolver.py blacklist.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/validated_sources.py scripts/verify_critical_domains.py

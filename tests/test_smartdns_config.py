@@ -135,3 +135,14 @@ def test_legacy_baseline_only_domains_are_reviewed_with_both_dns_groups():
         "- name: Review legacy upstream-only domains with both DNS groups", 1
     )[1].split("- name: Upload legacy baseline review", 1)[0]
     assert all(not line.endswith("\\\\") for line in review_step.splitlines())
+
+
+def test_maintained_python_code_receives_full_ruff_lint():
+    workflow = (
+        Path(__file__).parents[1] / ".github" / "workflows" / "audit-sources.yml"
+    ).read_text(encoding="utf-8")
+
+    assert (
+        "python -m ruff check --no-cache --select E4,E7,E9,F scripts tests"
+        in workflow
+    )
