@@ -30,3 +30,25 @@ def test_generate_all_propagates_format_generator_failure():
         generator.generateAll()
 
     assert generator.calls == [False, True]
+
+class AllowListGenerator(APPBase):
+    def __init__(self):
+        super().__init__(
+            [],
+            ["safe.example.com"],
+            {},
+            [],
+            [],
+            set(),
+            "out/example.txt",
+            "test",
+        )
+
+    def generate(self, isLite=False):
+        pass
+
+
+def test_lite_preserves_non_china_allow_exceptions():
+    generator = AllowListGenerator()
+
+    assert generator.unblockListLite == ["safe.example.com"]
