@@ -35,6 +35,20 @@
 ||trustwallet-eng.org^
 ||official-trustwallet.com^
 ||en-trustwallet.org^
+! Independent phishing intelligence: recently registered AI-account storefront with multiple provider detections.
+! https://gridinsoft.com/online-virus-scanner/url/168ai-store
+! https://www.scamadviser.com/check-website/168ai.store
+||168ai.store^
+! Independent phishing report: newly registered bank-impersonation site; IPQS phishing report and Gridinsoft detection.
+! https://www.scamadviser.com/check-website/swifttrustcb.com
+! https://es.gridinsoft.com/online-virus-scanner/url/swifttrustcb-com
+||swifttrustcb.com^
+! OpenPhish-referenced Suricata antiphishing signature for this exact host (2026-11-22).
+! https://dev.evebox.org/pub/julioliraup/antiphishing/changelog/684101
+||app-conbase.com^
+! Listed as an active Phantom wallet phishing domain (2026-11-17).
+! https://thecryptoguardian.com/crypto-phishing-checker/phantom/
+||official-phantom.com^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
