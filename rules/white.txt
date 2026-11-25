@@ -374,3 +374,7 @@ benefits.aon.com
 # Preserve this verified active service host; do not whitelist the entire shared did.kr parent.
 # https://www.daangn.com/kr/local-profile/%ED%95%98%EC%88%98%EA%B5%AC%EB%A7%89%ED%9E%98-h2v1bnwp7qbe/
 hasugu1004.did.kr
+
+# Preserve the iQIYI literature-reading API host; it serves book-page content, not a DNS-wide ad endpoint.
+# https://urlscan.io/result/01a0b641-56a4-73cd-aee3-e5bb451d70bf/
+api-yuedu.iqiyi.com
