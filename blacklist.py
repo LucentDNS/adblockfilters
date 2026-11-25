@@ -293,9 +293,16 @@ class BlackList(object):
                 response = client.get(url)
                 response.raise_for_status()
                 contentType = response.headers.get("Content-Type") or ""
-                if "text/plain" not in contentType:
-                    logger.warning("download %s: unexpected Content-Type[%s]"%(fileName, contentType))
-                with open(fileNameDownload,'wb') as f:
+                if "text/plain" not in contentType.lower():
+                    logger.error(
+                        "download %s: unexpected Content-Type[%s]; refusing non-text response"
+                        % (fileName, contentType)
+                    )
+                    return False
+                if not response.content or not response.content.strip():
+                    logger.error("download %s: empty response; refusing to replace cached data" % fileName)
+                    return False
+                with open(fileNameDownload, 'wb') as f:
                     f.write(response.content)
             
             if os.path.exists(fileName):
