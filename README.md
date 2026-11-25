@@ -1,6 +1,13 @@
-# DNS Adblock Filters
+# AdBlock DNS Filters
 
-独立维护的 DNS 与浏览器内容过滤规则。上游来源经过分类、解析、去重和贡献审查；构建包含白名单回归及关键服务检查。
+去广告合并规则，基于原作者 217heidai/adblockfilters 项目持续维护。保留原项目的规则组织方式、订阅格式和核心处理思路；在此基础上进行必要的来源审查、DNS 验证及构建质量检查。
+
+## 说明
+
+1. 定时从上游各规则源获取更新，合并去重。
+2. 使用国内、国外 DNS 服务对上游各规则源拦截的域名进行解析，去除已确认无法解析的域名。（上游各规则源中存在大量已无法解析的域名，无需加入拦截规则）
+3. 遵循原项目原则，以合并、去重和无效域名筛选为主；任何额外处理均应有明确依据，并经过验证，避免随意修改上游规则含义。
+4. 规则文件通过 GitHub Releases 和 dist 分支分发，请根据网络情况选择可用订阅地址。
 
 ## DNS 订阅
 
@@ -9,7 +16,7 @@
 | DNS 全量 | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt |
 | DNS Lite | https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdnslite.txt |
 
-DNS Lite 适用于希望减少规则数量的场景；仅在客户端有需要时再添加浏览器补充规则。
+规则 x’ 为规则 x 的 Lite 版，仅针对国内域名拦截，体积较小（如添加完整规则报错数量限制，请尝试 Lite 规则）。AdGuard 等浏览器插件使用规则 1 + 规则 2，规则 2 为规则 1 的补充，仅适用于浏览器插件。
 
 ## 其他客户端订阅
 
