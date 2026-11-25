@@ -342,3 +342,36 @@ vitacost.122.2o7.net
 
 # Preserve upstream DNS exception: all-law endpoint under the shared 2o7.net parent.
 @@||alllaw.112.2o7.net^
+
+# Dropbox documents consent.dropbox.com as an official verified service domain.
+# https://help.dropbox.com/security/official-domains
+consent.dropbox.com
+
+# Google lists this endpoint for FCM connectivity on mobile devices behind organizational firewalls.
+# https://support.google.com/work/android/answer/10513641
+device-provisioning.googleapis.com
+
+# Official OISD exclusions: these are service/content endpoints, not DNS-wide ad hosts.
+# https://oisd.nl/excludes
+content.canadiantire.ca
+content.discover.com
+content22.online.citi.com
+contents1.00110.citi.com
+contents2.00110.citi.com
+
+# OISD exclusions with documented service dependencies; keep these exact hosts available.
+# https://oisd.nl/excludes
+api.statsig.com
+corp.sts.microsoft.com
+diagnostics.support.microsoft.com
+androidtvchannels-pa.googleapis.com
+androidtvwatsonfe-pa.googleapis.com
+
+# Aon student-insurance enrollment links use this service host; do not block the portal.
+# https://www.tilburguniversity.edu/students/getting-started/welcome-new-student/insurances
+benefits.aon.com
+
+# Avoid DNS-wide blocking of this MP4 content host; existing path-specific browser rules remain intact.
+# https://archive.ph/evtubescms.phncdn.com
+# https://www.ipaddress.com/website/evtubescms.phncdn.com/
+evtubescms.phncdn.com

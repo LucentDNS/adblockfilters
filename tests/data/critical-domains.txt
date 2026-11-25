@@ -126,3 +126,16 @@ au-mobile.events.data.microsoft.com
 eu-mobile.events.data.microsoft.com
 uk-mobile.events.data.microsoft.com
 us-mobile.events.data.microsoft.com
+consent.dropbox.com
+device-provisioning.googleapis.com
+content.canadiantire.ca
+content.discover.com
+content22.online.citi.com
+contents1.00110.citi.com
+contents2.00110.citi.com
+api.statsig.com
+corp.sts.microsoft.com
+diagnostics.support.microsoft.com
+androidtvchannels-pa.googleapis.com
+androidtvwatsonfe-pa.googleapis.com
+benefits.aon.com
