@@ -346,3 +346,7 @@ vitacost.122.2o7.net
 # Dropbox documents consent.dropbox.com as an official verified service domain.
 # https://help.dropbox.com/security/official-domains
 consent.dropbox.com
+
+# Google lists this endpoint for FCM connectivity on mobile devices behind organizational firewalls.
+# https://support.google.com/work/android/answer/10513641
+device-provisioning.googleapis.com
