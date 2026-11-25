@@ -59,7 +59,7 @@ jobs:
           # workflow_dispatch runs may wait behind the concurrency queue.
           # Use the current main tip, not the stale event SHA captured when queued.
           ref: main
-      
+
       - name: Checkout domain-list-community
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -71,7 +71,7 @@ jobs:
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.14'
-      
+
       - name: Setup Go
         uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
         with:
@@ -319,7 +319,7 @@ jobs:
           ./sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box rule-set compile --output .cache/out/adblocksingbox.srs     .cache/out/adblocksingbox.json
           ./sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box rule-set compile --output .cache/out/adblocksingboxlite.srs .cache/out/adblocksingboxlite.json
           rm -rf sing-box*
-      
+
       - name: Compile mihomo filters
         run: |
           wget https://github.com/MetaCubeX/mihomo/releases/download/v${{env.MIHOMO_VERSION}}/mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz
@@ -329,7 +329,7 @@ jobs:
           ./mihomo-linux-amd64-v${{env.MIHOMO_VERSION}} convert-ruleset domain yaml .cache/out/adblockmihomo.yaml     .cache/out/adblockmihomo.mrs
           ./mihomo-linux-amd64-v${{env.MIHOMO_VERSION}} convert-ruleset domain yaml .cache/out/adblockmihomolite.yaml .cache/out/adblockmihomolite.mrs
           rm -rf mihomo*
-      
+
       - name: Compile v2ray/xray filters
         run: |
           mkdir -p domain-list-community/adblock
@@ -349,7 +349,7 @@ jobs:
           test -s .cache/out/adblockv2ray.dat
           test -s .cache/out/adblockv2raylite.dat
           rm -f .cache/out/adblockv2ray.txt .cache/out/adblockv2raylite.txt
-      
+
       - name: Validate complete client output matrix
         run: |
           python - <<'PY'
