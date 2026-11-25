@@ -87,13 +87,13 @@ class APPBase(ABC):
 
     def generateAll(self):
         try:
-            if len(self.blockList):
-                self.generate()
-
-            if len(self.blockListLite):
-                self.generate(isLite=True)
+            # Always write both variants, including header-only empty Lite outputs.
+            # A format-specific generator failure must stop the build, never be logged and ignored.
+            self.generate()
+            self.generate(isLite=True)
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception(e)
+            raise
     
     def isDomain(self, address:str) -> bool:
         try:
