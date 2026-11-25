@@ -382,3 +382,7 @@ hasugu1004.did.kr
 # Preserve the iQIYI literature-reading API host; it serves book-page content, not a DNS-wide ad endpoint.
 # https://urlscan.io/result/01a0b641-56a4-73cd-aee3-e5bb451d70bf/
 api-yuedu.iqiyi.com
+
+# Legacy Blogspot entries from the upstream baseline were not retained without current threat evidence.
+2006mindfreaklike.blogspot.com
+girlownedbypolicelike.blogspot.com
