@@ -44,5 +44,6 @@ class V2ray(APPBase):
             else:
                 logger.info("adblock V2ray/Xray: block=%d" % (len(blockList)))
         except Exception as e:
-            logger.error("%s" % (e))
+            logger.exception("%s" % (e))
+            raise
 
