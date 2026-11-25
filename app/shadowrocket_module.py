@@ -73,4 +73,5 @@ class ShadowrocketModule(APPBase):
             else:
                 logger.info("adblock Shadowrocket Module: block=%d" % (len(blockList)))
         except Exception as e:
-            logger.error("%s" % (e))
+            logger.exception("%s" % (e))
+            raise
