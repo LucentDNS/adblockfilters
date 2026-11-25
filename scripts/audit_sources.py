@@ -317,6 +317,11 @@ def covered_by_whitelist(domain, whitelist):
     return any(".".join(labels[index:]) in whitelist for index in range(len(labels)))
 
 
+def unexplained_absent_baseline_domains(source_absent, blacklist, whitelist, source_allow):
+    """Exclude baseline-only domains already explained by active project exceptions."""
+    return set(source_absent) - set(blacklist) - set(whitelist) - set(source_allow)
+
+
 def main():
     try:
         update_tld_names()
@@ -690,10 +695,24 @@ def main():
         - current_source_parent_inactive_whitelisted
         - current_source_parent_inactive_upstream_allowed
     )
+    baseline_only_source_allow_covered = {
+        domain for domain in baseline_blocks if covered_by_source_allow(domain)
+    }
+    blacklist_overlap = baseline_blocks & blacklist_domains
+    whitelist_covered = {
+        domain for domain in baseline_blocks
+        if covered_by_whitelist(domain, project_whitelist)
+    }
+    source_absent_unexplained = unexplained_absent_baseline_domains(
+        source_absent,
+        blacklist_overlap,
+        whitelist_covered,
+        baseline_only_source_allow_covered,
+    )
     source_unexplained = (
         source_presence_unexplained
         | current_source_parent_inactive_unexplained
-        | source_absent
+        | source_absent_unexplained
     )
     current_effective_coverage = (
         (current_source_exact_active - source_presence_unexplained)
@@ -701,6 +720,9 @@ def main():
         | current_source_exact_blacklisted
         | current_source_exact_whitelisted
         | current_source_exact_upstream_allowed
+        | blacklist_overlap
+        | whitelist_covered
+        | baseline_only_source_allow_covered
     )
     source_not_effectively_covered = source_unexplained
     blacklist_overlap = baseline_blocks & blacklist_domains
@@ -745,9 +767,6 @@ def main():
             "parent_coverage_samples": sorted(parent_covered)[:100],
         }
 
-    baseline_only_source_allow_covered = {
-        domain for domain in baseline_blocks if covered_by_source_allow(domain)
-    }
     browser_analysis.update({
         "baseline_comparison_available": True,
         "baseline_candidate_analysis": baseline_candidate_analysis,
@@ -781,6 +800,7 @@ def main():
     report += f"- 当前来源中存在、未被黑/白名单或来源 allow 解释、但仍未出现在输出：{len(source_presence_unexplained)} 条。\n"
     report += f"- 父域名来源覆盖：有效父域名 {len(current_source_parent_covered)} 条；失效或被例外排除的父域名 {len(current_source_parent_inactive)} 条（黑名单 {len(current_source_parent_inactive_blacklisted)}、白名单 {len(current_source_parent_inactive_whitelisted)}、来源 allow {len(current_source_parent_inactive_upstream_allowed)}、仍未解释 {len(current_source_parent_inactive_unexplained)}）。\n"
     report += f"- 当前六个 DNS/Hosts 来源中既无精确规则也无父域名：{len(source_absent)} 条。\n"
+    report += f"- 上述来源缺失项中，已由当前黑名单排除：{len(blacklist_overlap & source_absent)} 条；由项目白名单覆盖：{len(whitelist_covered & source_absent)} 条；由来源 allow 覆盖：{len(baseline_only_source_allow_covered & source_absent)} 条。\n"
     report += f"- 尚未由当前来源、黑名单、白名单或来源 allow 解释的基线 block 差异：{len(source_unexplained)} 条。\n"
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
     report += "- DNS NXDOMAIN 只用于解释确实经过本项目 DNS 验证的域名；未验证的基线独有域名不得假定为失效。\n"
@@ -906,13 +926,13 @@ def main():
     )
     write_domain_list(
         OUT_DIR / "baseline-only-current-blacklist-overlap.txt",
-        current_source_exact_blacklisted,
-        "No exact baseline-only rule is excluded by the current blacklist."
+        blacklist_overlap,
+        "No baseline-only rule is excluded by the current blacklist."
     )
     write_domain_list(
         OUT_DIR / "baseline-only-current-whitelist-covered.txt",
-        current_source_exact_whitelisted,
-        "No exact baseline-only rule is covered by the project whitelist."
+        whitelist_covered,
+        "No baseline-only rule is covered by the project whitelist."
     )
     write_domain_list(
         OUT_DIR / "baseline-only-current-source-unexplained.txt",
