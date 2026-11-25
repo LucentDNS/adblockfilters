@@ -370,3 +370,7 @@ androidtvwatsonfe-pa.googleapis.com
 # Aon student-insurance enrollment links use this service host; do not block the portal.
 # https://www.tilburguniversity.edu/students/getting-started/welcome-new-student/insurances
 benefits.aon.com
+
+# This host serves MP4 video content; it is a content-delivery endpoint, not an ad domain.
+# https://www.ipaddress.com/website/evtubescms.phncdn.com/
+evtubescms.phncdn.com
