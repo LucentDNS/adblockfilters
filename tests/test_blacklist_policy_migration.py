@@ -42,6 +42,7 @@ def test_policy_upgrade_resets_only_cached_nxdomain_decisions(tmp_path):
     rows = {row[0]: row for row in database.getAll()}
 
     assert rows["blocked.example"][6] == 0
+    assert rows["blocked.example"][7] == 0
     assert rows["blocked.example"][8] == 0
     assert rows["blocked.example"][9] is None
     assert rows["resolved.example"][6] == 0

@@ -142,7 +142,7 @@ class DomainDatabase(object):
     def resetBlockedForRevalidation(self) -> int:
         """Clear cached negative decisions so a new policy can re-evaluate them."""
         cursor = self.__conn.execute(
-            "UPDATE T_DOMAIN SET isBlock = 0, timeStamp = 0, ipList = NULL "
+            "UPDATE T_DOMAIN SET isBlock = 0, isChina = 0, timeStamp = 0, ipList = NULL "
             "WHERE isBlock = 1"
         )
         self.__conn.commit()
@@ -722,9 +722,8 @@ class BlackList(object):
             reset_count = _apply_dns_block_policy_version(self.__db)
             if reset_count:
                 logger.warning(
-                    "DNS block policy upgraded to %s; reset %d cached NXDOMAIN decisions",
-                    DNS_BLOCK_POLICY_VERSION,
-                    reset_count,
+                    f"DNS block policy upgraded to {DNS_BLOCK_POLICY_VERSION}; "
+                    f"reset {reset_count} cached NXDOMAIN decisions"
                 )
 
             # 获取域名清单 https://raw.githubusercontent.com/217heidai/adblockfilters/refs/heads/main/rules/domain.txt
