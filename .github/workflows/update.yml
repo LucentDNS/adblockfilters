@@ -158,23 +158,12 @@ jobs:
         run: |
           python scripts/audit_sources.py
 
-      - name: Check whitelist regression
+      - name: Check whitelist regression (Full and Lite)
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          output = Path(".cache/out/adblockdns.txt").read_text(encoding="utf-8")
-          blocked = {
-              line[2:-1].strip()
-              for line in output.splitlines()
-              if line.startswith("||") and line.endswith("^")
-          }
-          allowed = {
-              line[4:-1].strip()
-              for line in output.splitlines()
-              if line.startswith("@@||") and line.endswith("^")
-          }
-          failures = []
+          whitelist = []
           for raw in Path("rules/white.txt").read_text(encoding="utf-8").splitlines():
               domain = raw.strip()
               if not domain or domain.startswith("#"):
@@ -187,19 +176,37 @@ jobs:
                   domain = domain.split("^", 1)[0]
               if "$" in domain:
                   domain = domain.split("$", 1)[0]
-              # 浏览器脚本、路径、通配符和不完整域名不是 DNS 域名白名单。
+              # Browser scripts, paths, wildcards and incomplete domains are not DNS-domain exceptions.
               if (not domain or domain.endswith(".") or
                       any(ch in domain for ch in "*/#|?^$")):
                   continue
-              covered = any(domain == item or domain.endswith("." + item) for item in blocked)
-              excepted = any(domain == item or domain.endswith("." + item) for item in allowed)
-              if covered and not excepted:
-                  failures.append(domain)
+              whitelist.append(domain)
+
+          failures = []
+          for output_name in ("adblockdns.txt", "adblockdnslite.txt"):
+              output_path = Path(".cache/out") / output_name
+              output = output_path.read_text(encoding="utf-8")
+              blocked = {
+                  line[2:-1].strip()
+                  for line in output.splitlines()
+                  if line.startswith("||") and line.endswith("^")
+              }
+              allowed = {
+                  line[4:-1].strip()
+                  for line in output.splitlines()
+                  if line.startswith("@@||") and line.endswith("^")
+              }
+              for domain in whitelist:
+                  covered = any(domain == item or domain.endswith("." + item) for item in blocked)
+                  excepted = any(domain == item or domain.endswith("." + item) for item in allowed)
+                  if covered and not excepted:
+                      failures.append((output_name, domain))
+
           if failures:
-              for domain in failures:
-                  print(f"whitelist regression: {domain} remains blocked by adblockdns.txt")
+              for output_name, domain in failures:
+                  print(f"whitelist regression: {domain} remains blocked by {output_name}")
               raise SystemExit(1)
-          print("whitelist regression: passed")
+          print("whitelist regression: Full and Lite passed")
           PY
 
       - name: Write summary
