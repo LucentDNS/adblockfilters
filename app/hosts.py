@@ -58,4 +58,5 @@ class Hosts(APPBase):
             else:
                 logger.info("adblock Hosts: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception(e)
+            raise
