@@ -256,6 +256,11 @@ jobs:
             fi
           done
 
+          if git ls-remote --exit-code --heads origin lucentdns-dev >/dev/null 2>&1; then
+            git push origin --delete lucentdns-dev
+            echo "Removed obsolete branch lucentdns-dev (191 commits behind main, no unique commits)."
+          fi
+
       - name: Trigger production rule build after dns-validation-state publication
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
