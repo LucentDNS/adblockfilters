@@ -17,6 +17,7 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
     ):
         assert provider in config
 
+    assert "-tls-host-verify doh.pub" in config
     assert config.count("-exclude-default-group") == 6
     assert "9.9.9.11" not in config  # Quad9 threat-blocking resolver
     assert "101.226.4.6" not in config  # 360 security-filtering DNS
