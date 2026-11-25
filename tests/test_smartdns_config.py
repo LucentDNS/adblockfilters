@@ -56,3 +56,24 @@ def test_dns_validation_constructs_both_smartdns_resolvers(monkeypatch):
 
     assert [resolver.port for resolver in ports] == [5053, 5054]
     assert all(resolver.nameservers == ["127.0.0.1"] for resolver in ports)
+
+
+
+def test_dns_validation_workflow_pins_and_verifies_smartdns_binary():
+    workflow = (
+        Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "Release48.4" in workflow
+    assert "SMARTDNS_SHA256: 9d2164922dc8e822935e444d69a678636c5e7f8155e6ab4e81561d2d43cb9a0f" in workflow
+    assert "sha256sum --check -" in workflow
+    assert "wget --https-only --timeout=30 --tries=3 --waitretry=2" in workflow
+
+
+def test_ci_workflows_install_dev_tools_and_run_static_analysis():
+    root = Path(__file__).parents[1]
+    for name in ("update.yml", "blacklist.yml"):
+        workflow = (root / ".github" / "workflows" / name).read_text(encoding="utf-8")
+        assert "python -m pip install -r requirements-dev.txt" in workflow
+        assert "python -m ruff check --no-cache ." in workflow
+        assert "python -m ruff check --no-cache --select F401 scripts tests" in workflow
