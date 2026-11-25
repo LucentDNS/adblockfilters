@@ -59,6 +59,11 @@
 ||whatsappcore.com^
 
 
+! GL.iNet copycat domain used in the November 2026 router/KVM malware incident.
+! https://www.bleepingcomputer.com/news/security/hackers-exploit-glinet-cloud-flaw-to-infect-routers-kvm-devices/
+! https://forum.gl-inet.com/t/security-notice-goodcloud-remote-management-incident/73056
+||gl-inet.top^
+
 ! SBI Securities lookalike campaign; listed by PhishTank/Phishing Army and multiple security vendors.
 ! https://gtldti.com/tld/cfd?page=8
 ! https://phishing.jp/phishing/
