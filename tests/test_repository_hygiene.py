@@ -57,7 +57,6 @@ def test_github_workflows_follow_editorconfig():
     assert not violations, "\n".join(violations)
 
 
-
 def test_maintained_text_files_follow_editorconfig():
     paths = [
         ROOT / "README.md",
