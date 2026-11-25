@@ -29,6 +29,7 @@ TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 
 def source_audit_gate_failures(
     compiled_unparsed: int,
+    compiled_non_domain_filters: int,
     source_presence_unexplained: set[str],
     current_source_parent_inactive_unexplained: set[str],
     baseline_allow_missing_still_blocked: set[str],
@@ -37,6 +38,11 @@ def source_audit_gate_failures(
     failures = []
     if compiled_unparsed:
         failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
+    if compiled_non_domain_filters:
+        failures.append(
+            "compiled DNS output contains non-domain filter rules: "
+            f"{compiled_non_domain_filters}"
+        )
     if source_presence_unexplained:
         failures.append(
             "active baseline DNS source rules are missing from compiled output: "
@@ -773,6 +779,7 @@ def main():
     compiled_block_domains = set()
     compiled_allow_domains = set()
     compiled_unparsed = 0
+    compiled_non_domain_filters = 0
     if compiled_dns_path.exists():
         for raw in compiled_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = raw.strip()
@@ -791,12 +798,18 @@ def main():
                 compiled_allow_domains.add(allow_domain)
             if filt:
                 rule_text = filt[0] if isinstance(filt, (tuple, list)) else str(filt)
-                filter_domain = full_domain(filt[1]) if isinstance(filt, (tuple, list)) and len(filt) > 1 else None
+                filter_domain = (
+                    full_domain(filt[1])
+                    if isinstance(filt, (tuple, list)) and len(filt) > 1
+                    else None
+                )
                 if filter_domain:
                     if rule_text.lstrip().startswith("@@"):
                         compiled_allow_domains.add(filter_domain)
                     else:
                         compiled_block_domains.add(filter_domain)
+                else:
+                    compiled_non_domain_filters += 1
 
     def covered_by_compiled_output(domain):
         return (
@@ -1387,6 +1400,7 @@ def main():
 
     gate_failures = source_audit_gate_failures(
         compiled_unparsed,
+        compiled_non_domain_filters,
         source_presence_unexplained,
         current_source_parent_inactive_unexplained,
         baseline_allow_missing_still_blocked,
