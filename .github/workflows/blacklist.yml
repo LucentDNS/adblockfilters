@@ -27,6 +27,8 @@ on:
       - scripts/validated_sources.py
       - scripts/verify_critical_domains.py
       - tests/test_critical_domains.py
+      - tests/test_readme_generation.py
+      - tests/test_smartdns_config.py
       - rules/myblock.txt
       - rules/direct.txt
       - rules/ipv4_china.txt
