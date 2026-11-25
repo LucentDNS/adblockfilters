@@ -9,6 +9,12 @@
 ||adx-data.yfanads.com^
 ||api.yfanads.com^
 ||tracker.yfanads.com^
+! EasyPrivacy: third-party tracking endpoint on Akamai CDN; block only this hostname.
+! https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty_international.txt
+||fb_servpub-a.akamaihd.net^
+! SomeoneWhoCares maintained malware hosts list identifies this exact Blogspot host as a Facebook trojan.
+! https://someonewhocares.org/hosts/zero/mac/
+||2006mindfreaklike.blogspot.com^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
