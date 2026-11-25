@@ -386,6 +386,8 @@ jobs:
           files: |
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
+            .cache/audit/whitelist-coverage.json
+            .cache/audit/whitelist-unused.txt
             .cache/audit/baseline-browser-analysis.json
             .cache/audit/baseline-only-browser-overlap.txt
             .cache/audit/baseline-only-allow-exceptions-still-blocked.txt
