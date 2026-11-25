@@ -49,6 +49,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+      - name: Static analysis
+        run: |
+          python -m ruff check --no-cache .
+          python -m ruff check --no-cache --select F401 scripts tests
       - name: Run regression tests
         run: |
           python -m py_compile resolver.py blacklist.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/validated_sources.py scripts/verify_critical_domains.py
