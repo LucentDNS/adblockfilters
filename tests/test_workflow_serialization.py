@@ -62,7 +62,6 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "README.md",
         "requirements.txt",
         "rules/myblock.txt",
-        "rules/myblock.txt",
     } <= set(dns_paths)
 
     assert {
