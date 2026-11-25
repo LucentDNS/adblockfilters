@@ -175,11 +175,13 @@ jobs:
                   domain = domain[4:]
               elif domain.startswith("||"):
                   domain = domain[2:]
+              # Modifier-bearing exceptions (e.g. $third-party) are scoped browser
+              # rules, not DNS-wide whitelist entries; never widen them here.
+              if "$" in domain:
+                  continue
               if "^" in domain:
                   domain = domain.split("^", 1)[0]
-              if "$" in domain:
-                  domain = domain.split("$", 1)[0]
-              # Browser scripts, paths, wildcards and incomplete domains are not DNS-domain exceptions.
+              # Browser paths, wildcards and incomplete domains are not DNS-domain exceptions.
               if (not domain or domain.endswith(".") or
                       any(ch in domain for ch in "*/#|?^$")):
                   continue
