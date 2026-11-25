@@ -22,6 +22,7 @@ def test_curated_dns_supplement_rules_are_present():
     }
 
     assert "||fb_servpub-a.akamaihd.net^" in entries
+    assert "||oth.str.mdt.qq.com^" in entries
 
 
 def test_dns_resolver_accepts_underscore_label_in_known_tracking_domain():
