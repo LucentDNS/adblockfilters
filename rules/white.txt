@@ -383,7 +383,3 @@ hasugu1004.did.kr
 # https://urlscan.io/result/01a0b641-56a4-73cd-aee3-e5bb451d70bf/
 api-yuedu.iqiyi.com
 
-# Legacy Blogspot entries from the upstream baseline were not retained without current threat evidence.
-2006mindfreaklike.blogspot.com
-girlownedbypolicelike.blogspot.com
-# These two legacy Blogspot hosts are excluded from baseline carry-forward until current threat evidence exists.
