@@ -44,6 +44,10 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # workflow_dispatch runs may wait behind the concurrency queue.
+          # Use the current main tip, not the stale event SHA captured when queued.
+          ref: main
       
       - name: Checkout domain-list-community
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
