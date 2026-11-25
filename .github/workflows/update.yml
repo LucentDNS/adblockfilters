@@ -74,7 +74,7 @@ jobs:
           : > .cache/domain/input-provenance.txt
           # black/china 是过滤阶段的关键输入。下载失败时必须停止，禁止用空文件继续生成看似成功的规则。
           # Production builds consume the independently DNS-validated validated DNS domain state.
-          for name in black.txt china.txt domain.txt domain-input-provenance.json; do
+          for name in black.txt china.txt domain.txt domain-input-provenance.json dns-validation-bootstrap-complete-v2.txt; do
             curl -fsSL --retry 3 --retry-all-errors \
               -o ".cache/domain/$name" \
               "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/$name"
