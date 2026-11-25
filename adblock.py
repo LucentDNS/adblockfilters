@@ -86,14 +86,11 @@ def verify_domain_validation_provenance(ruleList, sourceDir, domainDir):
 
 
 def update_sources_preserving_validated_dns(ruleList, sourceDir, domainDir):
-    """Refresh browser sources while retaining the exact DNS snapshots and metadata validated for this build."""
+    """Update browser-only sources; DNS/Hosts sources are immutable validated snapshots."""
     provenance_path = os.path.join(domainDir, "domain-input-provenance.json")
     if not os.path.isfile(provenance_path):
         updater = Updater(ruleList)
         return updater.update(sourceDir)
-
-    import shutil
-    import tempfile
 
     with open(provenance_path, "r", encoding="utf-8") as stream:
         provenance = json.load(stream)
@@ -103,35 +100,26 @@ def update_sources_preserving_validated_dns(ruleList, sourceDir, domainDir):
         if isinstance(item, dict)
     }
 
-    snapshots = []
-    metadata = {}
-    backup_dir = tempfile.mkdtemp(prefix="adblock-dns-validated-")
-    try:
-        for rule in ruleList:
-            if rule.type not in ("host", "dns", "dnsfilter"):
-                continue
-            record = records.get(rule.name, {})
-            source_path = os.path.join(sourceDir, rule.filename)
-            if os.path.isfile(source_path):
-                backup_path = os.path.join(backup_dir, rule.filename)
-                shutil.copy2(source_path, backup_path)
-                snapshots.append((backup_path, source_path))
-            if "latest" in record:
-                metadata[rule.name] = record["latest"]
+    dns_types = ("host", "dns", "dnsfilter")
+    browser_rules = [rule for rule in ruleList if rule.type not in dns_types]
+    dns_metadata = {
+        rule.name: records[rule.name]["latest"]
+        for rule in ruleList
+        if rule.type in dns_types and rule.name in records and "latest" in records[rule.name]
+    }
 
-        updater = Updater(ruleList)
-        result = updater.update(sourceDir)
-    finally:
-        # The validation input and final build must consume byte-identical DNS sources.
-        for backup_path, source_path in snapshots:
-            shutil.copy2(backup_path, source_path)
-        shutil.rmtree(backup_dir, ignore_errors=True)
+    # These DNS/Hosts files were downloaded, parsed and DNS-validated by the
+    # preceding validation workflow. Re-downloading them here is both wasteful
+    # and unsafe: a new upstream version has not passed DNS validation yet.
+    updated, _ = Updater(browser_rules).update(sourceDir)
 
-    # Keep the README's source dates aligned with the DNS snapshots actually used.
+    # Keep README dates aligned with the exact DNS snapshots used for this build.
     for rule in ruleList:
-        if rule.name in metadata:
-            rule.latest = metadata[rule.name]
-    return result
+        if rule.name in dns_metadata:
+            rule.latest = dns_metadata[rule.name]
+
+    # Preserve the complete source list; only browser rules were refreshed.
+    return updated, ruleList
 
 
 class ADBlock(object):
