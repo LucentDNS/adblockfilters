@@ -27,9 +27,9 @@ class AdGuard(APPBase):
             with open(fileName, 'a') as f:
                 f.write("!\n")
                 if isLite:
-                    f.write("! Title: LucentDNS AdBlock Filter Lite\n")
+                    f.write("! Title: AdBlock Filter Lite\n")
                 else:
-                    f.write("! Title: LucentDNS AdBlock Filter\n")
+                    f.write("! Title: AdBlock Filter\n")
                 f.write("! Homepage: %s\n"%(self.homepage))
                 f.write("! Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("! Version: %s\n"%(self.version))
