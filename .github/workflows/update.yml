@@ -8,24 +8,31 @@ concurrency:
   group: update-filters-${{ github.ref }}
   cancel-in-progress: false
 on:
-  # Rebuild after changes to rule logic, source parsing, tests, or build configuration.
-  # Generated README/report-only edits do not trigger another production build.
+  # Build-only changes may reuse the current validated DNS state.
+  # DNS inputs and validation logic are handled exclusively by blacklist.yml,
+  # which dispatches this workflow only after publishing fresh state.
   push:
     branches: [main]
     paths:
-      - ".github/workflows/update.yml"
       - "adblock.py"
-      - "blacklist.py"
       - "filter.py"
-      - "resolver.py"
-      - "updater.py"
-      - "readme.py"
-      - "smartdns.conf"
-      - "requirements.txt"
-      - "rules/**"
       - "app/**"
-      - "scripts/**"
-      - "tests/**"
+      - "rules/filter-exclude.txt"
+      - "scripts/audit_sources.py"
+      - "tests/test_app_generation.py"
+      - "tests/test_audit_whitelist_coverage.py"
+      - "tests/test_dns_domain_only.py"
+      - "tests/test_filter_exclusions.py"
+      - "tests/test_lite_domain_scope.py"
+      - "tests/test_lite_format_semantics.py"
+      - "tests/test_mihomo_empty.py"
+      - "tests/test_readme_generation.py"
+      - "tests/test_readme_sources.py"
+      - "tests/test_singbox_empty.py"
+      - "tests/test_smartdns_config.py"
+      - "tests/test_source_audit_whitelist.py"
+      - "tests/test_upstream_allow_exceptions.py"
+      - "tests/test_whitelist_parser.py"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   workflow_dispatch:
   schedule:
