@@ -145,10 +145,10 @@ jobs:
           # The first AdBlock DNS run must not inherit upstream block/IP state.
           # Reuse a database only after our own fresh-validation marker exists.
           if curl -fsSL --retry 3 --retry-all-errors \
-              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/dns-validation-bootstrap-complete-v2.txt" \
+              "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/dns-validation-bootstrap-complete-v2.txt" \
               -o /tmp/dns-validation-bootstrap-complete-v2.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
-              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
+              "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/domain.db"
             test -s domain.db || { echo "DNS validation database is missing or empty"; exit 1; }
             echo "Using the previously generated DNS-validation database."
           else
@@ -205,7 +205,7 @@ jobs:
       - name: Publish validated domain state
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
-          tag_name: dev-domain-noble
+          tag_name: dns-validation-state
           name: Internal DNS validation state
           body: Internal DNS-validation state used by the production rule build. Not a user-facing rule subscription.
           prerelease: true
@@ -226,25 +226,37 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for obsolete in nobledns-bootstrap-complete.txt dns-validation-bootstrap-complete.txt; do
-            if gh release view dev-domain-noble --json assets --jq '.assets[].name' | grep -Fxq "$obsolete"; then
-              gh release delete-asset dev-domain-noble "$obsolete" --yes
+            if gh release view dns-validation-state --json assets --jq '.assets[].name' | grep -Fxq "$obsolete"; then
+              gh release delete-asset dns-validation-state "$obsolete" --yes
             fi
           done
 
-      - name: Verify dev-domain-noble release assets
+      - name: Verify dns-validation-state release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
+          assets="$(gh release view dns-validation-state --json assets --jq '.assets[].name')"
           for name in domain.db domain.txt domain-input-provenance.json validated-dns-sources.tar.gz black.txt china.txt dns-validation-bootstrap-complete-v2.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
-              echo "::error::dev-domain-noble release is missing $name"
+              echo "::error::dns-validation-state release is missing $name"
               exit 1
             fi
           done
 
-      - name: Trigger production rule build after dev-domain-noble publication
+      - name: Remove obsolete development DNS releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for legacy in dev-domain-noble dev-domain; do
+            if gh release view "$legacy" >/dev/null 2>&1; then
+              gh release delete "$legacy" --cleanup-tag --yes
+              echo "Removed obsolete release and tag: $legacy"
+            fi
+          done
+
+      - name: Trigger production rule build after dns-validation-state publication
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run update.yml --ref main
