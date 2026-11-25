@@ -175,3 +175,44 @@ def test_nxdomain_plus_valid_other_family_keeps_domain():
     assert resolve({"A": NXDOMAIN(), "AAAA": ["2001:db8::1"]}) == (
         ["2001:db8::1"], "resolved"
     )
+
+
+def resolve_groups(domestic_answers, global_answers):
+    instance = BlackList.__new__(BlackList)
+    resolvers = [FakeResolver(domestic_answers), FakeResolver(global_answers)]
+    return asyncio.run(instance._BlackList__resolve(resolvers, "example.test"))
+
+
+def test_nxdomain_requires_agreement_from_both_dns_groups():
+    assert resolve_groups(
+        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
+        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
+    ) == ([], "not_found")
+
+
+def test_one_resolving_group_prevents_blacklisting():
+    assert resolve_groups(
+        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
+        {"A": ["192.0.2.10"], "AAAA": NoAnswer()},
+    ) == (["192.0.2.10"], "resolved")
+
+
+def test_nxdomain_and_nodata_disagreement_is_inconclusive():
+    assert resolve_groups(
+        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
+        {"A": NoAnswer(), "AAAA": NoAnswer()},
+    ) == ([], "unknown")
+
+
+def test_nxdomain_and_timeout_disagreement_is_inconclusive():
+    assert resolve_groups(
+        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
+        {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")},
+    ) == ([], "unknown")
+
+
+def test_no_address_requires_both_groups_to_agree():
+    assert resolve_groups(
+        {"A": NoAnswer(), "AAAA": NoAnswer()},
+        {"A": NoAnswer(), "AAAA": NoAnswer()},
+    ) == ([], "no_address")
