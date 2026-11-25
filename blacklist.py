@@ -21,6 +21,11 @@ def _ip_in_ranges(ip_int:int, starts:List[int], ends:List[int]) -> bool:
     i = bisect_right(starts, ip_int) - 1
     return i >= 0 and ip_int <= ends[i]
 
+
+def _blacklist_abnormal(black_count:int, total:int) -> bool:
+    # 黑名单占比超过一半即异常（正常比例远低于该阈值）；防止 DNS 故障污染名单。
+    return total > 0 and black_count > total // 2
+
 DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 
@@ -668,6 +673,12 @@ class BlackList(object):
                 if v.getBlock():
                     blackList.append(k)
             if len(blackList):
+                # SmartDNS 故障时大量域名可能同时返回 NXDOMAIN；异常比例必须阻止发布。
+                if _blacklist_abnormal(len(blackList), len(domainDict)):
+                    raise RuntimeError(
+                        "blacklist abnormal: %d/%d domains unresolved" %
+                        (len(blackList), len(domainDict))
+                    )
                 blackList.sort()
                 self.__generateBlackList(blackList)
 
