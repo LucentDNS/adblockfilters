@@ -1,23 +1,16 @@
 from pathlib import Path
 
 
-def test_production_workflow_checks_out_current_main_after_queueing():
-    workflow = (
-        Path(__file__).parents[1] / ".github" / "workflows" / "update.yml"
-    ).read_text(encoding="utf-8")
+ROOT = Path(__file__).parents[1]
+WORKFLOWS = ROOT / ".github" / "workflows"
 
-    assert "group: update-filters-${{ github.ref }}" in workflow
-    checkout = workflow.split("- name: Checkout Repo", 1)[1].split(
-        "- name: Checkout domain-list-community", 1
-    )[0]
-    assert "ref: main" in checkout
-    assert "stale event SHA" in checkout
 
-def _push_paths(workflow_path):
-    lines = workflow_path.read_text(encoding="utf-8").splitlines()
+def _push_paths(workflow_name):
+    lines = (WORKFLOWS / workflow_name).read_text(encoding="utf-8").splitlines()
     push_index = lines.index("  push:")
     paths_index = next(
-        index for index in range(push_index + 1, len(lines))
+        index
+        for index in range(push_index + 1, len(lines))
         if lines[index].strip() == "paths:"
     )
     paths = []
@@ -31,16 +24,35 @@ def _push_paths(workflow_path):
     return paths
 
 
+def test_production_workflow_checks_out_current_main_after_queueing():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+
+    checkout = workflow.split("- name: Checkout Repo", 1)[1].split(
+        "- name: Checkout domain-list-community", 1
+    )[0]
+    assert "ref: main" in checkout
+    assert "stale event SHA" in checkout
+
+
+def test_dns_validation_has_priority_in_shared_production_concurrency_group():
+    update = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    dns = (WORKFLOWS / "blacklist.yml").read_text(encoding="utf-8")
+    group = "production-rule-pipeline-${{ github.repository }}"
+
+    assert f"group: {group}" in update
+    assert f"group: {group}" in dns
+    assert "cancel-in-progress: false" in update
+    assert "cancel-in-progress: true" in dns
+
+
 def test_dns_state_and_direct_build_push_triggers_are_disjoint():
-    root = Path(__file__).parents[1]
-    update_paths = _push_paths(root / ".github" / "workflows" / "update.yml")
-    dns_paths = _push_paths(root / ".github" / "workflows" / "blacklist.yml")
+    update_paths = _push_paths("update.yml")
+    dns_paths = _push_paths("blacklist.yml")
 
     assert len(update_paths) == len(set(update_paths))
     assert len(dns_paths) == len(set(dns_paths))
     assert set(update_paths).isdisjoint(dns_paths)
-    assert "tests/test_workflow_serialization.py" not in update_paths
-    assert "tests/test_workflow_serialization.py" not in dns_paths
+    assert all(not path.startswith("tests/") for path in update_paths)
 
     assert {
         ".github/workflows/update.yml",
