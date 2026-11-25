@@ -110,7 +110,7 @@ class ReadMe(object):
             f.write("本仓库基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 持续维护，保留原作者的规则组织和 Full/Lite 设计，并加强来源校验、双组 DNS 交叉验证与构建回归检查。\n\n")
             f.write("## 说明\n")
             f.write("1. 定时从上游各规则源获取更新，合并去重。\n")
-            f.write("2. 使用国内、国际两组相互独立的 DNS 验证组，每组配置 3 个非拦截公共 DNS 上游。只有 A、AAAA 查询在两组中均返回 NXDOMAIN，才将域名判为失效并剔除；NODATA、超时、SERVFAIL 或结果不一致均不会作为删除依据。\\n")
+            f.write("2. 使用国内、国际两组相互独立的 DNS 验证组，每组配置 3 个非拦截公共 DNS 上游。只有 A、AAAA 查询在两组中均返回 NXDOMAIN，才将域名判为失效并剔除；NODATA、超时、SERVFAIL 或结果不一致均不会作为删除依据。\n")
             f.write("3. 本项目以合并、去重和去除经双组 DNS 确认的无效域名为主，不随意改写上游规则语义；项目自维护的 myblock.txt（补充拦截及浏览器例外）和 white.txt（误拦截放行例外）分别管理，并纳入来源校验与误拦截回归检查。误拦截修正以可复现证据为准，优先使用精确主机或路径例外，避免扩大父域名放行范围。\n")
             f.write("4. 规则文件托管于 GitHub Releases 和 dist 分支，加速通道为 gh-proxy.com / ghfast.top / ghproxy.net，请根据网络情况选择可用订阅地址。\n\n")
             f.write("## 正式订阅（仅列出构建验证通过的产物）\n\n")

@@ -102,3 +102,10 @@ def test_test_runner_is_a_development_dependency():
     assert "pytest" not in runtime_requirements.lower()
     assert "pytest==9.2.0" in development_requirements
     assert "ruff==0.17.6" in development_requirements
+
+
+def test_readme_generator_uses_a_real_newline_for_dns_validation_policy():
+    source = (ROOT / "readme.py").read_text(encoding="utf-8")
+
+    assert r"均不会作为删除依据。\\n" not in source
+    assert r"均不会作为删除依据。\n" in source
