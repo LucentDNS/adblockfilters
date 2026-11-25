@@ -28,10 +28,11 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
         r"\[原始链接\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
         generated,
     )
-    assert len(subscriptions) == 34
+    assert len(subscriptions) == 35
+    assert "adblockdomainallow.txt" in subscriptions
     assert len(subscriptions) == len(set(subscriptions))
     for mirror in ("gh-proxy.com", "ghfast.top", "ghproxy.net"):
-        assert generated.count(f"https://{mirror}/https://raw.githubusercontent.com/") == 34
+        assert generated.count(f"https://{mirror}/https://raw.githubusercontent.com/") == 35
 
 
 def test_release_asset_filename_is_github_safe_and_stable():
