@@ -59,6 +59,10 @@
 
 ! PhishDestroy critical verdict (95/100), VirusTotal 18/91, Cloudflare Radar malware classification.
 ! https://phishdestroy.io/domain/antrenbitapptech.com/
+! Established DNS/adblock rule source identifies this exact host as advertising tracking infrastructure.
+! https://github.com/vhvg/Surge-2/blob/master/Module/Ad%20Block.sgmodule
+||apxadtracking.net^
+
 ||antrenbitapptech.com^
 ! Gridinsoft phishing verdict (1/100) with DNS8 and SOCRadar external phishing warnings.
 ! https://gridinsoft.com/online-virus-scanner/url/atlasfaktow-com
