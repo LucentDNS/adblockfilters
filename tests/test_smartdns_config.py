@@ -78,3 +78,16 @@ def test_ci_workflows_install_dev_tools_and_run_static_analysis():
         assert "python -m pip install -r requirements-dev.txt" in workflow
         assert "python -m ruff check --no-cache ." in workflow
         assert "python -m ruff check --no-cache --select F401 scripts tests" in workflow
+
+
+
+def test_upstream_baseline_is_validated_before_comparison():
+    workflow = (
+        Path(__file__).parents[1] / ".github" / "workflows" / "update.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'baseline_title != "! Title: AdBlock DNS"' in workflow
+    assert "baseline_version" in workflow
+    assert "len(baseline_rules) < 100000" in workflow
+    assert "invalid_rules" in workflow
+    assert '"baseline_version": baseline_version' in workflow
