@@ -17,9 +17,10 @@ FILTER_OUTPUT = ROOT / ".cache" / "out" / "adblockfilters.txt"
 SOURCE_DIR = ROOT / ".cache" / "source"
 MAX_DNS_RULES = 500_000
 
-# Only modifiers that preserve host-wide scope are accepted here.
+# For blocking rules, only modifiers preserving host-wide scope are accepted.
 # Resource-type and page-context modifiers (including document, 1p, and
-# ~third-party) are intentionally excluded from critical-service blocking.
+# ~third-party) are excluded. A $document exception is page-wide and is handled
+# separately below, as specified by AdGuard's filter syntax.
 DOMAIN_WIDE_OPTIONS = {"important", "all", "match-case"}
 
 
