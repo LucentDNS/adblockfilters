@@ -90,3 +90,15 @@ def test_maintained_text_files_follow_editorconfig():
                 violations.append(f"{relative_path}:{line_number}: tab character")
 
     assert not violations, "\n".join(violations)
+
+
+
+def test_test_runner_is_a_development_dependency():
+    runtime_requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    development_requirements = (
+        ROOT / "requirements-dev.txt"
+    ).read_text(encoding="utf-8")
+
+    assert "pytest" not in runtime_requirements.lower()
+    assert "pytest==9.2.0" in development_requirements
+    assert "ruff==0.17.6" in development_requirements
