@@ -912,6 +912,37 @@ def main():
                     else:
                         compiled_block_domains.add(filter_domain)
 
+    manual_block_audit = {"available": compiled_dns_path.exists(), "manual_block_domains": len(manual_block_domains)}
+    if compiled_dns_path.exists():
+        manual_block_covered = {
+            domain for domain in manual_block_domains
+            if covered_by_rule_domain(domain, compiled_block_domains)
+            and not covered_by_rule_domain(domain, compiled_allow_domains)
+        }
+        manual_block_missing = manual_block_domains - manual_block_covered
+        manual_block_audit.update({
+            "covered": len(manual_block_covered),
+            "missing": len(manual_block_missing),
+            "missing_domains": sorted(manual_block_missing),
+        })
+        write_domain_list(
+            OUT_DIR / "manual-block-domains-covered.txt",
+            manual_block_covered,
+            "No active manual block domains."
+        )
+        write_domain_list(
+            OUT_DIR / "manual-block-domains-missing.txt",
+            manual_block_missing,
+            "All active manual block domains are present in compiled DNS output."
+        )
+        report += "\\n## 项目手工拦截规则回归\\n\\n"
+        report += f"- 应进入 Full DNS 输出的手工拦截域名：{len(manual_block_domains)} 条；实际覆盖：{len(manual_block_covered)} 条；缺失：{len(manual_block_missing)} 条。\\n"
+        if manual_block_missing:
+            raise SystemExit(
+                "Manual block regression failed: "
+                + ", ".join(sorted(manual_block_missing))
+            )
+
     lite_scope = {"available": False, "reason": "validated-domain input, china.txt, or Lite output is unavailable"}
     validation_input_path = ROOT / ".cache" / "domain" / "validated-domain-input.txt"
     china_input_path = ROOT / ".cache" / "domain" / "china.txt"
