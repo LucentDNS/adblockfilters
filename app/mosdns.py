@@ -27,9 +27,9 @@ class MosDNS(APPBase):
             with open(fileName, 'a') as f:
                 f.write("#\n")
                 if isLite:
-                    f.write("# Title: LucentDNS AdBlock MosDNS Lite\n")
+                    f.write("# Title: AdBlock MosDNS Lite\n")
                 else:
-                    f.write("# Title: LucentDNS AdBlock MosDNS\n")
+                    f.write("# Title: AdBlock MosDNS\n")
                 f.write("# Homepage: %s\n"%(self.homepage))
                 f.write("# Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("# Version: %s\n"%(self.version))
