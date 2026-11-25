@@ -790,7 +790,7 @@ def main():
             line = raw.strip()
             if line.startswith("||") and line.endswith("^"):
                 domain = line[2:-1].strip().lower()
-                if domain and not any(char in domain for char in " /\\t^$*"):
+                if domain and not any(char in domain for char in " /\t^$*"):
                     manual_block_domains.add(domain)
     baseline_manual_block_covered = {
         domain for domain in baseline_blocks
