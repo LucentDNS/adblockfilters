@@ -64,7 +64,7 @@ class Filter(object):
         self.path = path              # 读取目录：black/china/white（.cache/domain）
         self.outPath = outPath if outPath else path   # 输出目录：生成产物（.cache/out）
         self.sourcePath = sourcePath if sourcePath else path   # 上游源目录：resolver 读取（.cache/source）
-    
+
     # 获取拦截规则
     def __getFilters(self) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]], Dict[str, str]]:
         def dictadd(d1:Dict[str,Set], d2:Dict[str,Set]) -> Dict[str,Set]:
@@ -93,7 +93,7 @@ class Filter(object):
         # 添加用户维护的补充 DNS 规则
         rule = Rule("myblock", "dns", "", "")
         taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
-        
+
         # 获取解析结果
         blockDict:Dict[str,Set[str]] = dict()
         unblockDict:Dict[str,Set[str]] = dict()
@@ -118,7 +118,7 @@ class Filter(object):
                 filterDict[filter] = domain
 
         return blockDict,unblockDict,filterDict
-    
+
     # 获取黑名单，经测试已无法解析的域名
     def __getBlackList(self, fileName:str) -> Set[str]:
         logger.info("resolve black list...")
@@ -141,7 +141,7 @@ class Filter(object):
                         whiteSet.add(line.replace("\n", ""))
         logger.info("white list: %d"%(len(whiteSet)))
         return whiteSet
-    
+
     def __getWhiteDict(self, whiteSet:Set[str]) -> Dict[str,Set[str]]:
         whiteDict = dict()
 
@@ -172,9 +172,9 @@ class Filter(object):
                     whiteDict[fld] |= {subdomain}
             except Exception as e:
                 logger.warning("white list parse failed: %s (%s)"%(address, e))
-        
+
         return whiteDict
-    
+
     # 生成被父级拦截规则覆盖的白名单例外
     def __getWhiteExceptions(self, whiteDict:Dict[str,Set[str]], blockList:List[str]) -> List[str]:
         blocked = set(blockList)
@@ -196,7 +196,7 @@ class Filter(object):
                 ChinaSet = set(map(lambda x: x.replace("\n", ""), ChinaList))
         logger.info("China list: %d"%(len(ChinaSet)))
         return ChinaSet
-    
+
     # 去重、排序
     def __domainSort(self, domainDict:Dict[str, Set[str]], blackSet:Set[str], whiteDict:Dict[str,Set[str]]) -> Tuple[List[str], Set[str]]:
         def repetition(l): # 短域名已被拦截，则干掉所有长域名。如'a.example'、'b.example'、'example'，则只保留'example'
@@ -247,7 +247,7 @@ class Filter(object):
                         if _domain not in blackSet:
                             subdomain_not_black = True
                             break
-                
+
                 domain = get_domain(fld, subdomain)
                 if domain not in blackSet:
                     domanList.append(domain)
@@ -256,10 +256,10 @@ class Filter(object):
                         domanList.append(domain)
 
             # 全域名保留，用于后续验证连通性
-            for subdomain in subdomainList_origin: 
+            for subdomain in subdomainList_origin:
                 domain = get_domain(fld, subdomain)
                 domanSet_all.add(domain)
-            
+
         return domanList,domanSet_all
 
     def __filterSort(self, filterDict:Dict[str,str], blockSet:Set[str], unblockSet:Set[str], blackSet:Set[str], whiteSet:Set[str], whiteDict:Dict[str,Set[str]]) -> Tuple[list[str], Set[str]]:
@@ -295,7 +295,7 @@ class Filter(object):
             if filter.startswith('#%#var'):
                 filterList_var.append(filter)
                 continue
-            
+
             domain = filterDict[filter]
             if domain:
                 if is_domain_whitelisted(domain): # 白名单域名及其子域名不进入浏览器拦截规则
@@ -315,9 +315,9 @@ class Filter(object):
                         continue
                 if not _is_ip_literal(domain):
                     domainSet_all.add(domain)
-            
+
             filterList_final.append(filter)
-        
+
         return filterList_var, filterList_final, domainSet_all
 
     # 生成用于域名连通性检测的全域名清单
@@ -332,7 +332,7 @@ class Filter(object):
         with open(fileName, 'a') as f:
             for domain in domainList:
                 f.write("%s\n"%(domain))
-        
+
         logger.info("domain backup: %d"%(len(domainList)))
 
     def generate(self, sourceRule):
@@ -399,6 +399,6 @@ class Filter(object):
                 # DNSCrypt allowlists are a separate native file, not inline blocklist syntax.
                 g.unblockList = sorted(allowDomainSet)
             g.generateAll()
-        
+
         # 生成用于域名连通性检测的全域名清单
         self.__generateDomainBackup(blockSet_block | unblockSet_unblock | domainSet_filter, self.path + "/domain.txt")

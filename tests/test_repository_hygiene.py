@@ -3,14 +3,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 MAINTAINED_DIRECTORIES = (ROOT / "scripts", ROOT / "tests")
+MAINTAINED_ROOT_PYTHON_FILES = tuple(ROOT.glob("*.py"))
 
 
 def test_python_maintenance_files_follow_editorconfig():
     files = sorted(
-        path
-        for directory in MAINTAINED_DIRECTORIES
-        for path in directory.rglob("*.py")
-        if path.is_file()
+        {
+            *MAINTAINED_ROOT_PYTHON_FILES,
+            *(
+                path
+                for directory in MAINTAINED_DIRECTORIES
+                for path in directory.rglob("*.py")
+                if path.is_file()
+            ),
+        }
     )
     assert files, "No maintained Python files were found"
 
