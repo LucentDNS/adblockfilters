@@ -7,6 +7,17 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
     assert "bind 127.0.0.1:5053 -group domestic" in config
     assert "bind 127.0.0.1:5054 -group global" in config
 
+    domestic = [
+        line for line in config.splitlines()
+        if line.startswith("server-tls ") and "-group domestic" in line
+    ]
+    global_servers = [
+        line for line in config.splitlines()
+        if line.startswith("server-tls ") and "-group global" in line
+    ]
+    assert len(domestic) >= 6
+    assert len(global_servers) >= 6
+
     for provider in (
         "https://doh.pub/dns-query",
         "180.76.76.76",
