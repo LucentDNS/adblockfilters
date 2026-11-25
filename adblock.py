@@ -86,36 +86,52 @@ def verify_domain_validation_provenance(ruleList, sourceDir, domainDir):
 
 
 def update_sources_preserving_validated_dns(ruleList, sourceDir, domainDir):
-    """Refresh upstream metadata without replacing DNS snapshots already validated for this build."""
+    """Refresh browser sources while retaining the exact DNS snapshots and metadata validated for this build."""
     provenance_path = os.path.join(domainDir, "domain-input-provenance.json")
+    if not os.path.isfile(provenance_path):
+        updater = Updater(ruleList)
+        return updater.update(sourceDir)
+
+    import shutil
+    import tempfile
+
+    with open(provenance_path, "r", encoding="utf-8") as stream:
+        provenance = json.load(stream)
+    records = {
+        item.get("name"): item
+        for item in provenance.get("sources", [])
+        if isinstance(item, dict)
+    }
+
     snapshots = []
-    if os.path.isfile(provenance_path):
-        import shutil
-        import tempfile
+    metadata = {}
+    backup_dir = tempfile.mkdtemp(prefix="adblock-dns-validated-")
+    try:
+        for rule in ruleList:
+            if rule.type not in ("host", "dns", "dnsfilter"):
+                continue
+            record = records.get(rule.name, {})
+            source_path = os.path.join(sourceDir, rule.filename)
+            if os.path.isfile(source_path):
+                backup_path = os.path.join(backup_dir, rule.filename)
+                shutil.copy2(source_path, backup_path)
+                snapshots.append((backup_path, source_path))
+            if "latest" in record:
+                metadata[rule.name] = record["latest"]
 
-        backup_dir = tempfile.mkdtemp(prefix="lucentdns-validated-dns-")
-        try:
-            for rule in ruleList:
-                if rule.type not in ("host", "dns", "dnsfilter"):
-                    continue
-                source_path = os.path.join(sourceDir, rule.filename)
-                if os.path.isfile(source_path):
-                    backup_path = os.path.join(backup_dir, rule.filename)
-                    shutil.copy2(source_path, backup_path)
-                    snapshots.append((backup_path, source_path))
+        updater = Updater(ruleList)
+        result = updater.update(sourceDir)
+    finally:
+        # The validation input and final build must consume byte-identical DNS sources.
+        for backup_path, source_path in snapshots:
+            shutil.copy2(backup_path, source_path)
+        shutil.rmtree(backup_dir, ignore_errors=True)
 
-            try:
-                updater = Updater(ruleList)
-                return updater.update(sourceDir)
-            finally:
-                # The validation input and final build must consume byte-identical DNS sources.
-                for backup_path, source_path in snapshots:
-                    shutil.copy2(backup_path, source_path)
-        finally:
-            shutil.rmtree(backup_dir, ignore_errors=True)
-
-    updater = Updater(ruleList)
-    return updater.update(sourceDir)
+    # Keep the README's source dates aligned with the DNS snapshots actually used.
+    for rule in ruleList:
+        if rule.name in metadata:
+            rule.latest = metadata[rule.name]
+    return result
 
 
 class ADBlock(object):
