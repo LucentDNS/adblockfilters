@@ -672,24 +672,24 @@ class BlackList(object):
                 # records, so it must not create a DNS blacklist entry.
                 if v.getBlock():
                     blackList.append(k)
-            if len(blackList):
-                # SmartDNS 故障时大量域名可能同时返回 NXDOMAIN；异常比例必须阻止发布。
-                if _blacklist_abnormal(len(blackList), len(domainDict)):
-                    raise RuntimeError(
-                        "blacklist abnormal: %d/%d domains unresolved" %
-                        (len(blackList), len(domainDict))
-                    )
-                blackList.sort()
-                self.__generateBlackList(blackList)
+            # SmartDNS 故障时大量域名可能同时返回 NXDOMAIN；异常比例必须阻止发布。
+            if _blacklist_abnormal(len(blackList), len(domainDict)):
+                raise RuntimeError(
+                    "blacklist abnormal: %d/%d domains unresolved" %
+                    (len(blackList), len(domainDict))
+                )
+            blackList.sort()
+            # 必须每轮都覆盖文件；空结果也要清空旧名单，防止上轮失效域名残留。
+            self.__generateBlackList(blackList)
 
             # 生成 China 域名列表
             ChinaList = []
             for k,v in domainDict.items():
                 if v.getChina() and not v.getBlock():
                     ChinaList.append(k)
-            if len(ChinaList):
-                ChinaList.sort()
-                self.__generateChinaList(ChinaList)
+            ChinaList.sort()
+            # 同样必须覆盖空结果，不能把过期国内域名清单带入下一轮构建。
+            self.__generateChinaList(ChinaList)
             
             # 更新数据库域名清单
             self.__updateDomainDict_db(domainDict)
