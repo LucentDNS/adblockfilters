@@ -91,3 +91,18 @@ def test_upstream_baseline_is_validated_before_comparison():
     assert "len(baseline_rules) < 100000" in workflow
     assert "invalid_rules" in workflow
     assert '"baseline_version": baseline_version' in workflow
+
+
+
+def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
+    workflow = (
+        Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'SMARTDNS_LOG="$SMARTDNS_PATH/smartdns.log"' in workflow
+    assert 'nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_LOG" 2>&1 &' in workflow
+    assert 'kill -0 "$SMARTDNS_PID"' in workflow
+    assert "127\\\\.0\\\\.0\\\\.1:5053" in workflow
+    assert "127\\\\.0\\\\.0\\\\.1:5054" in workflow
+    assert "sock.recvfrom(1024)" not in workflow
+    assert 'cat "$SMARTDNS_LOG"' in workflow
