@@ -58,3 +58,21 @@ def test_wildcard_subdomain_rule_does_not_match_service_root():
 
 def test_disabled_badfilter_rule_is_ignored():
     assert parse_domain_wide_browser_rule("||alipay.com^$badfilter") is None
+
+
+def test_critical_service_regression_list_is_unique_and_broad():
+    from pathlib import Path
+
+    path = Path(__file__).parent / "data" / "critical-domains.txt"
+    domains = [
+        line.strip().lower()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+    assert len(domains) >= 100
+    assert len(domains) == len(set(domains))
+    assert "google.com" in domains
+    assert "microsoft.com" in domains
+    assert "github.com" in domains
+    assert "qq.com" in domains
