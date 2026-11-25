@@ -358,3 +358,11 @@ content.discover.com
 content22.online.citi.com
 contents1.00110.citi.com
 contents2.00110.citi.com
+
+# OISD exclusions with documented service dependencies; keep these exact hosts available.
+# https://oisd.nl/excludes
+api.statsig.com
+corp.sts.microsoft.com
+diagnostics.support.microsoft.com
+androidtvchannels-pa.googleapis.com
+androidtvwatsonfe-pa.googleapis.com
