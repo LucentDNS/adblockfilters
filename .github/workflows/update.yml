@@ -14,25 +14,14 @@ on:
   push:
     branches: [main]
     paths:
-      - "adblock.py"
-      - "filter.py"
+      - ".github/workflows/**"
+      - "*.py"
       - "app/**"
-      - "rules/filter-exclude.txt"
-      - "scripts/audit_sources.py"
-      - "tests/test_app_generation.py"
-      - "tests/test_audit_whitelist_coverage.py"
-      - "tests/test_dns_domain_only.py"
-      - "tests/test_filter_exclusions.py"
-      - "tests/test_lite_domain_scope.py"
-      - "tests/test_lite_format_semantics.py"
-      - "tests/test_mihomo_empty.py"
-      - "tests/test_readme_generation.py"
-      - "tests/test_readme_sources.py"
-      - "tests/test_singbox_empty.py"
-      - "tests/test_smartdns_config.py"
-      - "tests/test_source_audit_whitelist.py"
-      - "tests/test_upstream_allow_exceptions.py"
-      - "tests/test_whitelist_parser.py"
+      - "rules/**"
+      - "scripts/**"
+      - "tests/**"
+      - "requirements*.txt"
+      - "README.md"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   workflow_dispatch:
   schedule:
