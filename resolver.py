@@ -332,6 +332,11 @@ class Resolver(object):
                 if match(r'^@@\|\|.*', line):
                     filter = line
                     break
+                # Bare wildcard URL patterns can occur in DNS-labelled upstreams.
+                # Keep them as browser filters; never turn them into DNS domains.
+                if "*" in line:
+                    filter = line
+                    break
                 # other
                 raise Exception('"%s": not keep'%(line))
             
