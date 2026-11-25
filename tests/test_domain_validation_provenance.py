@@ -88,3 +88,11 @@ def test_refresh_preserves_dns_snapshot_used_for_validation(tmp_path, monkeypatc
     assert returned_rules == rules
     assert source_path.read_bytes() == original
     assert verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
+
+
+def test_validation_provenance_missing_fails_closed(tmp_path):
+    rules, source_dir, domain_dir, _ = _prepare(tmp_path)
+    (domain_dir / "domain-input-provenance.json").unlink()
+
+    with pytest.raises(RuntimeError, match="provenance is missing"):
+        verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
