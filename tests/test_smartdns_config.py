@@ -97,8 +97,10 @@ def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
     ).read_text(encoding="utf-8")
 
     assert 'SMARTDNS_LOG="$SMARTDNS_PATH/smartdns.log"' in workflow
+    assert 'SMARTDNS_ROOT="$(dirname "$SMARTDNS_BIN")"' in workflow
+    assert 'cd "$SMARTDNS_ROOT"' in workflow
     launch_command = (
-        'nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" '
+        'nohup ./smartdns -f -x -c "$SMARTDNS_PATH/smartdns.conf" '
         '> "$SMARTDNS_LOG" 2>&1 &'
     )
     assert launch_command in workflow
