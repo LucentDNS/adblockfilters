@@ -7,7 +7,9 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: dns-validation-state
+  # DNS validation has priority over a queued or running production build.
+  # Both workflows share this lock so builds cannot consume stale validation state.
+  group: production-rule-pipeline-${{ github.repository }}
   cancel-in-progress: true
 
 on:
