@@ -79,16 +79,15 @@ def test_policy_upgrade_is_idempotent(tmp_path):
     database.close()
 
 
-def test_inconclusive_dns_results_use_the_negative_retry_cooldown(monkeypatch):
-    now = 1_000_000
-    monkeypatch.setattr("blacklist.time.time", lambda: now)
+def test_inconclusive_dns_results_use_the_negative_retry_cooldown():
     domain = DOMAIN("unknown.example", tld="example", fld="unknown.example", timeStamp=1)
 
     domain.setCheckedAtNow()
     last_checked = domain.getTimeStamp()
 
-    assert not _needs_dns_validation([], last_checked, now + 5 * 60 * 60)
-    assert _needs_dns_validation([], last_checked, now + 6 * 60 * 60 + 1)
+    assert last_checked > 1
+    assert not _needs_dns_validation([], last_checked, last_checked + 5 * 60 * 60)
+    assert _needs_dns_validation([], last_checked, last_checked + 6 * 60 * 60 + 1)
 
 
 def test_positive_dns_cache_keeps_its_long_refresh_window():
