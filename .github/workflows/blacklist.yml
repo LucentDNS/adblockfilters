@@ -99,8 +99,12 @@ jobs:
           ldd "$SMARTDNS_BIN" || true
           rm -f "$SMARTDNS_PATH/smartdns.deb"
           cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
+          # This release uses a relative ELF interpreter path (lib/ld-musl-*.so.1).
+          # Launch from its own directory so the bundled musl runtime is found.
+          SMARTDNS_ROOT="$(dirname "$SMARTDNS_BIN")"
+          cd "$SMARTDNS_ROOT"
           SMARTDNS_LOG="$SMARTDNS_PATH/smartdns.log"
-          nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_LOG" 2>&1 &
+          nohup ./smartdns -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_LOG" 2>&1 &
           SMARTDNS_PID=$!
           ready=0
           for i in $(seq 1 30); do
