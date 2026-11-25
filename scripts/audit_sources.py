@@ -26,6 +26,34 @@ OUT_DIR = ROOT / ".cache" / "audit"
 CANDIDATE_SOURCE_DIR = OUT_DIR / "candidate-source"
 TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 
+
+def source_audit_gate_failures(
+    compiled_unparsed,
+    source_presence_unexplained,
+    current_source_parent_inactive_unexplained,
+    baseline_allow_missing_still_blocked,
+):
+    """Return hard failures where source intent is lost or upstream allows regress."""
+    failures = []
+    if compiled_unparsed:
+        failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
+    if source_presence_unexplained:
+        failures.append(
+            "active baseline DNS source rules are missing from compiled output: "
+            + ", ".join(sorted(source_presence_unexplained)[:20])
+        )
+    if current_source_parent_inactive_unexplained:
+        failures.append(
+            "baseline rules have inactive current-source parents without a valid exclusion: "
+            + ", ".join(sorted(current_source_parent_inactive_unexplained)[:20])
+        )
+    if baseline_allow_missing_still_blocked:
+        failures.append(
+            "upstream baseline allow exceptions are missing while domains remain blocked: "
+            + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
+        )
+    return failures
+
 def write_domain_list(path, domains, empty_note):
     """Write a non-empty, comment-safe list so empty reports remain publishable."""
     values = sorted(set(domains))
@@ -1341,6 +1369,15 @@ def main():
             "Audit incomplete; required source failures="
             + ", ".join(failed_required + failed_candidates)
         )
+
+    gate_failures = source_audit_gate_failures(
+        compiled_unparsed,
+        source_presence_unexplained,
+        current_source_parent_inactive_unexplained,
+        baseline_allow_missing_still_blocked,
+    )
+    if gate_failures:
+        raise SystemExit("Source/output consistency gate failed:\n- " + "\n- ".join(gate_failures))
 
 
 if __name__ == "__main__":
