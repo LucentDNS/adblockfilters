@@ -14,6 +14,9 @@ on:
   push:
     branches: [main]
     paths:
+      - ".editorconfig"
+      - "pyproject.toml"
+      - "requirements-dev.txt"
       - "adblock.py"
       - "filter.py"
       - "app/**"
@@ -89,6 +92,11 @@ jobs:
           sudo timedatectl set-timezone "$TZ"
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
+
+      - name: Static analysis
+        run: |
+          python -m ruff check --no-cache .
 
       - name: Run unit tests
         run: |
