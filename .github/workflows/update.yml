@@ -11,6 +11,8 @@ on:
   # Production builds are started only after the DNS-validation workflow
   # has published and verified its source snapshot and then dispatches this workflow.
   workflow_dispatch:
+  schedule:
+    - cron: '0 */8 * * *'
 
 env:
   TZ: Asia/Shanghai
