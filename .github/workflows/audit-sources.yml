@@ -13,6 +13,11 @@ on:
       - 'resolver.py'
       - 'readme.py'
       - 'blacklist.py'
+      - 'adblock.py'
+      - 'updater.py'
+      - 'smartdns.conf'
+      - '.gitignore'
+      - '.github/workflows/blacklist.yml'
       - 'filter.py'
       - 'rules/**'
       - 'tests/**'
@@ -30,7 +35,7 @@ concurrency:
 
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - name: Checkout
