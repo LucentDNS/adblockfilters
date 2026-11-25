@@ -33,6 +33,27 @@ def test_adguard_home_lite_uses_upstream_compatible_domain_suffix_rule(tmp_path)
     assert "\ncn.example.com\n" not in output
 
 
+
+def test_adguard_home_lite_keeps_upstream_block_and_allow_syntax(tmp_path):
+    generator = AdGuardHome(
+        ["blocked.example.com"],
+        ["safe.example.com"],
+        {},
+        [],
+        [],
+        {"blocked.example.com"},
+        str(tmp_path / "adblockdns.txt"),
+        "test",
+    )
+    generator.blockListLite = ["blocked.example.com"]
+    generator.generate(isLite=True)
+    output = Path(generator.fileNameLite).read_text(encoding="utf-8")
+
+    assert "! Title: AdBlock DNS Lite" in output
+    assert "||blocked.example.com^" in output
+    assert "@@||safe.example.com^" in output
+    assert "\\nblocked.example.com\\n" not in output
+
 def test_dnsmasq_lite_uses_exact_host_record(tmp_path):
     output = generate_lite(DNSMasq, tmp_path, "adblockdnsmasq.conf")
     assert "host-record=cn.example.com,0.0.0.0,::" in output
