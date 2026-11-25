@@ -779,6 +779,25 @@ def main():
         | baseline_only_source_allow_covered
     )
     source_not_effectively_covered = source_unexplained
+
+    # Project-maintained manual blocks are intentionally separate from upstream
+    # source attribution, but they still provide effective coverage of baseline
+    # domains. Report that coverage explicitly instead of calling it unexplained.
+    manual_block_domains = set()
+    manual_rules_path = ROOT / "rules" / "myblock.txt"
+    if manual_rules_path.exists():
+        for raw in manual_rules_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = raw.strip()
+            if line.startswith("||") and line.endswith("^"):
+                domain = line[2:-1].strip().lower()
+                if domain and not any(char in domain for char in " /\\t^$*"):
+                    manual_block_domains.add(domain)
+    baseline_manual_block_covered = {
+        domain for domain in baseline_blocks
+        if covered_by_rule_domain(domain, manual_block_domains)
+    }
+    source_unexplained_after_manual = source_unexplained - baseline_manual_block_covered
+
     provenance_path = ROOT / ".cache" / "domain" / "input-provenance.txt"
     input_provenance = {}
     if provenance_path.exists():
@@ -837,6 +856,8 @@ def main():
         "baseline_only_blacklist_exact_overlap": len(blacklist_overlap),
         "baseline_only_project_whitelist_parent_coverage": len(whitelist_covered),
         "baseline_only_not_effectively_covered_by_current_dns_sources": len(source_unexplained),
+        "baseline_only_project_manual_block_covered": len(baseline_manual_block_covered),
+        "baseline_only_unexplained_after_manual_blocks": len(source_unexplained_after_manual),
         "baseline_only_absent_from_current_dns_sources": len(source_absent),
         "blacklist_input_available": blacklist_path.exists(),
         "domain_input_provenance": input_provenance
@@ -1169,6 +1190,16 @@ def main():
             f"{stats['baseline_only_not_covered']} |\n"
         )
 
+    write_domain_list(
+        OUT_DIR / "baseline-only-manual-block-covered.txt",
+        baseline_manual_block_covered,
+        "No upstream baseline-only block is covered by project manual blocks."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-unexplained-after-manual.txt",
+        source_unexplained_after_manual,
+        "No baseline-only block remains unexplained after manual blocks."
+    )
     write_domain_list(
         OUT_DIR / "baseline-only-current-dns-source-overlap.txt",
         current_source_exact | current_source_parent_present,
