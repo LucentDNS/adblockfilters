@@ -17,11 +17,10 @@ FILTER_OUTPUT = ROOT / ".cache" / "out" / "adblockfilters.txt"
 SOURCE_DIR = ROOT / ".cache" / "source"
 MAX_DNS_RULES = 500_000
 
-# These modifiers do not narrow a rule to a resource type or page context.
-# All other modifiers (e.g. script, image, third-party, domain=...) make the
-# rule narrower than a domain-wide block and must not be treated as blocking
-# the service root itself.
-DOMAIN_WIDE_OPTIONS = {"important", "all", "document", "match-case", "~third-party", "1p"}
+# Only modifiers that preserve host-wide scope are accepted here.
+# Resource-type and page-context modifiers (including document, 1p, and
+# ~third-party) are intentionally excluded from critical-service blocking.
+DOMAIN_WIDE_OPTIONS = {"important", "all", "match-case"}
 
 
 def normalize_domain(value):
