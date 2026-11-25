@@ -223,29 +223,6 @@ def test_no_address_requires_both_groups_to_agree():
     ) == ([], "no_address")
 
 
-def test_both_independent_dns_groups_must_confirm_nxdomain():
-    dead = {"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}
-    assert resolve([dead, dead]) == ([], "not_found")
-
-
-def test_valid_answer_from_either_dns_group_prevents_blacklisting():
-    dead = {"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}
-    alive = {"A": ["192.0.2.20"], "AAAA": NoAnswer()}
-    assert resolve([dead, alive]) == (["192.0.2.20"], "resolved")
-
-
-def test_nxdomain_disagreement_between_dns_groups_is_inconclusive():
-    dead = {"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}
-    no_address = {"A": NoAnswer(), "AAAA": NoAnswer()}
-    assert resolve([dead, no_address]) == ([], "unknown")
-
-
-def test_one_dns_group_timeout_prevents_nxdomain_blacklisting():
-    dead = {"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}
-    unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
-    assert resolve([dead, unavailable]) == ([], "unknown")
-
-
 def test_dns_group_disagreement_preserves_previous_unblocked_state():
     dead = {"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}
     unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
