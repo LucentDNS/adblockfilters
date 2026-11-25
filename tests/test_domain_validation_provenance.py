@@ -76,8 +76,7 @@ def test_refresh_preserves_dns_snapshot_used_for_validation(tmp_path, monkeypatc
             self.rule_list = rule_list
 
         def update(self, path):
-            source_path.write_text("||changed-after-validation.example^\\n", encoding="utf-8")
-            self.rule_list[0].latest = "2026/11/25"
+            assert self.rule_list == []
             return True, self.rule_list
 
     monkeypatch.setattr(adblock, "Updater", FakeUpdater)
@@ -90,6 +89,44 @@ def test_refresh_preserves_dns_snapshot_used_for_validation(tmp_path, monkeypatc
     assert returned_rules == rules
     assert source_path.read_bytes() == original
     assert returned_rules[0].latest == "2026/11/24"
+    assert verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
+
+
+def test_refresh_updates_browser_sources_without_replacing_validated_dns_sources(tmp_path, monkeypatch):
+    import adblock
+
+    dns_rules, source_dir, domain_dir, dns_source_path = _prepare(tmp_path)
+    dns_original = dns_source_path.read_bytes()
+    browser_rule = Rule(
+        "AdGuard Base filter", "filter",
+        "https://example.org/base.txt", "2026/11/24"
+    )
+    browser_source_path = source_dir / browser_rule.filename
+    browser_source_path.write_text("old browser snapshot\n", encoding="utf-8")
+    rules = dns_rules + [browser_rule]
+
+    class FakeUpdater:
+        def __init__(self, rule_list):
+            self.rule_list = rule_list
+
+        def update(self, path):
+            assert self.rule_list == [browser_rule]
+            browser_source_path.write_text("new browser snapshot\n", encoding="utf-8")
+            browser_rule.latest = "2026/11/25"
+            return True, self.rule_list
+
+    monkeypatch.setattr(adblock, "Updater", FakeUpdater)
+
+    updated, returned_rules = adblock.update_sources_preserving_validated_dns(
+        rules, str(source_dir), str(domain_dir)
+    )
+
+    assert updated is True
+    assert returned_rules == rules
+    assert dns_source_path.read_bytes() == dns_original
+    assert browser_source_path.read_text(encoding="utf-8") == "new browser snapshot\n"
+    assert dns_rules[0].latest == "2026/11/24"
+    assert browser_rule.latest == "2026/11/25"
     assert verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
 
 
