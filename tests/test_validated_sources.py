@@ -140,5 +140,5 @@ def test_restore_extracts_only_verified_dns_source_snapshots(tmp_path, monkeypat
 
     validated_sources.restore()
 
-    restored = source_dir / "Test DNS source.txt"
+    restored = next(source_dir.iterdir())
     assert restored.read_text(encoding="utf-8") == "||ads.example.test^\n"
