@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the NobleDNS DNS-validation input from its own selected DNS/Hosts sources."""
+"""Build the AdBlock DNS validation input from its own selected DNS/Hosts sources."""
 import hashlib
 import json
 import shutil
@@ -78,7 +78,7 @@ def main():
     domain_file_sha256 = hashlib.sha256(output.read_bytes()).hexdigest()
 
     provenance = {
-        "generator": "NobleDNS selected DNS/Hosts sources",
+        "generator": "AdBlock DNS selected DNS/Hosts sources",
         "source_count": len(dns_rules),
         "sources": [
             {
@@ -100,7 +100,7 @@ def main():
         encoding="utf-8",
     )
 
-    print(f"NobleDNS DNS/Hosts sources: {len(dns_rules)}")
+    print(f"AdBlock DNS/Hosts sources: {len(dns_rules)}")
     for name, count in sorted(source_counts.items()):
         print(f"  {name}: {count}")
     print(f"Unique DNS validation domains: {len(all_domains)}")
