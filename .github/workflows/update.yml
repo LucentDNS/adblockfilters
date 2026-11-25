@@ -98,6 +98,7 @@ jobs:
       - name: Static analysis
         run: |
           python -m ruff check --no-cache .
+          python -m ruff check --no-cache --select F401 scripts tests
 
       - name: Run unit tests
         run: |
