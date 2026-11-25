@@ -66,7 +66,6 @@
 ! https://github.com/fmz200/wool_scripts/blob/main/Shadowrocket/module/blockAds.srmodule
 ! https://github.com/zqzess/rule_for_quantumultX/blob/master/Loon/Plugin/AdBlock.plugin
 ||iqiyim.adtrack.enlightent.cn^
-||antrenbitapptech.com^
 ! Gridinsoft phishing verdict (1/100) with DNS8 and SOCRadar external phishing warnings.
 ! https://gridinsoft.com/online-virus-scanner/url/atlasfaktow-com
 ||atlasfaktow.com^
