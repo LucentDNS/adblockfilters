@@ -283,7 +283,7 @@ jobs:
           expected = {
               "adblockdns.txt", "adblockdnslite.txt",
               "adblockfilters.txt", "adblockfilterslite.txt",
-              "adblockdomain.txt", "adblockdomainlite.txt",
+              "adblockdomain.txt", "adblockdomainlite.txt", "adblockdomainallow.txt",
               "adblockdnsmasq.txt", "adblockdnsmasqlite.txt",
               "adblocksmartdns.conf", "adblocksmartdnslite.conf",
               "adblockclash.list", "adblockclashlite.list",
