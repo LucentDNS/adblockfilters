@@ -27,7 +27,7 @@ def generate_lite(generator_cls, tmp_path, filename):
     return Path(generator.fileNameLite).read_text(encoding="utf-8")
 
 
-def test_adguard_home_lite_uses_exact_domain_rule(tmp_path):
+def test_adguard_home_lite_uses_upstream_compatible_domain_suffix_rule(tmp_path):
     output = generate_lite(AdGuardHome, tmp_path, "adblockdns.txt")
     assert "||cn.example.com^" in output
     assert "\ncn.example.com\n" not in output
