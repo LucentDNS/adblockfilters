@@ -263,7 +263,7 @@ sentry.io
 */ad.
 # https://github.com/217heidai/adblockfilters/issues/39
 txt.go.sohu.com
-# https://uprising.kip.pro/join?ref=6Q4ARF 
+# https://uprising.kip.pro/join?ref=6Q4ARF
 uprising.kip.pro
 # https://github.com/217heidai/adblockfilters/issues/38
 castatic.fengkongcloud.com
