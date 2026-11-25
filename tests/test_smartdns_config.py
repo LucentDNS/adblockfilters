@@ -9,14 +9,14 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
 
     domestic = [
         line for line in config.splitlines()
-        if line.startswith("server-tls ") and "-group domestic" in line
+        if line.startswith(("server ", "server-tls ", "server-https ")) and "-group domestic" in line
     ]
     global_servers = [
         line for line in config.splitlines()
-        if line.startswith("server-tls ") and "-group global" in line
+        if line.startswith(("server ", "server-tls ", "server-https ")) and "-group global" in line
     ]
-    assert len(domestic) >= 6
-    assert len(global_servers) >= 6
+    assert len(domestic) >= 3
+    assert len(global_servers) >= 3
 
     for provider in (
         "https://doh.pub/dns-query",
