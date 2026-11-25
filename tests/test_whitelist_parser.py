@@ -143,6 +143,8 @@ def test_service_whitelist_entries_are_scoped_to_confirmed_hosts():
     assert "apps.coloros.com" not in entries
     assert "iwisdom.apps.coloros.com" in entries
     assert "browser.miui.com" not in entries
+    assert "upqzfile.com" not in entries
+    assert "v6.pic.upqzfile.com" in entries
     assert {
         "api.browser.miui.com",
         "httpdns.browser.miui.com",
