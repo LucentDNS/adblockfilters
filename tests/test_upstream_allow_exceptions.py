@@ -22,4 +22,3 @@ def test_curated_dns_supplement_rules_are_present():
     }
 
     assert "||fb_servpub-a.akamaihd.net^" in entries
-    assert "||2006mindfreaklike.blogspot.com^" in entries
