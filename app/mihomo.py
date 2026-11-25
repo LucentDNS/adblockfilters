@@ -39,8 +39,11 @@ class Mihomo(APPBase):
                 f.write("  # Last modified: %s\n"%(self.time))
                 f.write("  # Blocked domains: %s\n"%(len(blockList)))
                 f.write("  #\n")
-                for domain in blockList:
-                    f.write("  - '+.%s'\n"%(domain))
+                if not blockList:
+                    f.write("  []\n")
+                else:
+                    for domain in blockList:
+                        f.write("  - '+.%s'\n"%(domain))
             
             if isLite:
                 logger.info("adblock Mihomo Lite: block=%d"%(len(blockList)))
