@@ -390,36 +390,57 @@ class BlackList(object):
             raise
     
     async def __resolve(self, dnsresolver, domain) -> Tuple[List[str], str]:
-        # Query both address families. A valid answer from either family is
-        # sufficient; transient resolver failures must never be treated as
-        # proof that a domain is dead.
-        ipList = []
-        no_answer_count = 0
-        saw_nxdomain = False
-        for rdtype in ("A", "AAAA"):
-            try:
-                query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
-                for item in query_object:
-                    ip = str(item)
-                    if ip not in ("0.0.0.0", "::") and ip not in ipList:
-                        ipList.append(ip)
-            except NXDOMAIN:
-                saw_nxdomain = True
-            except NoAnswer:
-                # NOERROR/NODATA is a definitive negative answer for this RR type.
-                no_answer_count += 1
-            except Exception:
-                # Timeout, SERVFAIL, NoNameservers and resolver-specific errors
-                # are inconclusive. Do not turn them into blacklist evidence.
-                continue
+        # Query A and AAAA independently in each regional resolver group.
+        # A valid answer from either group is sufficient; NXDOMAIN is accepted
+        # only when both domestic and global groups independently agree.
+        resolvers = list(dnsresolver) if isinstance(dnsresolver, (list, tuple)) else [dnsresolver]
 
-        if ipList:
-            return ipList, "resolved"
-        if saw_nxdomain:
+        async def resolve_group(group_resolver):
+            ip_list = []
+            no_answer_count = 0
+            saw_nxdomain = False
+            for rdtype in ("A", "AAAA"):
+                try:
+                    query_object = await group_resolver.resolve(qname=domain, rdtype=rdtype)
+                    for item in query_object:
+                        ip = str(item)
+                        if ip not in ("0.0.0.0", "::") and ip not in ip_list:
+                            ip_list.append(ip)
+                except NXDOMAIN:
+                    saw_nxdomain = True
+                except NoAnswer:
+                    # NOERROR/NODATA is not proof that the name does not exist.
+                    no_answer_count += 1
+                except Exception:
+                    # Timeout, SERVFAIL and resolver-specific errors are inconclusive.
+                    continue
+
+            if ip_list:
+                return ip_list, "resolved"
+            if saw_nxdomain:
+                return [], "not_found"
+            if no_answer_count == 2:
+                return [], "no_address"
+            return [], "unknown"
+
+        results = await asyncio.gather(*(resolve_group(item) for item in resolvers))
+        ip_list = []
+        for addresses, _ in results:
+            for address in addresses:
+                if address not in ip_list:
+                    ip_list.append(address)
+        if ip_list:
+            return ip_list, "resolved"
+
+        statuses = [status for _, status in results]
+        if len(statuses) == 1:
+            return results[0]
+        if all(status == "not_found" for status in statuses):
             return [], "not_found"
-        if no_answer_count == 2:
+        if all(status == "no_address" for status in statuses):
             return [], "no_address"
-        # Unknown results are summarized after the batch; avoid one log line per domain.
+
+        # Regional disagreement or an inconclusive group must never create a block.
         return [], "unknown"
 
     async def __pingx(self, dnsresolver:DNSResolver, domain:DOMAIN, semaphore):
@@ -515,11 +536,15 @@ class BlackList(object):
         logger.info("resolve domain...")
 
         async def _resolve_all():
-            dnsresolver = DNSResolver()
-            dnsresolver.nameservers = nameservers
-            dnsresolver.port = port
-            dnsresolver.timeout = 2.0
-            dnsresolver.lifetime = 5.0
+            dnsresolvers = []
+            ports = (port, 5054) if port == 5053 else (port,)
+            for resolver_port in ports:
+                dnsresolver = DNSResolver()
+                dnsresolver.nameservers = nameservers
+                dnsresolver.port = resolver_port
+                dnsresolver.timeout = 2.0
+                dnsresolver.lifetime = 5.0
+                dnsresolvers.append(dnsresolver)
             semaphore = asyncio.Semaphore(self.__maxTask)
 
             tasks = []
@@ -527,7 +552,7 @@ class BlackList(object):
             for _,v in domainDict.items():
                 ipList = v.getIPList()
                 if _needs_dns_validation(ipList, v.getTimeStamp(), now, v.getUpdate()):
-                    tasks.append(self.__pingx(dnsresolver, v, semaphore))
+                    tasks.append(self.__pingx(dnsresolvers, v, semaphore))
             total = len(tasks)
             for completed, task in enumerate(asyncio.as_completed(tasks), 1):
                 domain = await task
