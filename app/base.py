@@ -34,7 +34,10 @@ class APPBase(ABC):
         self.fileName:str = fileName
         self.sourceRule:str = sourceRule
         self.blockListLite:List[str] = self.__generateDomainLiteList(self.blockList, self.ChinaSet)
-        self.unblockListLite:List[str] = self.__generateDomainLiteList(self.unblockList, self.ChinaSet)
+        # Keep every allow exception in Lite. Filtering allow rules by ChinaSet can
+        # drop a non-China child exception while retaining its China-classified
+        # parent block rule, reintroducing a false positive in the Lite output.
+        self.unblockListLite:List[str] = list(self.unblockList)
         self.filterListLite:List[str] = self.__generateFilterLiteList(self.filterDict, self.filterList, self.ChinaSet)
         self.fileNameLite:str = fileName[:self.fileName.rfind(".")] + "lite" + fileName[self.fileName.rfind("."):]
     
