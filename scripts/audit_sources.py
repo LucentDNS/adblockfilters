@@ -935,15 +935,15 @@ def main():
             manual_block_missing,
             "All active manual block domains are present in compiled DNS output."
         )
-        report += "\\n## 项目手工拦截规则回归\\n\\n"
-        report += f"- 应进入 Full DNS 输出的手工拦截域名：{len(manual_block_domains)} 条；实际覆盖：{len(manual_block_covered)} 条；缺失：{len(manual_block_missing)} 条。\\n"
+        report += "\n## 项目手工拦截规则回归\n\n"
+        report += f"- 应进入 Full DNS 输出的手工拦截域名：{len(manual_block_domains)} 条；实际覆盖：{len(manual_block_covered)} 条；缺失：{len(manual_block_missing)} 条。\n"
         if manual_block_missing:
             raise SystemExit(
                 "Manual block regression failed: "
                 + ", ".join(sorted(manual_block_missing))
             )
     (OUT_DIR / "manual-block-audit.json").write_text(
-        json.dumps(manual_block_audit, ensure_ascii=False, indent=2) + "\\n",
+        json.dumps(manual_block_audit, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
 
