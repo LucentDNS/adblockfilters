@@ -100,9 +100,13 @@ def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
     ).read_text(encoding="utf-8")
 
     assert 'SMARTDNS_LOG="$SMARTDNS_PATH/smartdns.log"' in workflow
-    assert 'nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_LOG" 2>&1 &' in workflow
+    launch_command = (
+        'nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" '
+        '> "$SMARTDNS_LOG" 2>&1 &'
+    )
+    assert launch_command in workflow
     assert 'kill -0 "$SMARTDNS_PID"' in workflow
-    assert "127\\\\.0\\\\.0\\\\.1:5053" in workflow
-    assert "127\\\\.0\\\\.0\\\\.1:5054" in workflow
+    assert "127\\.0\\.0\\.1:5053" in workflow
+    assert "127\\.0\\.0\\.1:5054" in workflow
     assert "sock.recvfrom(1024)" not in workflow
     assert 'cat "$SMARTDNS_LOG"' in workflow
