@@ -781,12 +781,17 @@ def main():
         domain for domain in current_source_exact_active
         if not covered_by_compiled_output(domain)
     }
+    current_source_parent_inactive_output_covered = {
+        domain for domain in current_source_parent_inactive
+        if covered_by_compiled_output(domain)
+    }
     source_absent = baseline_blocks - current_source_exact - current_source_parent_present
     current_source_parent_inactive_unexplained = (
         current_source_parent_inactive
         - current_source_parent_inactive_blacklisted
         - current_source_parent_inactive_whitelisted
         - current_source_parent_inactive_upstream_allowed
+        - current_source_parent_inactive_output_covered
     )
     baseline_only_source_allow_covered = {
         domain for domain in baseline_blocks if covered_by_source_allow(domain)
@@ -893,6 +898,7 @@ def main():
         "baseline_only_exact_source_rules_excluded_by_upstream_allow": len(current_source_exact_upstream_allowed),
         "baseline_only_source_allow_covered": len(baseline_only_source_allow_covered),
         "baseline_only_current_source_rules_covered_by_compiled_output_parent": len(source_presence_parent_output_covered),
+        "baseline_only_parent_inactive_rules_covered_by_compiled_output": len(current_source_parent_inactive_output_covered),
         "baseline_only_exact_source_rules_active_but_missing_from_output": len(source_presence_unexplained),
         "baseline_only_parent_present_in_current_dns_sources": len(current_source_parent_present),
         "baseline_only_covered_by_active_current_source_parent": len(current_source_parent_covered),
@@ -916,6 +922,7 @@ def main():
     report += f"- 精确来源规则中，被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条；被上游来源 allow 规则覆盖：{len(current_source_exact_upstream_allowed)} 条。\n"
     report += f"- 基线 block 被当前来源 allow 精确或父域名覆盖：{len(baseline_only_source_allow_covered)} 条。\n"
     report += f"- 当前来源精确域名虽未逐条输出、但已由编译结果父规则覆盖：{len(source_presence_parent_output_covered)} 条。\n"
+    report += f"- 原作者基线域名的当前来源父规则虽经 DNS 判为失效、但已由实际编译输出规则覆盖：{len(current_source_parent_inactive_output_covered)} 条。\n"
     report += f"- 当前来源中存在、未被黑/白名单或来源 allow 解释、且未被任何编译输出规则覆盖：{len(source_presence_unexplained)} 条。\n"
     report += f"- 父域名来源覆盖：有效父域名 {len(current_source_parent_covered)} 条；失效或被例外排除的父域名 {len(current_source_parent_inactive)} 条（黑名单 {len(current_source_parent_inactive_blacklisted)}、白名单 {len(current_source_parent_inactive_whitelisted)}、来源 allow {len(current_source_parent_inactive_upstream_allowed)}、仍未解释 {len(current_source_parent_inactive_unexplained)}）。\n"
     report += f"- 当前六个 DNS/Hosts 来源中既无精确规则也无父域名：{len(source_absent)} 条。\n"
@@ -1329,6 +1336,11 @@ def main():
         OUT_DIR / "baseline-only-current-source-parent-output-covered.txt",
         source_presence_parent_output_covered,
         "No baseline-only current-source domain is covered by a compiled parent rule."
+    )
+    write_domain_list(
+        OUT_DIR / "baseline-only-parent-inactive-output-covered.txt",
+        current_source_parent_inactive_output_covered,
+        "No baseline-only domain with an inactive current-source parent is covered by the compiled output."
     )
     write_domain_list(
         OUT_DIR / "baseline-only-current-source-unexplained.txt",
