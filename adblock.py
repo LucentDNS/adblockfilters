@@ -22,7 +22,7 @@ def verify_domain_validation_provenance(ruleList, sourceDir, domainDir):
     """Require the build's DNS sources to match the exact snapshots DNS-validated."""
     provenance_path = os.path.join(domainDir, "domain-input-provenance.json")
     if not os.path.isfile(provenance_path):
-        return False
+        raise RuntimeError("DNS validation provenance is missing; refusing to build without verified inputs")
 
     with open(provenance_path, "r", encoding="utf-8") as stream:
         provenance = json.load(stream)
