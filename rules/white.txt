@@ -371,6 +371,7 @@ androidtvwatsonfe-pa.googleapis.com
 # https://www.tilburguniversity.edu/students/getting-started/welcome-new-student/insurances
 benefits.aon.com
 
-# This host serves MP4 video content; it is a content-delivery endpoint, not an ad domain.
+# Avoid DNS-wide blocking of this MP4 content host; existing path-specific browser rules remain intact.
+# https://archive.ph/evtubescms.phncdn.com
 # https://www.ipaddress.com/website/evtubescms.phncdn.com/
 evtubescms.phncdn.com
