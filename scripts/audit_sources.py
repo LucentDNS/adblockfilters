@@ -1058,6 +1058,7 @@ def main():
             "allowlist_rules": len(invizible_allow_domains),
             "expected_source_and_project_allow_domains": len(expected_invizible_allow_domains),
             "missing_allow_domains": len(invizible_allowlist_missing),
+            "missing_allow_domain_samples": sorted(invizible_allowlist_missing)[:100],
         }
     (OUT_DIR / "invizible-allowlist-audit.json").write_text(
         json.dumps(invizible_allowlist_audit, ensure_ascii=False, indent=2) + "\n",
