@@ -136,3 +136,16 @@ def test_service_whitelist_entries_are_scoped_to_confirmed_hosts():
     assert "shouji.360.cn" not in entries
     assert "ads.heytapmobi.com" not in entries
     assert "tanx.com" not in entries
+    assert "17u.cn" not in entries
+    assert "wx.17u.cn" in entries
+    assert "go.sohu.com" not in entries
+    assert "txt.go.sohu.com" in entries
+    assert "apps.coloros.com" not in entries
+    assert "iwisdom.apps.coloros.com" in entries
+    assert "browser.miui.com" not in entries
+    assert {
+        "api.browser.miui.com",
+        "httpdns.browser.miui.com",
+        "r.browser.miui.com",
+        "security.browser.miui.com",
+    } <= entries
