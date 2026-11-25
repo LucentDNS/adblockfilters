@@ -28,12 +28,16 @@ class Loon(APPBase):
                 f.write("#\n")
                 if isLite:
                     f.write("#!name=AdBlock Loon Lite\n")
+                    f.write("#!desc=适用于 Loon 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
                 else:
                     f.write("#!name=AdBlock Loon\n")
+                    f.write("#!desc=适用于 Loon 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
                 f.write("#!homepage=%s\n"%(self.homepage))
                 f.write("#!raw-url=%s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("#!tag=AdBlock, 217heidai\n")
                 f.write("#!system=iOS, iPadOS\n")
+                f.write("#!system_version=\n")
+                f.write("#!loon_version=\n")
                 f.write("#!date=%s\n"%(self.time))
                 f.write("#!support=%s\n"%(len(blockList)))
                 f.write("#!proxy-select=REJECT\n")
@@ -46,5 +50,4 @@ class Loon(APPBase):
             else:
                 logger.info("adblock Loon: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.exception(e)
-            raise
+            logger.error("%s"%(e))
