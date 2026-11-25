@@ -35,6 +35,7 @@ def test_dns_resolver_accepts_underscore_label_in_known_tracking_domain():
     assert unblock is None
     assert filter_rule is None
 
+
 def test_manual_dns_supplement_rules_use_dns_label_syntax():
     import re
 
