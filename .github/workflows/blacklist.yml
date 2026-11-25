@@ -114,7 +114,7 @@ jobs:
               raise SystemExit(f"SmartDNS health check failed: only {success} resolved")
 
           try:
-              resolver.resolve("noble-dns-probe-20261124.example.invalid", "A")
+              resolver.resolve("adblock-dns-probe-20261125.example.invalid", "A")
           except NXDOMAIN:
               print("NXDOMAIN probe passed")
           else:
@@ -125,15 +125,15 @@ jobs:
       - name: Download database
         run: |
           set -euo pipefail
-          # The first LucentDNS run must not inherit upstream block/IP state.
+          # The first AdBlock DNS run must not inherit upstream block/IP state.
           # Reuse a database only after our own fresh-validation marker exists.
           if curl -fsSL --retry 3 --retry-all-errors \
-              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/nobledns-bootstrap-complete.txt" \
-              -o /tmp/nobledns-bootstrap-complete.txt; then
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/dns-validation-bootstrap-complete.txt" \
+              -o /tmp/dns-validation-bootstrap-complete.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
               "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
             test -s domain.db || { echo "DNS validation database is missing or empty"; exit 1; }
-            echo "Using the previously generated LucentDNS DNS-validation database."
+            echo "Using the previously generated AdBlock DNS DNS-validation database."
           else
             echo "No DNS validation marker found; starting with an empty database for a full independent DNS pass."
             : > domain.db
@@ -163,7 +163,7 @@ jobs:
           # publish a non-empty asset while the parser still treats it as empty.
           test -s black.txt || printf '! Validated blacklist: no confirmed dead domains\n' > black.txt
           test -s china.txt || printf '! Validated China list: no validated China domains\n' > china.txt
-          printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
+          printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > dns-validation-bootstrap-complete.txt
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Upload log on failure
@@ -200,9 +200,17 @@ jobs:
             validated-dns-sources.tar.gz
             black.txt
             china.txt
-            nobledns-bootstrap-complete.txt
+            dns-validation-bootstrap-complete.txt
           overwrite_files: true
           fail_on_unmatched_files: true
+
+      - name: Remove obsolete DNS validation marker asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view dev-domain-noble --json assets --jq '.assets[].name' | grep -Fxq "nobledns-bootstrap-complete.txt"; then
+            gh release delete-asset dev-domain-noble "nobledns-bootstrap-complete.txt" --yes
+          fi
 
       - name: Verify dev-domain-noble release assets
         env:
@@ -210,7 +218,7 @@ jobs:
         run: |
           set -euo pipefail
           assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
-          for name in domain.db domain.txt domain-input-provenance.json validated-dns-sources.tar.gz black.txt china.txt nobledns-bootstrap-complete.txt; do
+          for name in domain.db domain.txt domain-input-provenance.json validated-dns-sources.tar.gz black.txt china.txt dns-validation-bootstrap-complete.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
               echo "::error::dev-domain-noble release is missing $name"
               exit 1
