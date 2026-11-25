@@ -1,4 +1,4 @@
-name: Generate LucentDNS DNS State
+name: Generate DNS State
 
 # README-only changes must not restart DNS validation or recursively dispatch production builds.
 permissions:
