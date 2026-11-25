@@ -370,3 +370,7 @@ androidtvwatsonfe-pa.googleapis.com
 # Aon student-insurance enrollment links use this service host; do not block the portal.
 # https://www.tilburguniversity.edu/students/getting-started/welcome-new-student/insurances
 benefits.aon.com
+
+# Preserve this verified active service host; do not whitelist the entire shared did.kr parent.
+# https://www.daangn.com/kr/local-profile/%ED%95%98%EC%88%98%EA%B5%AC%EB%A7%89%ED%9E%98-h2v1bnwp7qbe/
+hasugu1004.did.kr
