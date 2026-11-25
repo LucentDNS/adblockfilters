@@ -93,3 +93,8 @@
 @@||r.*.awstrack.me^
 ! https://github.com/217heidai/adblockfilters/issues/131
 @@||clients2.googleusercontent.com/crx/blobs/Ad_*^
+
+! Tencent MDT telemetry/tracking endpoint independently listed by multiple maintained hosts blocklists.
+! https://github.com/TonyRL/blocklist/blob/master/hosts
+! https://github.com/ultranity/ultranity.github.io/blob/master/hosts0.txt
+||oth.str.mdt.qq.com^
