@@ -106,8 +106,8 @@ jobs:
               cat "$SMARTDNS_LOG"
               exit 1
             fi
-            if ss -H -lun | grep -Eq '127\\.0\\.0\\.1:5053([[:space:]]|$)' \
-              && ss -H -lun | grep -Eq '127\\.0\\.0\\.1:5054([[:space:]]|$)'; then
+            if ss -H -lun | grep -Eq '127\.0\.0\.1:5053([[:space:]]|$)' \
+              && ss -H -lun | grep -Eq '127\.0\.0\.1:5054([[:space:]]|$)'; then
               ready=1
               break
             fi
