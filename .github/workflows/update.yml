@@ -97,6 +97,8 @@ jobs:
             test -s ".cache/domain/$name" || { echo "::error::Validated dns-validation-state/$name is missing or empty"; exit 1; }
             printf '%s\t%s\n' "$name" "dual-group DNS validation v2" >> .cache/domain/input-provenance.txt
           done
+          # Preserve the exact validation input before Filter.generate rewrites domain.txt.
+          cp .cache/domain/domain.txt .cache/domain/validated-domain-input.txt
           curl -fsSL --retry 3 --retry-all-errors \
             -o .cache/domain/validated-dns-sources.tar.gz \
             "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/validated-dns-sources.tar.gz"
