@@ -51,11 +51,12 @@
 ! https://gridinsoft.com/online-virus-scanner/url/whatsappdns-com
 ||whatsappdns.com^
 
-! PhishDestroy critical verdict (95/100), VirusTotal 18/91, Cloudflare Radar malware classification.
-! https://phishdestroy.io/domain/antrenbitapptech.com/
 ! Established DNS/adblock rule source identifies this exact host as advertising tracking infrastructure.
 ! https://github.com/vhvg/Surge-2/blob/master/Module/Ad%20Block.sgmodule
 ||apxadtracking.net^
+! PhishDestroy critical verdict (95/100), VirusTotal 18/91, Cloudflare Radar malware classification.
+! https://phishdestroy.io/domain/antrenbitapptech.com/
+||antrenbitapptech.com^
 
 ! Gridinsoft phishing verdict with 17 external provider warnings; ScamAdviser also reports iQ Abuse Scan and IPQS phishing flags.
 ! https://gridinsoft.com/online-virus-scanner/url/iplog-co
