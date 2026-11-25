@@ -169,3 +169,9 @@ def test_domain_input_deduplicates_normalized_variants(tmp_path):
     domains = instance._BlackList__getDomainDict()
 
     assert list(domains) == ["example.com"]
+
+
+def test_nxdomain_plus_valid_other_family_keeps_domain():
+    assert resolve({"A": NXDOMAIN(), "AAAA": ["2001:db8::1"]}) == (
+        ["2001:db8::1"], "resolved"
+    )
