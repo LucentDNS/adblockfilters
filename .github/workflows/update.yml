@@ -70,13 +70,13 @@ jobs:
           mkdir -p .cache/domain .cache/source
           : > .cache/domain/input-provenance.txt
           # black/china 是过滤阶段的关键输入。下载失败时必须停止，禁止用空文件继续生成看似成功的规则。
-          # Production builds consume the independently DNS-validated LucentDNS domain state.
+          # Production builds consume the independently DNS-validated validated DNS domain state.
           for name in black.txt china.txt domain.txt domain-input-provenance.json; do
             curl -fsSL --retry 3 --retry-all-errors \
               -o ".cache/domain/$name" \
               "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/$name"
             test -s ".cache/domain/$name" || { echo "::error::Validated dev-domain-noble/$name is missing or empty"; exit 1; }
-            printf '%s\t%s\n' "$name" "LucentDNS independent DNS validation" >> .cache/domain/input-provenance.txt
+            printf '%s\t%s\n' "$name" "independent DNS validation" >> .cache/domain/input-provenance.txt
           done
           curl -fsSL --retry 3 --retry-all-errors \
             -o .cache/domain/validated-dns-sources.tar.gz \
@@ -125,7 +125,7 @@ jobs:
           }
           Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           Path(".cache/report/optimized-only.txt").write_text(
-              "\n".join(optimized_only) + ("\n" if optimized_only else "! No LucentDNS-only rules in this comparison.\n"),
+              "\n".join(optimized_only) + ("\n" if optimized_only else "! No project-only rules in this comparison.\n"),
               encoding="utf-8")
           Path(".cache/report/baseline-only.txt").write_text(
               "\n".join(baseline_only) + ("\n" if baseline_only else "! No upstream-only rules in this comparison.\n"),
@@ -300,7 +300,7 @@ jobs:
       - name: Upload build and comparison artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: lucentdns-optimized-build
+          name: adblock-dns-build
           path: |
             .cache/out/*
             .cache/report/*
