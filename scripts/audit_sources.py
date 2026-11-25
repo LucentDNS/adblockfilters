@@ -963,35 +963,6 @@ def main():
     report += f"- 扣除项目手工拦截后，仍未由当前来源、黑名单、白名单、来源 allow 或手工规则解释的基线差异：{len(source_unexplained_after_manual)} 条。\n"
     report += f"- 黑名单文件存在：{blacklist_path.exists()}；输入来源：{input_provenance.get('black.txt', '未记录')}。\n"
     report += "- DNS NXDOMAIN 只用于解释确实经过本项目 DNS 验证的域名；未验证的基线独有域名不得假定为失效。\n"
-    compiled_dns_path = ROOT / ".cache" / "out" / "adblockdns.txt"
-    compiled_block_domains = set()
-    compiled_allow_domains = set()
-    compiled_unparsed = 0
-    if compiled_dns_path.exists():
-        for raw in compiled_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
-            line = raw.strip()
-            if not line or line.startswith(("!", "#")):
-                continue
-            try:
-                block, unblock, filt = resolver._Resolver__resolveDNS(line)
-            except Exception:
-                compiled_unparsed += 1
-                continue
-            block_domain = full_domain(block)
-            allow_domain = full_domain(unblock)
-            if block_domain:
-                compiled_block_domains.add(block_domain)
-            if allow_domain:
-                compiled_allow_domains.add(allow_domain)
-            if filt:
-                rule_text = filt[0] if isinstance(filt, (tuple, list)) else str(filt)
-                filter_domain = full_domain(filt[1]) if isinstance(filt, (tuple, list)) and len(filt) > 1 else None
-                if filter_domain:
-                    if rule_text.lstrip().startswith("@@"):
-                        compiled_allow_domains.add(filter_domain)
-                    else:
-                        compiled_block_domains.add(filter_domain)
-
     manual_block_audit = {"available": compiled_dns_path.exists(), "manual_block_domains": len(manual_block_domains)}
     if compiled_dns_path.exists():
         manual_block_covered = {
