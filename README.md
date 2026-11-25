@@ -1,13 +1,13 @@
 # AdBlock DNS Filters
-去广告合并规则，每8个小时更新一次。
-个人收藏了不少广告过滤规则，但是每次往新设备添加的时候很是头疼，于是写了这个项目，定时自动获取各规则源更新，生成合并规则库。
+去广告合并规则，每 8 小时更新一次。
+本项目聚合多个公开维护的广告、跟踪及浏览器过滤规则源，自动更新、去重并生成适配多种客户端的 Full/Lite 规则。
 
 本仓库基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 持续维护，保留原作者的规则组织和 Full/Lite 设计，并加强来源校验、双组 DNS 交叉验证与构建回归检查。
 
 ## 说明
 1. 定时从上游各规则源获取更新，合并去重。
-2. 使用国内、国际两组相互独立的 DNS 验证组，每组配置 3 个非拦截公共 DNS 上游，分别解析上游规则中的域名。仅当两组均确认 NXDOMAIN 时才剔除；解析超时、无地址、SERVFAIL 或两组结果不一致时保留，避免把临时故障误判为失效域名。
-3. 本项目以合并、去重和去除经双组 DNS 确认的无效域名为主，不随意改写上游规则语义；项目自维护的 myblock.txt（补充拦截）和 white.txt（放行例外）单独管理，并纳入来源校验与误拦截回归检查。如发现误拦截，请反馈上游；经复现验证后再调整项目白名单。
+2. 使用国内、国际两组相互独立的 DNS 验证组，每组配置 3 个非拦截公共 DNS 上游。只有 A、AAAA 查询在两组中均返回 NXDOMAIN，才将域名判为失效并剔除；NODATA、超时、SERVFAIL 或结果不一致均不会作为删除依据。
+3. 本项目以合并、去重和去除经双组 DNS 确认的无效域名为主，不随意改写上游规则语义；项目自维护的 myblock.txt（补充拦截及浏览器例外）和 white.txt（误拦截放行例外）分别管理，并纳入来源校验与误拦截回归检查。误拦截修正以可复现证据为准，优先使用精确主机或路径例外，避免扩大父域名放行范围。
 4. 规则文件托管于 GitHub Releases 和 dist 分支，加速通道为 gh-proxy.com / ghfast.top / ghproxy.net，请根据网络情况选择可用订阅地址。
 
 ## 正式订阅（仅列出构建验证通过的产物）
@@ -81,6 +81,21 @@
 - 规则产物由 GitHub Actions 每 8 小时自动构建；DNS 验证状态每日更新，完成关键服务域名及白名单回归检查后，发布在 dist 分支及 Releases。
 - 构建审计、来源贡献及与上游基线的差异报告见 audit Release。规则数量差异不等同于质量优劣证明。
 - 误拦截修正须经复现与回归验证；未经验证不直接扩大白名单范围。
+
+## 本地开发与验证
+
+在仓库根目录执行以下命令，安装运行依赖和开发依赖，并运行与 CI 一致的静态检查及回归测试：
+
+```bash
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
+python -m ruff check --no-cache .
+python -m ruff check --no-cache --select F401 scripts tests
+python -m ruff check --no-cache --select E4,E7,E9,F scripts tests readme.py
+python -m pytest -q tests
+```
+
+DNS 状态验证、规则编译及 Release/dist 发布由 GitHub Actions 执行；本地测试通过不等于生产产物已发布。
 
 ## License
 
