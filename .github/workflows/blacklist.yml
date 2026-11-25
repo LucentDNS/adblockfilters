@@ -278,4 +278,12 @@ jobs:
       - name: Trigger production rule build after dns-validation-state publication
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run update.yml --ref main
+        run: |
+          git fetch origin main --quiet
+          current_main_sha="$(git rev-parse FETCH_HEAD)"
+          if [[ "$current_main_sha" != "$GITHUB_SHA" ]]; then
+            echo "::notice::Skipping production build because main advanced during DNS validation; the newer validation run will publish the matching state."
+            exit 0
+          fi
+          gh workflow run update.yml --ref main
+          echo "Triggered production rule build."
