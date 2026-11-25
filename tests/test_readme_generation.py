@@ -22,6 +22,8 @@ def test_regenerated_readme_preserves_original_project_notice(tmp_path):
     )
     assert len(subscriptions) == 34
     assert len(subscriptions) == len(set(subscriptions))
+    for mirror in ("gh-proxy.com", "ghfast.top", "ghproxy.net"):
+        assert generated.count(f"https://{mirror}/https://raw.githubusercontent.com/") == 34
 
 
 def test_release_asset_filename_is_github_safe_and_stable():
