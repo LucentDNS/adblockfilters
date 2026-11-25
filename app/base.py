@@ -16,6 +16,18 @@ def _cached_get_tld(address:str):
     return get_tld(address, fix_protocol=True, as_object=True)
 
 
+def exclude_allowlisted_block_domains(block_domains, allow_domains):
+    """Drop block suffixes covered by a broader allow suffix, preserving narrower allow exceptions."""
+    allowed = {str(domain).strip().lower() for domain in allow_domains if str(domain).strip()}
+    result = []
+    for domain in block_domains:
+        labels = str(domain).strip().lower().split(".")
+        if any(".".join(labels[index:]) in allowed for index in range(len(labels))):
+            continue
+        result.append(domain)
+    return result
+
+
 class APPBase(ABC):
     def __init__(self, blockList:List[str], unblockList:List[str], filterDict:Dict[str,str], filterList:List[str], filterList_var:List[str], ChinaSet:Set[str], fileName:str, sourceRule:str):
         self.homepage:str = "https://github.com/LucentDNS/adblockfilters"

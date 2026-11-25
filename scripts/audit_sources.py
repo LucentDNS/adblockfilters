@@ -296,10 +296,12 @@ def load_project_whitelist():
             value = value[4:]
         elif value.startswith("||"):
             value = value[2:]
+        # Modifier-bearing exceptions (e.g. $third-party) are browser rules,
+        # not DNS-wide whitelist entries; match Filter.__getWhiteDict semantics.
+        if "$" in value:
+            continue
         if "^" in value:
             value = value.split("^", 1)[0]
-        if "$" in value:
-            value = value.split("$", 1)[0]
         if (not value or value.endswith(".") or
                 any(char in value for char in "*/#|?^$")):
             continue

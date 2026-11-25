@@ -151,3 +151,40 @@ def test_invizible_full_emits_a_separate_dnscrypt_allowlist(tmp_path):
     output = allow_path.read_text(encoding="utf-8")
     assert "safe.parent.example.com" in output
     assert "project-safe.example.net" in output
+
+
+
+def test_dnsmasq_full_parent_allow_removes_more_specific_block(tmp_path):
+    generator = DNSMasq(
+        ["ads.parent.example.com"],
+        ["parent.example.com"],
+        {},
+        [],
+        [],
+        set(),
+        str(tmp_path / "adblockdnsmasq.txt"),
+        "test",
+    )
+    generator.generate(isLite=False)
+    output = Path(generator.fileName).read_text(encoding="utf-8")
+    assert "local=/ads.parent.example.com/" not in output
+    assert "server=/parent.example.com/#" in output
+
+
+def test_smartdns_full_preserves_specific_allow_and_parent_allow(tmp_path):
+    generator = SmartDNS(
+        ["parent.example.com", "ads.parent.example.net"],
+        ["safe.parent.example.com", "parent.example.net"],
+        {},
+        [],
+        [],
+        set(),
+        str(tmp_path / "adblocksmartdns.conf"),
+        "test",
+    )
+    generator.generate(isLite=False)
+    output = Path(generator.fileName).read_text(encoding="utf-8")
+    assert "address /parent.example.com/#" in output
+    assert "address /safe.parent.example.com/-" in output
+    assert "address /ads.parent.example.net/#" not in output
+    assert "address /parent.example.net/-" in output

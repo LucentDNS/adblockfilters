@@ -3,7 +3,7 @@ from typing import List, Set, Dict
 
 from loguru import logger
 
-from app.base import APPBase
+from app.base import APPBase, exclude_allowlisted_block_domains
 
 class DNSMasq(APPBase):
     def __init__(self, blockList:List[str], unblockList:List[str], filterDict:Dict[str,str], filterList:List[str], filterList_var:List[str], ChinaSet:Set[str], fileName:str, sourceRule:str):
@@ -19,7 +19,7 @@ class DNSMasq(APPBase):
             else:
                 logger.info("generate adblock DNSMasq...")
                 fileName = self.fileName
-                blockList = self.blockList
+                blockList = exclude_allowlisted_block_domains(self.blockList, self.unblockList)
                 unblockList = self.unblockList
             
             if os.path.exists(fileName):
