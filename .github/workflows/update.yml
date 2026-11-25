@@ -33,7 +33,6 @@ on:
       - "tests/test_source_audit_whitelist.py"
       - "tests/test_upstream_allow_exceptions.py"
       - "tests/test_whitelist_parser.py"
-      - "tests/test_workflow_serialization.py"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   workflow_dispatch:
   schedule:
