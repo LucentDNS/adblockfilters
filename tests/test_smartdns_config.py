@@ -30,6 +30,8 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
 
     assert "-tls-host-verify doh.pub" in config
     assert config.count("-exclude-default-group") == 6
+    assert "force-AAAA-SOA" not in config
+    assert "-force-aaaa-soa" not in config
     assert "9.9.9.11" not in config  # Quad9 threat-blocking resolver
     assert "101.226.4.6" not in config  # 360 security-filtering DNS
     assert "114.114.114.114" not in config  # 114DNS standard resolver has ad filtering
@@ -171,3 +173,11 @@ def test_maintained_python_code_receives_full_ruff_lint():
         "python -m ruff check --no-cache --select E4,E7,E9,F scripts tests"
         in workflow
     )
+
+def test_dns_validation_health_check_verifies_a_and_aaaa_nxdomain():
+    workflow = (
+        Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'for rdtype in ("A", "AAAA"):' in workflow
+    assert 'resolver.resolve(probe, rdtype)' in workflow

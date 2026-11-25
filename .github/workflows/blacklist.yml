@@ -151,12 +151,16 @@ jobs:
               if len(success) < 2:
                   raise SystemExit(f"SmartDNS group {port} health check failed: only {success} resolved")
 
-              try:
-                  resolver.resolve(probe, "A")
-              except NXDOMAIN:
-                  print(f"Group {port}: NXDOMAIN probe passed")
-              else:
-                  raise SystemExit(f"SmartDNS group {port} failed to return NXDOMAIN for reserved .invalid domain")
+              for rdtype in ("A", "AAAA"):
+                  try:
+                      resolver.resolve(probe, rdtype)
+                  except NXDOMAIN:
+                      print(f"Group {port}: {rdtype} NXDOMAIN probe passed")
+                  else:
+                      raise SystemExit(
+                          f"SmartDNS group {port} failed to return {rdtype} NXDOMAIN "
+                          "for the reserved .invalid domain"
+                      )
 
               print(f"Group {port} positive probes passed: {', '.join(success)}")
           PY
