@@ -82,18 +82,6 @@
 - 构建审计、来源贡献及与上游基线的差异报告见 audit Release。规则数量差异不等同于质量优劣证明。
 - 误拦截修正须经复现与回归验证；未经验证不直接扩大白名单范围。
 
-## 本地开发检查
-
-项目使用 Python 3.14。提交代码前运行以下检查：
-
-```bash
-python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
-python -m ruff check --no-cache .
-python -m ruff check --no-cache --select F401 scripts tests
-python -m pytest -q tests
-```
-
 ## License
 
 GPL-3.0. 上游规则遵循各自原始许可证及使用条款。
