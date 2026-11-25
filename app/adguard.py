@@ -45,4 +45,5 @@ class AdGuard(APPBase):
             else:
                 logger.info("adblock AdGuard: block=%d"%(len(filterList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception(e)
+            raise
