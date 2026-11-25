@@ -6,7 +6,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: lucentdns-dev-domain-noble
+  group: dns-validation-state
   cancel-in-progress: false
 
 on:
@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Checkout LucentDNS main branch
+      - name: Checkout main branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
@@ -132,19 +132,19 @@ jobs:
               -o /tmp/nobledns-bootstrap-complete.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
               "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
-            test -s domain.db || { echo "LucentDNS domain.db is missing or empty"; exit 1; }
+            test -s domain.db || { echo "DNS validation database is missing or empty"; exit 1; }
             echo "Using the previously generated LucentDNS DNS-validation database."
           else
-            echo "No LucentDNS validation marker found; starting with an empty database for a full independent DNS pass."
+            echo "No DNS validation marker found; starting with an empty database for a full independent DNS pass."
             : > domain.db
           fi
 
-      - name: Generate DNS validation input from LucentDNS sources
+      - name: Generate DNS validation input from configured DNS sources
         run: |
           set -euo pipefail
           python -m py_compile scripts/generate_domain_input.py
           python scripts/generate_domain_input.py
-          test -s .cache/domain/domain.txt || { echo "LucentDNS domain input is missing or empty"; exit 1; }
+          test -s .cache/domain/domain.txt || { echo "DNS domain input is missing or empty"; exit 1; }
           cp .cache/domain/domain.txt domain.txt
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           python -m py_compile scripts/validated_sources.py
@@ -161,16 +161,16 @@ jobs:
           test -s domain.db || { echo "domain.db missing after blacklist generation"; exit 1; }
           # Empty lists are represented by a comment-only file so GitHub can
           # publish a non-empty asset while the parser still treats it as empty.
-          test -s black.txt || printf '! LucentDNS validated blacklist: no confirmed dead domains\n' > black.txt
-          test -s china.txt || printf '! LucentDNS validated China list: no validated China domains\n' > china.txt
-          printf 'LucentDNS fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
+          test -s black.txt || printf '! Validated blacklist: no confirmed dead domains\n' > black.txt
+          test -s china.txt || printf '! Validated China list: no validated China domains\n' > china.txt
+          printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > nobledns-bootstrap-complete.txt
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Upload log on failure
         if: failure()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
-          name: lucentdns-dev-domain-noble-log
+          name: dns-validation-state-log
           path: blacklist.log
           if-no-files-found: warn
 
@@ -178,7 +178,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "### LucentDNS DNS State"
+            echo "### DNS Validation State"
             echo "- domain.txt: $(test -f domain.txt && wc -l < domain.txt || echo 0) lines"
             echo "- black.txt: $(test -f black.txt && wc -l < black.txt || echo 0) lines"
             echo "- china.txt: $(test -f china.txt && wc -l < china.txt || echo 0) lines"
@@ -189,7 +189,7 @@ jobs:
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: dev-domain-noble
-          name: LucentDNS independent development domain state
+          name: Internal DNS validation state
           body: Internal DNS-validation state used by the production rule build. Not a user-facing rule subscription.
           prerelease: true
           make_latest: false
