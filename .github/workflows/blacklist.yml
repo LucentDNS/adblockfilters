@@ -204,6 +204,7 @@ jobs:
           test -s black.txt || printf '! Validated blacklist: no confirmed dead domains\n' > black.txt
           test -s china.txt || printf '! Validated China list: no validated China domains\n' > china.txt
           printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > dns-validation-bootstrap-complete-v2.txt
+          # Seal every published asset so builds cannot mix validation runs.
           python scripts/validated_sources.py seal
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
