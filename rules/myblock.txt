@@ -4,12 +4,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 拦截规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! ES File Explorer ad endpoints reported upstream; independently present in AWAvenue.
-! https://github.com/217heidai/adblockfilters/issues/96
-! https://github.com/TG-Twilight/AWAvenue-Ads-Rule/issues/193
-||adx-data.yfanads.com^
-||api.yfanads.com^
-||tracker.yfanads.com^
 ! EasyPrivacy: third-party tracking endpoint on Akamai CDN; block only this hostname.
 ! https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty_international.txt
 ||fb_servpub-a.akamaihd.net^
