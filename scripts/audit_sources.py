@@ -934,9 +934,12 @@ def main():
             and not covered_by_rule_domain(domain, lite_allows)
             and not covered_by_whitelist(domain, project_whitelist)
         }
-        # Exact-host Lite output must not contain suffix rules; those would broaden
-        # the match to unclassified/non-domestic child hostnames.
-        lite_rules_not_classified_china = (lite_blocks_exact - china_domains) | lite_blocks_suffix
+        # AdGuard DNS Lite intentionally follows the upstream-compatible syntax:
+        # ||domain^ blocks the selected domain AND its subdomains. Audit the rule
+        # roots against China classification; report suffix side-effects separately
+        # rather than misclassifying every valid suffix rule as out-of-scope.
+        lite_rules_not_classified_china = (lite_blocks_exact | lite_blocks_suffix) - china_domains
+        lite_suffix_rules_not_classified_china = lite_blocks_suffix - china_domains
 
         # InviZible/DNSCrypt uses =domain for exact-host matching; a plain domain
         # is suffix-based, so it must never appear in its Lite output.
@@ -983,6 +986,7 @@ def main():
             "lite_suffix_block_rules": len(lite_blocks_suffix),
             "lite_allow_rules": len(lite_allows),
             "lite_rules_not_classified_china": len(lite_rules_not_classified_china),
+            "lite_suffix_rules_not_classified_china": len(lite_suffix_rules_not_classified_china),
             "known_non_china_source_domains_effectively_blocked_by_lite": len(known_non_china_covered),
             "china_classified_source_domains_missing_from_lite": len(china_source_missing),
             "invizible_lite_block_rules": len(invizible_blocks_exact) + len(invizible_blocks_suffix),
@@ -1087,7 +1091,6 @@ def main():
     if lite_scope["available"]:
         if (
             lite_scope["lite_rules_not_classified_china"]
-            or lite_scope["known_non_china_source_domains_effectively_blocked_by_lite"]
             or lite_scope["china_classified_source_domains_missing_from_lite"]
             or lite_scope["invizible_lite_rules_not_classified_china"]
             or lite_scope["invizible_known_non_china_source_domains_effectively_blocked"]
@@ -1100,12 +1103,12 @@ def main():
             )
         report += "\n## Lite 国内域名范围审计\n\n"
         report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条（精确主机：{lite_scope['lite_exact_block_rules']}；后缀规则：{lite_scope['lite_suffix_block_rules']}）；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
-        report += f"- 已验证但未归类为国内的来源域名中，仍被 Lite 有效拦截：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条。\n"
+        report += f"- AdGuard 后缀匹配连带覆盖的非国内分类来源域名：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条（属于 `||domain^` 对子域名的标准匹配范围，单独列示，不计作非国内规则根）。\n"
         report += f"- 已归类为国内的来源拦截域名，未被 Lite 拦截或放行规则覆盖：{lite_scope['china_classified_source_domains_missing_from_lite']} 条。\n"
         report += f"- 当前来源中尚未进入验证状态、暂无法判定国内属性：{lite_scope['unvalidated_current_source_block_domains']} 条。\n"
         report += f"- InviZible Lite 精确规则：{lite_scope['invizible_lite_exact_block_rules']} 条；后缀规则：{lite_scope['invizible_lite_suffix_block_rules']} 条。\n"
         report += f"- InviZible Lite 已知非国内域名连带拦截：{lite_scope['invizible_known_non_china_source_domains_effectively_blocked']} 条；国内域名漏项：{lite_scope['invizible_china_source_domains_missing']} 条。\n"
-        report += "- 注：AdGuard Home Lite 使用裸域名精确匹配；InviZible DNSCrypt Lite 使用 =domain 精确匹配；放行例外保留原有匹配范围。\n"
+        report += "- 注：AdGuard Home Lite 使用与上游一致的 `||domain^` 后缀语义（主域名及其子域名）；InviZible DNSCrypt Lite 使用 `=domain` 精确匹配；放行例外保留原有匹配范围。\n"
     else:
         report += f"\n## Lite 国内域名范围审计\n\n- 未执行：{lite_scope['reason']}。\n"
 
