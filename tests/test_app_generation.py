@@ -54,7 +54,7 @@ def test_lite_preserves_non_china_allow_exceptions():
     assert generator.unblockListLite == ["safe.example.com"]
 
 
-def test_manual_phishing_regression_domains_are_present_in_project_block_rules():
+def test_manual_threat_regression_domains_are_present_in_project_block_rules():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
