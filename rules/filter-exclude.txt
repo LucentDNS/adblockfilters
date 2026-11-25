@@ -1,0 +1,4 @@
+! Exact browser-rule exclusions only. Keep narrower path-specific rules from other sources.
+! jiekouAD blocks this entire video CMS host, while AdGuard Base blocks only
+! known ad-video paths. A host-wide rule would also block ordinary video assets.
+||evtubescms.phncdn.com^
