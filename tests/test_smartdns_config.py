@@ -65,7 +65,8 @@ def test_dns_validation_workflow_pins_and_verifies_smartdns_binary():
     ).read_text(encoding="utf-8")
 
     assert "Release48.4" in workflow
-    assert "SMARTDNS_SHA256: 9d2164922dc8e822935e444d69a678636c5e7f8155e6ab4e81561d2d43cb9a0f" in workflow
+    expected_sha256 = "9d2164922dc8e822935e444d69a678636c5e7f8155e6ab4e81561d2d43cb9a0f"
+    assert f"SMARTDNS_SHA256: {expected_sha256}" in workflow
     assert "sha256sum --check -" in workflow
     assert "wget --https-only --timeout=30 --tries=3 --waitretry=2" in workflow
 
