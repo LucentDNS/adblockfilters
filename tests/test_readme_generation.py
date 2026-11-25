@@ -16,7 +16,12 @@ def test_regenerated_readme_preserves_original_project_notice(tmp_path):
     assert "white.txt（放行例外）" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
-    assert generated.count("https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt") == 1
+    # The raw subscription URL is also embedded inside each of the three
+    # mirror URLs. Assert the Markdown's original-link target, not substring
+    # occurrences across the complete document.
+    assert generated.count(
+        "[原始链接](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt)"
+    ) == 1
     assert "每 8 小时自动构建" in generated
     import re
     subscriptions = re.findall(
