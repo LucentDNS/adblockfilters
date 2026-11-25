@@ -90,6 +90,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "app/**",
         "rules/filter-exclude.txt",
         "rules/white.txt",
+        "scripts/compare_baseline.py",
     } <= set(update_paths)
     assert "rules/white.txt" not in dns_paths
     assert ".github/workflows/update.yml" not in dns_paths

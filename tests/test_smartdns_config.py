@@ -85,16 +85,22 @@ def test_ci_workflows_install_dev_tools_and_run_static_analysis():
         assert "python -m ruff check --no-cache --select F401 scripts tests" in workflow
 
 
-def test_upstream_baseline_is_validated_before_comparison():
-    workflow = (
-        Path(__file__).parents[1] / ".github" / "workflows" / "update.yml"
-    ).read_text(encoding="utf-8")
+def test_full_and_lite_upstream_baselines_are_validated_before_comparison():
+    root = Path(__file__).parents[1]
+    workflow = (root / ".github" / "workflows" / "update.yml").read_text(
+        encoding="utf-8"
+    )
+    script = (root / "scripts" / "compare_baseline.py").read_text(
+        encoding="utf-8"
+    )
 
-    assert 'baseline_title != "! Title: AdBlock DNS"' in workflow
-    assert "baseline_version" in workflow
-    assert "len(baseline_rules) < 100000" in workflow
-    assert "invalid_rules" in workflow
-    assert '"baseline_version": baseline_version' in workflow
+    assert "adblockdns.txt" in workflow
+    assert "adblockdnslite.txt" in workflow
+    assert "python scripts/compare_baseline.py" in workflow
+    assert '"! Title: AdBlock DNS"' in script
+    assert '"! Title: AdBlock DNS Lite"' in script
+    assert "lite-baseline-only-domains.txt" in script
+    assert "baseline_allow_rules" in script
 
 
 def test_dns_validation_state_is_sealed_before_publication():
