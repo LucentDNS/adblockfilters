@@ -46,4 +46,5 @@ class InviZible(APPBase):
             else:
                 logger.info("adblock InviZible: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception("%s"%(e))
+            raise
