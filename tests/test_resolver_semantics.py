@@ -65,3 +65,14 @@ def test_project_googleusercontent_exception_is_path_scoped_and_valid():
     assert block is None
     assert unblock is None
     assert filt == (expected, "clients2.googleusercontent.com")
+
+
+def test_bare_wildcard_from_dns_source_is_preserved_as_browser_filter_only():
+    resolver = Resolver(".")
+    rule = "*-ad.sm.cn*"
+
+    block, unblock, filt = resolver._Resolver__resolveDNS(rule)
+
+    assert block is None
+    assert unblock is None
+    assert filt == (rule, None)
