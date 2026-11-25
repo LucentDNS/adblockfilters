@@ -1,15 +1,16 @@
 from readme import ReadMe, Rule
 
 
-def test_regenerated_readme_omits_obsolete_migration_announcement(tmp_path):
+def test_regenerated_readme_preserves_original_project_notice(tmp_path):
     readme_path = tmp_path / "README.md"
     readme = ReadMe(str(readme_path))
 
     readme.regenerate()
 
     generated = readme_path.read_text(encoding="utf-8")
-    assert "重要公告" not in generated
-    assert "20261120" not in generated
+    assert "## 重要公告" in generated
+    assert "20261120" in generated
+    assert "dist 分支和 GitHub Releases 分发" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
     assert generated.count("https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt") == 1
