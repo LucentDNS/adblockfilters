@@ -257,8 +257,11 @@ jobs:
           done
 
           if git ls-remote --exit-code --heads origin lucentdns-dev >/dev/null 2>&1; then
-            git push origin --delete lucentdns-dev
-            echo "Removed obsolete branch lucentdns-dev (191 commits behind main, no unique commits)."
+            if git push origin --delete lucentdns-dev; then
+              echo "Removed obsolete branch lucentdns-dev (191 commits behind main, no unique commits)."
+            else
+              echo "::warning::Could not delete obsolete branch lucentdns-dev; DNS validation and production build will continue."
+            fi
           fi
 
       - name: Trigger production rule build after dns-validation-state publication
