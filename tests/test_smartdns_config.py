@@ -22,3 +22,26 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
     assert "9.9.9.11" not in config  # Quad9 threat-blocking resolver
     assert "101.226.4.6" not in config  # 360 security-filtering DNS
     assert "114.114.114.114" not in config  # 114DNS standard resolver has ad filtering
+
+
+def test_dns_validation_constructs_both_smartdns_resolvers(monkeypatch):
+    from blacklist import BlackList
+
+    instance = BlackList.__new__(BlackList)
+    instance._BlackList__maxTask = 1
+    ports = []
+
+    class FakeDNSResolver:
+        def __init__(self):
+            self.nameservers = None
+            self.port = None
+            self.timeout = None
+            self.lifetime = None
+            ports.append(self)
+
+    monkeypatch.setattr("blacklist.DNSResolver", FakeDNSResolver)
+
+    instance._BlackList__testDomain({}, ["127.0.0.1"], 5053)
+
+    assert [resolver.port for resolver in ports] == [5053, 5054]
+    assert all(resolver.nameservers == ["127.0.0.1"] for resolver in ports)
