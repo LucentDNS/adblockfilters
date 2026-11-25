@@ -90,6 +90,7 @@
 python -m pip install -r requirements.txt
 python -m pip install -r requirements-dev.txt
 python -m ruff check --no-cache .
+python -m ruff check --no-cache --select F401 scripts tests
 python -m pytest -q tests
 ```
 
