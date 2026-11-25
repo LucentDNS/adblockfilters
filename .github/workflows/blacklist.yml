@@ -225,7 +225,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for obsolete in nobledns-bootstrap-complete.txt dns-validation-bootstrap-complete.txt; do
+          for obsolete in dns-validation-bootstrap-complete.txt; do
             if gh release view dns-validation-state --json assets --jq '.assets[].name' | grep -Fxq "$obsolete"; then
               gh release delete-asset dns-validation-state "$obsolete" --yes
             fi
