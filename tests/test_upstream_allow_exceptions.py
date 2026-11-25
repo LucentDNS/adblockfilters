@@ -34,3 +34,25 @@ def test_dns_resolver_accepts_underscore_label_in_known_tracking_domain():
     assert block is not None
     assert unblock is None
     assert filter_rule is None
+
+def test_manual_dns_supplement_rules_use_dns_label_syntax():
+    import re
+
+    path = Path(__file__).parents[1] / "rules" / "myblock.txt"
+    pattern = re.compile(r"^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$")
+
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("!") or line.startswith("#"):
+            continue
+        if line.startswith("@@||") and line.endswith("^"):
+            domain = line[4:-1]
+        elif line.startswith("||") and line.endswith("^"):
+            domain = line[2:-1]
+        else:
+            raise AssertionError(f"Unsupported manual DNS rule syntax: {line}")
+
+        assert len(domain) <= 253, domain
+        labels = domain.split(".")
+        assert len(labels) >= 2, domain
+        assert all(1 <= len(label) <= 63 and pattern.fullmatch(label) for label in labels), domain
