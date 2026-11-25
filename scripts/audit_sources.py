@@ -7,8 +7,8 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
 from collections import defaultdict
+from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
 
@@ -28,11 +28,11 @@ TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 
 
 def source_audit_gate_failures(
-    compiled_unparsed,
-    source_presence_unexplained,
-    current_source_parent_inactive_unexplained,
-    baseline_allow_missing_still_blocked,
-):
+    compiled_unparsed: int,
+    source_presence_unexplained: set[str],
+    current_source_parent_inactive_unexplained: set[str],
+    baseline_allow_missing_still_blocked: set[str],
+) -> list[str]:
     """Return hard failures where source intent is lost or upstream allows regress."""
     failures = []
     if compiled_unparsed:
@@ -53,6 +53,7 @@ def source_audit_gate_failures(
             + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
         )
     return failures
+
 
 def write_domain_list(path, domains, empty_note):
     """Write a non-empty, comment-safe list so empty reports remain publishable."""
