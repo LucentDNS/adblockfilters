@@ -738,9 +738,20 @@ def main():
         if any(covered_by_source_allow(parent) for parent in parent_domains(domain))
     }
 
+    def covered_by_compiled_output(domain):
+        return (
+            compiled_dns_path.exists()
+            and covered_by_rule_domain(domain, compiled_block_domains)
+            and not covered_by_rule_domain(domain, compiled_allow_domains)
+        )
+
+    source_presence_parent_output_covered = {
+        domain for domain in current_source_exact_active
+        if domain not in compiled_block_domains and covered_by_compiled_output(domain)
+    }
     source_presence_unexplained = {
         domain for domain in current_source_exact_active
-        if not covered_by_active_current_parent(domain)
+        if not covered_by_compiled_output(domain)
     }
     source_absent = baseline_blocks - current_source_exact - current_source_parent_present
     current_source_parent_inactive_unexplained = (
