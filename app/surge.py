@@ -53,5 +53,6 @@ class Surge(APPBase):
             else:
                 logger.info("adblock Surge: block=%d" % (len(blockList)))
         except Exception as e:
-            logger.error("%s" % (e))
+            logger.exception("%s" % (e))
+            raise
 
