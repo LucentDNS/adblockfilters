@@ -44,7 +44,8 @@ on:
 
 env:
   TZ: Asia/Shanghai
-  SMARTDNS_URL: https://github.com/pymumu/smartdns/releases/download/Release46.1/smartdns-x86_64
+  SMARTDNS_URL: https://github.com/pymumu/smartdns/releases/download/Release48.4/smartdns.1.2026.08.05-0921.x86_64-linux-all.tar.gz
+  SMARTDNS_SHA256: 9d2164922dc8e822935e444d69a678636c5e7f8155e6ab4e81561d2d43cb9a0f
   SMARTDNS_PATH: /tmp/smartdns
 
 jobs:
@@ -86,10 +87,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$SMARTDNS_PATH"
-          wget "$SMARTDNS_URL" -O "$SMARTDNS_PATH/smartdns"
-          chmod +x "$SMARTDNS_PATH/smartdns"
+          wget --https-only "$SMARTDNS_URL" -O "$SMARTDNS_PATH/smartdns.tar.gz"
+          echo "$SMARTDNS_SHA256  $SMARTDNS_PATH/smartdns.tar.gz" | sha256sum --check -
+          tar -xzf "$SMARTDNS_PATH/smartdns.tar.gz" -C "$SMARTDNS_PATH"
+          SMARTDNS_BIN="$(find "$SMARTDNS_PATH" -type f -name smartdns -print -quit)"
+          test -n "$SMARTDNS_BIN" || { echo "Verified SmartDNS archive contains no smartdns executable"; exit 1; }
+          chmod +x "$SMARTDNS_BIN"
+          rm -f "$SMARTDNS_PATH/smartdns.tar.gz"
           cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
-          nohup "$SMARTDNS_PATH/smartdns" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > /dev/null 2>&1 &
+          nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > /dev/null 2>&1 &
           ready=0
           for i in $(seq 1 30); do
             if python3 - <<'PY'
