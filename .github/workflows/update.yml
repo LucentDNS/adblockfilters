@@ -22,6 +22,7 @@ on:
       - "readme.py"
       - "smartdns.conf"
       - "requirements.txt"
+      - "rules/**"
       - "app/**"
       - "scripts/**"
       - "tests/**"
