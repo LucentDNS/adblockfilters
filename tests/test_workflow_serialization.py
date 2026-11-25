@@ -39,6 +39,8 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert len(update_paths) == len(set(update_paths))
     assert len(dns_paths) == len(set(dns_paths))
     assert set(update_paths).isdisjoint(dns_paths)
+    assert "tests/test_workflow_serialization.py" not in update_paths
+    assert "tests/test_workflow_serialization.py" not in dns_paths
 
     assert {
         ".github/workflows/update.yml",
