@@ -29,10 +29,19 @@ def test_host_wide_browser_modifiers_are_domain_wide():
     assert parse_domain_wide_browser_rule("||alipay.com^$all") == ("alipay.com", False)
 
 
-def test_document_and_first_party_modifiers_are_not_domain_wide():
+def test_document_block_and_first_party_modifiers_are_not_domain_wide():
     assert parse_domain_wide_browser_rule("||alipay.com^$document") is None
     assert parse_domain_wide_browser_rule("||alipay.com^$~third-party") is None
     assert parse_domain_wide_browser_rule("||alipay.com^$1p") is None
+
+
+def test_document_exception_disables_filtering_for_the_page():
+    assert parse_domain_wide_browser_rule("@@||alipay.com^$document") == ("alipay.com", True)
+
+
+def test_all_modifier_is_only_valid_for_blocking_rules():
+    assert parse_domain_wide_browser_rule("||alipay.com^$all") == ("alipay.com", False)
+    assert parse_domain_wide_browser_rule("@@||alipay.com^$all") is None
 
 
 def test_global_browser_allow_exception_is_detected():
