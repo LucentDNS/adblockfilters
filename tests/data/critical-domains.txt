@@ -126,3 +126,4 @@ au-mobile.events.data.microsoft.com
 eu-mobile.events.data.microsoft.com
 uk-mobile.events.data.microsoft.com
 us-mobile.events.data.microsoft.com
+consent.dropbox.com
