@@ -1,4 +1,4 @@
-# High-confidence phishing domains that must remain blocked.
+# High-confidence phishing and malware domains that must remain blocked.
 easywebtd-authenticate.com
 arbitrum-one.com
 com-polybets-a1.com
@@ -18,3 +18,4 @@ whatsappcore.com
 gl-inet.top
 smswhatsapp.com
 whatsappdns.com
+atlasfaktow.com
