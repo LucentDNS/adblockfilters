@@ -4,6 +4,6 @@ line-length = 100
 exclude = [".cache", ".venv", "domain-list-community"]
 
 [tool.ruff.lint]
-# Enforce syntax safety and undefined-name detection without mass-rewriting
-# legacy upstream-derived code in the first quality-gate rollout.
-select = ["E999", "F821"]
+# Ruff's parser rejects syntax errors; F821 adds undefined-name detection
+# without mass-rewriting legacy upstream-derived code in the first quality-gate rollout.
+select = ["F821"]
