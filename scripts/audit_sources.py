@@ -792,9 +792,17 @@ def main():
                 domain = line[2:-1].strip().lower()
                 if domain and not any(char in domain for char in " /\t^$*"):
                     manual_block_domains.add(domain)
+    manual_block_domains = {
+        domain for domain in manual_block_domains
+        if domain not in blacklist_domains
+        and not covered_by_whitelist(domain, project_whitelist)
+        and not covered_by_source_allow(domain)
+    }
     baseline_manual_block_covered = {
         domain for domain in baseline_blocks
         if covered_by_rule_domain(domain, manual_block_domains)
+        and not covered_by_whitelist(domain, project_whitelist)
+        and not covered_by_source_allow(domain)
     }
     source_unexplained_after_manual = source_unexplained - baseline_manual_block_covered
 
