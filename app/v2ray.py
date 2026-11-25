@@ -27,13 +27,16 @@ class V2ray(APPBase):
             with open(fileName, 'a') as f:
                 f.write("#\n")
                 if isLite:
-                    f.write("# Title: LucentDNS AdBlock V2ray/Xray Lite\n")
+                    f.write("# Title: AdBlock V2ray/Xray Lite\n")
+                    f.write("# Description: 适用于 V2ray、Xray 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
                 else:
-                    f.write("# Title: LucentDNS AdBlock V2ray/Xray\n")
+                    f.write("# Title: AdBlock V2ray/Xray\n")
+                    f.write("# Description: 适用于 V2ray、Xray 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
                 f.write("# Homepage: %s\n"%(self.homepage))
                 f.write("# Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("# Version: %s\n"%(self.version))
                 f.write("# Last modified: %s\n"%(self.time))
+                f.write("# Blocked domains: %s\n"%(len(blockList)))
                 f.write("#\n")
                 for domain in blockList:
                     if domain.find('_') < 0: # domain-list-community 工具在生成 geosite.dat 时，会进行严格的主机名校验
@@ -44,6 +47,5 @@ class V2ray(APPBase):
             else:
                 logger.info("adblock V2ray/Xray: block=%d" % (len(blockList)))
         except Exception as e:
-            logger.exception("%s" % (e))
-            raise
+            logger.error("%s" % (e))
 
