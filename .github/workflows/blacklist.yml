@@ -290,24 +290,3 @@ jobs:
           fi
           gh workflow run update.yml --ref main
           echo "Triggered production rule build."
-; then
-              echo "::notice::Skipping production build because DNS inputs or validation logic changed during this run; the newer validation run will publish matching state."
-              exit 0
-            fi
-          fi
-          gh workflow run update.yml --ref main
-          echo "Triggered production rule build."
-; then
-              echo "::notice::Skipping production build because DNS inputs or validation logic changed during this run; the newer validation run will publish matching state."
-              exit 0
-            fi
-          fi
-          gh workflow run update.yml --ref main
-          echo "Triggered production rule build."
-; then
-              echo "::notice::Skipping production build because DNS inputs or validation logic changed during this run; the newer validation run will publish matching state."
-              exit 0
-            fi
-          fi
-          gh workflow run update.yml --ref main
-          echo "Triggered production rule build."
