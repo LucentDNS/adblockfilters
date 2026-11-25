@@ -567,7 +567,10 @@ class BlackList(object):
                 # but receive the same short retry cooldown as other empty answers.
                 if domain.ip:
                     logger.warning('"%s": TCP check inconclusive; preserve previous state' % domain.domain)
-                domain.setCheckedAtNow()
+                # Do not refresh a positive DNS cache timestamp on an inconclusive lookup.
+                # Empty/negative cache entries still receive a short retry cooldown.
+                if not domain.getIPList():
+                    domain.setCheckedAtNow()
 
             return domain
 

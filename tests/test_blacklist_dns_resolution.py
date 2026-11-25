@@ -34,21 +34,25 @@ def resolve(answers):
 
 
 class DummyDomain:
-    def __init__(self, initially_blocked=False):
+    def __init__(self, initially_blocked=False, ip_list=None):
         self.domain = "example.test"
         self.ip = None
         self.port = None
-        self.ip_list = []
+        self.ip_list = list(ip_list or [])
+        self.timestamp = 100
         self.blocked = initially_blocked
 
     def setIPList(self, values):
         self.ip_list = values
 
+    def getIPList(self):
+        return self.ip_list
+
     def setBlock(self, value):
         self.blocked = value
 
     def setCheckedAtNow(self):
-        self.timestamp = 1
+        self.timestamp = 200
 
 
 def pingx(answers, initially_blocked=False):
@@ -131,6 +135,27 @@ def test_unknown_dns_result_preserves_previous_state():
         initially_blocked=True
     )
     assert domain.blocked is True
+
+
+def test_inconclusive_dns_does_not_extend_a_positive_cache_timestamp():
+    instance = BlackList.__new__(BlackList)
+    domain = DummyDomain(ip_list=["192.0.2.10"])
+    resolvers = _fake_resolvers(
+        {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
+    )
+
+    asyncio.run(instance._BlackList__pingx(resolvers, domain, asyncio.Semaphore(1)))
+
+    assert domain.ip_list == ["192.0.2.10"]
+    assert domain.timestamp == 100
+
+
+def test_inconclusive_dns_sets_retry_cooldown_for_empty_cache():
+    domain = pingx(
+        {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
+    )
+    assert domain.ip_list == []
+    assert domain.timestamp == 200
 
 
 
