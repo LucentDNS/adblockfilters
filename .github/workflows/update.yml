@@ -397,6 +397,11 @@ jobs:
             .cache/audit/source-audit.json
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt
+            .cache/audit/lite-scope-audit.json
+            .cache/audit/lite-scope-known-non-china-covered.txt
+            .cache/audit/lite-scope-china-domains-missing.txt
+            .cache/audit/lite-scope-rules-not-classified-china.txt
+            .cache/audit/lite-scope-unvalidated-source-domains.txt
             .cache/audit/baseline-browser-analysis.json
             .cache/audit/baseline-only-browser-overlap.txt
             .cache/audit/baseline-only-allow-exceptions-still-blocked.txt
