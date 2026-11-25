@@ -74,7 +74,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert "rules/white.txt" not in dns_paths
     assert "scripts/review_baseline_only.py" in dns_paths
     assert "scripts/audit_sources.py" not in update_paths
-    assert "scripts/audit_sources.py" in audit_paths
+    assert "scripts/**" in audit_paths
 
     ci_only_paths = {".editorconfig", "pyproject.toml", "requirements-dev.txt"}
     assert ci_only_paths.isdisjoint(update_paths)
