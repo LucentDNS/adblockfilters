@@ -935,6 +935,32 @@ def main():
         # the match to unclassified/non-domestic child hostnames.
         lite_rules_not_classified_china = (lite_blocks_exact - china_domains) | lite_blocks_suffix
 
+        # InviZible/DNSCrypt uses =domain for exact-host matching; a plain domain
+        # is suffix-based, so it must never appear in its Lite output.
+        invizible_lite_path = ROOT / ".cache" / "out" / "adblockdomainlite.txt"
+        invizible_blocks_exact, invizible_blocks_suffix = set(), set()
+        if invizible_lite_path.exists():
+            for raw in invizible_lite_path.read_text(encoding="utf-8", errors="replace").splitlines():
+                line = raw.strip()
+                if not line or line.startswith(("!", "#")):
+                    continue
+                if line.startswith("="):
+                    invizible_blocks_exact.add(line[1:].lower())
+                elif "." in line and not any(char in line for char in " /\t^$*"):
+                    invizible_blocks_suffix.add(line.lower())
+        invizible_non_china_covered = {
+            domain for domain in validated_non_china_source_blocks
+            if domain in invizible_blocks_exact or covered_by_rule_domain(domain, invizible_blocks_suffix)
+        }
+        invizible_china_missing = {
+            domain for domain in china_source_blocks
+            if domain not in invizible_blocks_exact
+            and not covered_by_rule_domain(domain, invizible_blocks_suffix)
+        }
+        invizible_rules_not_classified_china = (
+            (invizible_blocks_exact - china_domains) | invizible_blocks_suffix
+        )
+
         lite_scope = {
             "available": True,
             "validated_domain_input_count": len(validated_domains),
@@ -950,6 +976,12 @@ def main():
             "lite_rules_not_classified_china": len(lite_rules_not_classified_china),
             "known_non_china_source_domains_effectively_blocked_by_lite": len(known_non_china_covered),
             "china_classified_source_domains_missing_from_lite": len(china_source_missing),
+            "invizible_lite_block_rules": len(invizible_blocks_exact) + len(invizible_blocks_suffix),
+            "invizible_lite_exact_block_rules": len(invizible_blocks_exact),
+            "invizible_lite_suffix_block_rules": len(invizible_blocks_suffix),
+            "invizible_known_non_china_source_domains_effectively_blocked": len(invizible_non_china_covered),
+            "invizible_china_source_domains_missing": len(invizible_china_missing),
+            "invizible_lite_rules_not_classified_china": len(invizible_rules_not_classified_china),
         }
         write_domain_list(
             OUT_DIR / "lite-scope-known-non-china-covered.txt",
@@ -971,6 +1003,21 @@ def main():
             unvalidated_source_blocks,
             "All current source block domains have validation state."
         )
+        write_domain_list(
+            OUT_DIR / "lite-scope-invizible-known-non-china-covered.txt",
+            invizible_non_china_covered,
+            "No validated non-China source domain is covered by InviZible Lite."
+        )
+        write_domain_list(
+            OUT_DIR / "lite-scope-invizible-china-domains-missing.txt",
+            invizible_china_missing,
+            "All validated China-classified source block domains are represented in InviZible Lite."
+        )
+        write_domain_list(
+            OUT_DIR / "lite-scope-invizible-rules-not-classified-china.txt",
+            invizible_rules_not_classified_china,
+            "Every InviZible Lite exact rule is present in the China-classified domain set."
+        )
     (OUT_DIR / "lite-scope-audit.json").write_text(
         json.dumps(lite_scope, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -981,7 +1028,9 @@ def main():
         report += f"- 已验证但未归类为国内的来源域名中，仍被 Lite 有效拦截：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条。\n"
         report += f"- 已归类为国内的来源拦截域名，未被 Lite 拦截或放行规则覆盖：{lite_scope['china_classified_source_domains_missing_from_lite']} 条。\n"
         report += f"- 当前来源中尚未进入验证状态、暂无法判定国内属性：{lite_scope['unvalidated_current_source_block_domains']} 条。\n"
-        report += "- 注：Lite DNS 拦截项使用精确主机名匹配；上游/白名单放行例外保留其原有匹配范围。\n"
+        report += f"- InviZible Lite 精确规则：{lite_scope['invizible_lite_exact_block_rules']} 条；后缀规则：{lite_scope['invizible_lite_suffix_block_rules']} 条。\n"
+        report += f"- InviZible Lite 已知非国内域名连带拦截：{lite_scope['invizible_known_non_china_source_domains_effectively_blocked']} 条；国内域名漏项：{lite_scope['invizible_china_source_domains_missing']} 条。\n"
+        report += "- 注：AdGuard Home Lite 使用裸域名精确匹配；InviZible DNSCrypt Lite 使用 =domain 精确匹配；放行例外保留原有匹配范围。\n"
     else:
         report += f"\n## Lite 国内域名范围审计\n\n- 未执行：{lite_scope['reason']}。\n"
 
