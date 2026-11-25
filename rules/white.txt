@@ -366,3 +366,7 @@ corp.sts.microsoft.com
 diagnostics.support.microsoft.com
 androidtvchannels-pa.googleapis.com
 androidtvwatsonfe-pa.googleapis.com
+
+# Aon student-insurance enrollment links use this service host; do not block the portal.
+# https://www.tilburguniversity.edu/students/getting-started/welcome-new-student/insurances
+benefits.aon.com
