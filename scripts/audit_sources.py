@@ -767,6 +767,35 @@ def main():
         if any(covered_by_source_allow(parent) for parent in parent_domains(domain))
     }
 
+    compiled_dns_path = ROOT / ".cache" / "out" / "adblockdns.txt"
+    compiled_block_domains = set()
+    compiled_allow_domains = set()
+    compiled_unparsed = 0
+    if compiled_dns_path.exists():
+        for raw in compiled_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = raw.strip()
+            if not line or line.startswith(("!", "#")):
+                continue
+            try:
+                block, unblock, filt = resolver._Resolver__resolveDNS(line)
+            except Exception:
+                compiled_unparsed += 1
+                continue
+            block_domain = full_domain(block)
+            allow_domain = full_domain(unblock)
+            if block_domain:
+                compiled_block_domains.add(block_domain)
+            if allow_domain:
+                compiled_allow_domains.add(allow_domain)
+            if filt:
+                rule_text = filt[0] if isinstance(filt, (tuple, list)) else str(filt)
+                filter_domain = full_domain(filt[1]) if isinstance(filt, (tuple, list)) and len(filt) > 1 else None
+                if filter_domain:
+                    if rule_text.lstrip().startswith("@@"):
+                        compiled_allow_domains.add(filter_domain)
+                    else:
+                        compiled_block_domains.add(filter_domain)
+
     def covered_by_compiled_output(domain):
         return (
             compiled_dns_path.exists()
