@@ -44,6 +44,16 @@ def test_dns_and_build_workflows_use_independent_concurrency_groups():
     assert "cancel-in-progress: true" in dns
 
 
+def test_production_build_waits_for_a_complete_matching_dns_state():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+
+    assert "Wait for a complete DNS state matching current inputs" in workflow
+    assert "python scripts/validated_sources.py check-current" in workflow
+    assert "validated-dns-sources.tar.gz" in workflow
+    assert "validation logic, and myblock.txt" in workflow
+    assert "git rev-parse origin/main" in workflow
+
+
 def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     update_paths = _push_paths("update.yml")
     dns_paths = _push_paths("blacklist.yml")

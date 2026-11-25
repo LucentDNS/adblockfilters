@@ -7,8 +7,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  # DNS validation has priority over a queued or running production build.
-  # Both workflows share this lock so builds cannot consume stale validation state.
+  # Serialize DNS validation runs only; production builds use a separate queue and verify provenance.
   group: dns-validation-state-${{ github.repository }}
   cancel-in-progress: true
 
@@ -205,6 +204,8 @@ jobs:
           test -s black.txt || printf '! Validated blacklist: no confirmed dead domains\n' > black.txt
           test -s china.txt || printf '! Validated China list: no validated China domains\n' > china.txt
           printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > dns-validation-bootstrap-complete-v2.txt
+          python scripts/validated_sources.py seal
+          cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Review legacy upstream-only domains with both DNS groups

@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 from readme import ReadMe, Rule  # noqa: E402 - project-root bootstrap above
 from resolver import Resolver, configure_logging  # noqa: E402 - project-root bootstrap above
 from updater import Updater  # noqa: E402 - project-root bootstrap above
+from validated_sources import validation_logic_sha256  # noqa: E402 - project-root bootstrap above
 SOURCE_DIR = ROOT / ".cache" / "source"
 DOMAIN_DIR = ROOT / ".cache" / "domain"
 MYBLOCK_SOURCE = ROOT / "rules" / "myblock.txt"
@@ -92,6 +93,7 @@ def main():
             for rule in dns_rules
         ],
         "myblock_sha256": hashlib.sha256(MYBLOCK_SOURCE.read_bytes()).hexdigest(),
+        "validation_logic_sha256": validation_logic_sha256(),
         "myblock_parsed_block_domains": source_counts["myblock"],
         "unique_validation_domains": len(all_domains),
         "domain_file_sha256": domain_file_sha256,

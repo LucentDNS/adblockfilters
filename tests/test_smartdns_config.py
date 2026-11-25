@@ -97,6 +97,25 @@ def test_upstream_baseline_is_validated_before_comparison():
     assert '"baseline_version": baseline_version' in workflow
 
 
+def test_dns_validation_state_is_sealed_before_publication():
+    root = Path(__file__).parents[1]
+    workflow = (root / ".github" / "workflows" / "blacklist.yml").read_text(
+        encoding="utf-8"
+    )
+    generator = (root / "scripts" / "generate_domain_input.py").read_text(
+        encoding="utf-8"
+    )
+    state_script = (root / "scripts" / "validated_sources.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"validation_logic_sha256": validation_logic_sha256()' in generator
+    assert "def validation_logic_sha256()" in state_script
+    assert "def seal()" in state_script
+    assert "def check_current()" in state_script
+    assert "python scripts/validated_sources.py seal" in workflow
+
+
 def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
     workflow = (
         Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"

@@ -5,7 +5,7 @@ permissions:
 
 # 避免连续提交触发多个发布任务并发覆盖 Releases 和 dist。
 concurrency:
-  # Serialize with DNS validation; never let a build consume an older validation snapshot.
+  # Serialize production builds; DNS-state freshness is checked independently before building.
   group: update-filters-${{ github.repository }}
   cancel-in-progress: false
 on:
@@ -90,25 +90,65 @@ jobs:
           python -m compileall -q app
           python -m pytest -q tests
 
+      - name: Wait for a complete DNS state matching current inputs
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/domain
+          state_files=(
+            black.txt
+            china.txt
+            domain.txt
+            domain-input-provenance.json
+            dns-validation-bootstrap-complete-v2.txt
+            validated-dns-sources.tar.gz
+          )
+          state_ready=0
+          for attempt in $(seq 1 50); do
+            for name in "${state_files[@]}"; do
+              rm -f ".cache/domain/$name"
+            done
+            download_ok=1
+            for name in "${state_files[@]}"; do
+              if ! curl --fail --location --silent --show-error --retry 1 --retry-all-errors --connect-timeout 10 --max-time 120 \
+                -o ".cache/domain/$name" \
+                "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/$name"; then
+                download_ok=0
+                break
+              fi
+              if ! test -s ".cache/domain/$name"; then
+                download_ok=0
+                break
+              fi
+            done
+            if [ "$download_ok" -eq 1 ] && python scripts/validated_sources.py check-current; then
+              state_ready=1
+              break
+            fi
+            echo "Waiting for a complete DNS state matching the current source manifest, validation logic, and myblock.txt ($attempt/50)"
+            sleep 30
+          done
+          if [ "$state_ready" -ne 1 ]; then
+            echo "::error::No complete, current DNS validation state was published within 25 minutes."
+            exit 1
+          fi
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced while waiting for DNS validation; refusing to build a stale checkout."
+            exit 1
+          fi
+
       - name: Prepare domain inputs
         run: |
+          set -euo pipefail
           mkdir -p .cache/domain .cache/source
           : > .cache/domain/input-provenance.txt
-          # black/china 是过滤阶段的关键输入。下载失败时必须停止，禁止用空文件继续生成看似成功的规则。
-          # Production builds consume the independently DNS-validated validated DNS domain state.
-          for name in black.txt china.txt domain.txt domain-input-provenance.json dns-validation-bootstrap-complete-v2.txt; do
-            curl -fsSL --retry 3 --retry-all-errors \
-              -o ".cache/domain/$name" \
-              "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/$name"
-            test -s ".cache/domain/$name" || { echo "::error::Validated dns-validation-state/$name is missing or empty"; exit 1; }
-            printf '%s\t%s\n' "$name" "dual-group DNS validation v2" >> .cache/domain/input-provenance.txt
+          for name in black.txt china.txt domain.txt domain-input-provenance.json dns-validation-bootstrap-complete-v2.txt validated-dns-sources.tar.gz; do
+            test -s ".cache/domain/$name" || { echo "::error::Verified DNS validation state asset is missing: $name"; exit 1; }
+            printf '%s\t%s\n' "$name" "sealed dual-group DNS validation state" >> .cache/domain/input-provenance.txt
           done
           # Preserve the exact validation input before Filter.generate rewrites domain.txt.
           cp .cache/domain/domain.txt .cache/domain/validated-domain-input.txt
-          curl -fsSL --retry 3 --retry-all-errors \
-            -o .cache/domain/validated-dns-sources.tar.gz \
-            "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/validated-dns-sources.tar.gz"
-          test -s .cache/domain/validated-dns-sources.tar.gz || { echo "::error::Validated DNS source archive is missing or empty"; exit 1; }
           python scripts/validated_sources.py restore
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
