@@ -17,7 +17,7 @@ def _prepare(tmp_path):
     source_dir.mkdir()
     domain_dir.mkdir()
 
-    rule = Rule("AdGuard DNS filter", "dns", "https://example.com/list.txt", "")
+    rule = Rule("AdGuard DNS filter", "dns", "https://example.com/list.txt", "2026/11/24")
     source_path = source_dir / rule.filename
     source_path.write_text("||ads.example.com^\n", encoding="utf-8")
     myblock_path = source_dir / "myblock.txt"
@@ -30,6 +30,7 @@ def _prepare(tmp_path):
             "name": rule.name,
             "type": rule.type,
             "url": rule.url,
+            "latest": rule.latest,
             "sha256": _sha256(source_path),
         }],
         "myblock_sha256": _sha256(myblock_path),
@@ -76,6 +77,7 @@ def test_refresh_preserves_dns_snapshot_used_for_validation(tmp_path, monkeypatc
 
         def update(self, path):
             source_path.write_text("||changed-after-validation.example^\\n", encoding="utf-8")
+            self.rule_list[0].latest = "2026/11/25"
             return True, self.rule_list
 
     monkeypatch.setattr(adblock, "Updater", FakeUpdater)
@@ -87,6 +89,7 @@ def test_refresh_preserves_dns_snapshot_used_for_validation(tmp_path, monkeypatc
     assert updated is True
     assert returned_rules == rules
     assert source_path.read_bytes() == original
+    assert returned_rules[0].latest == "2026/11/24"
     assert verify_domain_validation_provenance(rules, str(source_dir), str(domain_dir))
 
 
