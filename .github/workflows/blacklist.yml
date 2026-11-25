@@ -211,15 +211,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .cache/baseline-review
-          curl --fail --location --silent --show-error --retry 3 --retry-all-errors \\
-            --connect-timeout 20 --max-time 120 \\
-            -o .cache/baseline-review/baseline-only-unexplained-after-manual.txt \\
-            https://github.com/LucentDNS/adblockfilters/releases/download/audit/baseline-only-unexplained-after-manual.txt
-          test -s .cache/baseline-review/baseline-only-unexplained-after-manual.txt
+          curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
+            --connect-timeout 20 --max-time 120 \
+            -o .cache/baseline-review/baseline-only-not-effectively-covered-by-current-dns.txt \
+            https://github.com/LucentDNS/adblockfilters/releases/download/audit/baseline-only-not-effectively-covered-by-current-dns.txt
+          test -s .cache/baseline-review/baseline-only-not-effectively-covered-by-current-dns.txt
           python -m py_compile scripts/review_baseline_only.py
-          python scripts/review_baseline_only.py \\
-            --input .cache/baseline-review/baseline-only-unexplained-after-manual.txt \\
-            --output-dir .cache/baseline-review \\
+          python scripts/review_baseline_only.py \
+            --input .cache/baseline-review/baseline-only-not-effectively-covered-by-current-dns.txt \
+            --output-dir .cache/baseline-review \
             --concurrency 100
           cat .cache/baseline-review/summary.md >> "$GITHUB_STEP_SUMMARY"
 

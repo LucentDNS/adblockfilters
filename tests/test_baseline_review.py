@@ -2,6 +2,7 @@ from pathlib import Path
 
 from scripts.review_baseline_only import (
     classify_groups,
+    classify_rrtype_results,
     read_candidates,
     valid_domain,
 )
@@ -21,6 +22,13 @@ def test_any_successful_dns_group_keeps_domain_active():
 def test_no_address_requires_both_groups():
     assert classify_groups(["no_address", "no_address"]) == "no_address"
     assert classify_groups(["no_address", "unknown"]) == "inconclusive"
+
+
+def test_mixed_a_and_aaaa_nxdomain_responses_are_inconclusive():
+    assert classify_rrtype_results(["not_found", "not_found"]) == "not_found"
+    assert classify_rrtype_results(["not_found", "no_address"]) == "unknown"
+    assert classify_rrtype_results(["no_address", "unknown"]) == "unknown"
+    assert classify_rrtype_results(["resolved", "not_found"]) == "resolved"
 
 
 def test_candidate_parser_normalizes_deduplicates_and_rejects_patterns(tmp_path: Path):

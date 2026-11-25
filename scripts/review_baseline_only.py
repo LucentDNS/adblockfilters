@@ -47,6 +47,16 @@ def read_candidates(path: Path) -> tuple[list[str], list[str], int]:
     return sorted(domains), invalid, candidate_count
 
 
+def classify_rrtype_results(statuses: list[str]) -> str:
+    if "resolved" in statuses:
+        return "resolved"
+    if len(statuses) == 2 and all(status == "not_found" for status in statuses):
+        return "not_found"
+    if len(statuses) == 2 and all(status == "no_address" for status in statuses):
+        return "no_address"
+    return "unknown"
+
+
 def classify_groups(statuses: list[str]) -> str:
     if "resolved" in statuses:
         return "resolved"
@@ -69,8 +79,7 @@ async def resolve_group(
     resolver.timeout = timeout
     resolver.lifetime = lifetime
 
-    saw_nxdomain = False
-    saw_no_address = False
+    query_statuses: list[str] = []
     addresses: set[str] = set()
 
     for rdtype in ("A", "AAAA"):
@@ -81,29 +90,25 @@ async def resolve_group(
                 search=False,
                 raise_on_no_answer=False,
             )
-            if answer.rrset is None:
-                saw_no_address = True
-                continue
-            for record in answer:
-                address = getattr(record, "address", None)
-                if address:
-                    addresses.add(address)
-            if not addresses:
-                saw_no_address = True
+            found_address = False
+            if answer.rrset is not None:
+                for record in answer:
+                    address = getattr(record, "address", None)
+                    if address:
+                        addresses.add(address)
+                        found_address = True
+            query_statuses.append("resolved" if found_address else "no_address")
         except dns.resolver.NXDOMAIN:
-            saw_nxdomain = True
+            query_statuses.append("not_found")
         except dns.resolver.NoAnswer:
-            saw_no_address = True
+            query_statuses.append("no_address")
         except dns.exception.DNSException:
-            continue
+            query_statuses.append("unknown")
 
     if addresses:
         return {"status": "resolved", "addresses": sorted(addresses)}
-    if saw_nxdomain:
-        return {"status": "not_found", "addresses": []}
-    if saw_no_address:
-        return {"status": "no_address", "addresses": []}
-    return {"status": "unknown", "addresses": []}
+    status = classify_rrtype_results(query_statuses)
+    return {"status": status, "addresses": []}
 
 
 async def review_candidates(

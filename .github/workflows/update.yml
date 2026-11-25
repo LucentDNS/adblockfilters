@@ -19,6 +19,7 @@ on:
       - "filter.py"
       - "app/**"
       - "rules/filter-exclude.txt"
+      - "rules/white.txt"
       - "scripts/audit_sources.py"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # Tests run in audit-sources.yml; test-only changes must not launch release builds.

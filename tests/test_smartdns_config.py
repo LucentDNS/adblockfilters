@@ -119,11 +119,19 @@ def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
 
 
 def test_legacy_baseline_only_domains_are_reviewed_with_both_dns_groups():
-    workflow = (
-        Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"
-    ).read_text(encoding="utf-8")
+    root = Path(__file__).parents[1]
+    workflow = (root / ".github" / "workflows" / "blacklist.yml").read_text(
+        encoding="utf-8"
+    )
+    review_script = (root / "scripts" / "review_baseline_only.py").read_text(
+        encoding="utf-8"
+    )
 
-    assert "baseline-only-unexplained-after-manual.txt" in workflow
+    assert "baseline-only-not-effectively-covered-by-current-dns.txt" in workflow
     assert "python scripts/review_baseline_only.py" in workflow
-    assert "nxdomain-both-groups.txt" in workflow
+    assert "nxdomain-both-groups.txt" in review_script
     assert "Upload legacy baseline review" in workflow
+    review_step = workflow.split(
+        "- name: Review legacy upstream-only domains with both DNS groups", 1
+    )[1].split("- name: Upload legacy baseline review", 1)[0]
+    assert all(not line.endswith("\\\\") for line in review_step.splitlines())
