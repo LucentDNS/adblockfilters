@@ -77,7 +77,16 @@ jobs:
           nohup "$SMARTDNS_PATH/smartdns" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > /dev/null 2>&1 &
           ready=0
           for i in $(seq 1 30); do
-            if python3 -c "import socket,sys; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.settimeout(2); s.sendto(bytes.fromhex('00000100000100000000000003777777076578616d706c6503636f6d0000010001'),('127.0.0.1',5053)); s.recvfrom(1024); sys.exit(0)" 2>/dev/null; then
+            if python3 - <<'PY'
+          import socket
+          packet = bytes.fromhex("00000100000100000000000003777777076578616d706c6503636f6d0000010001")
+          for port in (5053, 5054):
+              with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                  sock.settimeout(2)
+                  sock.sendto(packet, ("127.0.0.1", port))
+                  sock.recvfrom(1024)
+          PY
+            then
               ready=1
               break
             fi
@@ -88,38 +97,46 @@ jobs:
             exit 1
           fi
 
-      - name: Verify SmartDNS can resolve valid and nonexistent domains
+      - name: Verify domestic and global SmartDNS groups independently
         run: |
           set -euo pipefail
           python - <<'PY'
           import dns.resolver
           from dns.resolver import NXDOMAIN
 
-          resolver = dns.resolver.Resolver(configure=False)
-          resolver.nameservers = ["127.0.0.1"]
-          resolver.port = 5053
-          resolver.timeout = 3.0
-          resolver.lifetime = 8.0
+          groups = {
+              5053: ("baidu.com", "qq.com", "example.com"),
+              5054: ("example.com", "cloudflare.com", "google.com"),
+          }
+          probe = "adblock-dns-probe-20261125.example.invalid"
 
-          success = []
-          for domain in ("example.com", "cloudflare.com", "baidu.com"):
+          for port, domains in groups.items():
+              resolver = dns.resolver.Resolver(configure=False)
+              resolver.nameservers = ["127.0.0.1"]
+              resolver.port = port
+              resolver.timeout = 3.0
+              resolver.lifetime = 8.0
+
+              success = []
+              for domain in domains:
+                  try:
+                      answer = resolver.resolve(domain, "A")
+                      if len(answer) > 0:
+                          success.append(domain)
+                  except Exception as exc:
+                      print(f"Group {port} probe failed for {domain}: {type(exc).__name__}: {exc}")
+
+              if len(success) < 2:
+                  raise SystemExit(f"SmartDNS group {port} health check failed: only {success} resolved")
+
               try:
-                  answer = resolver.resolve(domain, "A")
-                  if len(answer) > 0:
-                      success.append(domain)
-              except Exception as exc:
-                  print(f"Probe failed for {domain}: {type(exc).__name__}: {exc}")
+                  resolver.resolve(probe, "A")
+              except NXDOMAIN:
+                  print(f"Group {port}: NXDOMAIN probe passed")
+              else:
+                  raise SystemExit(f"SmartDNS group {port} failed to return NXDOMAIN for reserved .invalid domain")
 
-          if len(success) < 2:
-              raise SystemExit(f"SmartDNS health check failed: only {success} resolved")
-
-          try:
-              resolver.resolve("adblock-dns-probe-20261125.example.invalid", "A")
-          except NXDOMAIN:
-              print("NXDOMAIN probe passed")
-          else:
-              raise SystemExit("SmartDNS failed to return NXDOMAIN for reserved .invalid domain")
-          print(f"Positive DNS probes passed: {', '.join(success)}")
+              print(f"Group {port} positive probes passed: {', '.join(success)}")
           PY
 
       - name: Download database
@@ -128,8 +145,8 @@ jobs:
           # The first AdBlock DNS run must not inherit upstream block/IP state.
           # Reuse a database only after our own fresh-validation marker exists.
           if curl -fsSL --retry 3 --retry-all-errors \
-              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/dns-validation-bootstrap-complete.txt" \
-              -o /tmp/dns-validation-bootstrap-complete.txt; then
+              "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/dns-validation-bootstrap-complete-v2.txt" \
+              -o /tmp/dns-validation-bootstrap-complete-v2.txt; then
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
               "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
             test -s domain.db || { echo "DNS validation database is missing or empty"; exit 1; }
@@ -163,7 +180,7 @@ jobs:
           # publish a non-empty asset while the parser still treats it as empty.
           test -s black.txt || printf '! Validated blacklist: no confirmed dead domains\n' > black.txt
           test -s china.txt || printf '! Validated China list: no validated China domains\n' > china.txt
-          printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > dns-validation-bootstrap-complete.txt
+          printf 'Fresh DNS-validation database initialized on %s\n' "$(date -u +%F)" > dns-validation-bootstrap-complete-v2.txt
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
       - name: Upload log on failure
@@ -200,7 +217,7 @@ jobs:
             validated-dns-sources.tar.gz
             black.txt
             china.txt
-            dns-validation-bootstrap-complete.txt
+            dns-validation-bootstrap-complete-v2.txt
           overwrite_files: true
           fail_on_unmatched_files: true
 
@@ -208,9 +225,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view dev-domain-noble --json assets --jq '.assets[].name' | grep -Fxq "nobledns-bootstrap-complete.txt"; then
-            gh release delete-asset dev-domain-noble "nobledns-bootstrap-complete.txt" --yes
-          fi
+          for obsolete in nobledns-bootstrap-complete.txt dns-validation-bootstrap-complete.txt; do
+            if gh release view dev-domain-noble --json assets --jq '.assets[].name' | grep -Fxq "$obsolete"; then
+              gh release delete-asset dev-domain-noble "$obsolete" --yes
+            fi
+          done
 
       - name: Verify dev-domain-noble release assets
         env:
@@ -218,7 +237,7 @@ jobs:
         run: |
           set -euo pipefail
           assets="$(gh release view dev-domain-noble --json assets --jq '.assets[].name')"
-          for name in domain.db domain.txt domain-input-provenance.json validated-dns-sources.tar.gz black.txt china.txt dns-validation-bootstrap-complete.txt; do
+          for name in domain.db domain.txt domain-input-provenance.json validated-dns-sources.tar.gz black.txt china.txt dns-validation-bootstrap-complete-v2.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
               echo "::error::dev-domain-noble release is missing $name"
               exit 1
