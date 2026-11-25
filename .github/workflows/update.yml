@@ -241,6 +241,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json
+          import re
 
           output = Path(".cache/out")
           expected = {
