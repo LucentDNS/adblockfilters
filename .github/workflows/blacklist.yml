@@ -96,26 +96,26 @@ jobs:
           chmod +x "$SMARTDNS_BIN"
           rm -f "$SMARTDNS_PATH/smartdns.tar.gz"
           cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
-          nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > /dev/null 2>&1 &
+          SMARTDNS_LOG="$SMARTDNS_PATH/smartdns.log"
+          nohup "$SMARTDNS_BIN" -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_LOG" 2>&1 &
+          SMARTDNS_PID=$!
           ready=0
           for i in $(seq 1 30); do
-            if python3 - <<'PY'
-          import socket
-          packet = bytes.fromhex("00000100000100000000000003777777076578616d706c6503636f6d0000010001")
-          for port in (5053, 5054):
-              with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                  sock.settimeout(2)
-                  sock.sendto(packet, ("127.0.0.1", port))
-                  sock.recvfrom(1024)
-          PY
-            then
+            if ! kill -0 "$SMARTDNS_PID" 2>/dev/null; then
+              echo "::error::SmartDNS exited during startup"
+              cat "$SMARTDNS_LOG"
+              exit 1
+            fi
+            if ss -H -lun | grep -Eq '127\\.0\\.0\\.1:5053([[:space:]]|$)' \
+              && ss -H -lun | grep -Eq '127\\.0\\.0\\.1:5054([[:space:]]|$)'; then
               ready=1
               break
             fi
             sleep 1
           done
           if [ "$ready" = "0" ]; then
-            echo "SmartDNS not ready after 30s"
+            echo "::error::SmartDNS did not bind both local DNS listeners within 30s"
+            cat "$SMARTDNS_LOG"
             exit 1
           fi
 
