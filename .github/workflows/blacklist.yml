@@ -1,6 +1,6 @@
 name: Generate DNS State
 
-# README-only changes must not restart DNS validation or recursively dispatch production builds.
+# README.md contains the upstream source manifest; source-table changes must trigger fresh DNS validation.
 permissions:
   contents: write
   actions: write
@@ -21,6 +21,8 @@ on:
       - smartdns.conf
       - resolver.py
       - updater.py
+      - README.md
+      - readme.py
       - scripts/generate_domain_input.py
       - scripts/validated_sources.py
       - scripts/verify_critical_domains.py
