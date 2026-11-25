@@ -1,0 +1,9 @@
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+exclude = [".cache", ".venv", "domain-list-community"]
+
+[tool.ruff.lint]
+# Enforce syntax safety and undefined-name detection without mass-rewriting
+# legacy upstream-derived code in the first quality-gate rollout.
+select = ["E999", "F821", "F822", "F823"]
