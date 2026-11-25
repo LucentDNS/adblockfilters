@@ -43,4 +43,5 @@ class MosDNS(APPBase):
             else:
                 logger.info("adblock MosDNS: block=%d"%(len(blockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception("%s"%(e))
+            raise
