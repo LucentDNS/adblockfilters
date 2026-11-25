@@ -120,3 +120,9 @@ figma.com
 canva.com
 # Content-delivery host: retain the host while path-specific ad rules remain active.
 evtubescms.phncdn.com
+# Microsoft Defender Core mobile telemetry endpoints documented as required connectivity targets.
+mobile.events.data.microsoft.com
+au-mobile.events.data.microsoft.com
+eu-mobile.events.data.microsoft.com
+uk-mobile.events.data.microsoft.com
+us-mobile.events.data.microsoft.com

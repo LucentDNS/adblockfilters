@@ -322,6 +322,15 @@ heads-fa.spotify.com
 
 # AdGuard HTTPS filtering self-test endpoint; keep it available for accurate diagnostics.
 https-filtering-check.adtidy.org
+# Microsoft documents these exact endpoints for Defender Core diagnostic telemetry.
+# Keep the regional mobile endpoints available without allowing the whole events.data.microsoft.com zone.
+# https://learn.microsoft.com/en-us/defender-endpoint/standard-device-connectivity-urls-commercial
+mobile.events.data.microsoft.com
+au-mobile.events.data.microsoft.com
+eu-mobile.events.data.microsoft.com
+uk-mobile.events.data.microsoft.com
+us-mobile.events.data.microsoft.com
+
 # Preserve exact allow exceptions from the original published DNS baseline
 pgpartner.com
 puma.112.2o7.net

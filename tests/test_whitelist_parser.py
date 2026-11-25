@@ -79,3 +79,32 @@ def test_lite_filter_domain_scopes_only_keep_china_or_unrestricted_rules():
         "||tracker^$script,domain=~qq.com",
         "||tracker^$script",
     }
+
+
+def test_microsoft_defender_core_mobile_endpoints_are_exact_whitelist_entries():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    entries = {
+        line.strip()
+        for line in (root / "rules" / "white.txt").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith(("#", "!"))
+    }
+    expected = {
+        "mobile.events.data.microsoft.com",
+        "au-mobile.events.data.microsoft.com",
+        "eu-mobile.events.data.microsoft.com",
+        "uk-mobile.events.data.microsoft.com",
+        "us-mobile.events.data.microsoft.com",
+    }
+
+    assert expected <= entries
+    assert "events.data.microsoft.com" not in entries
+
+    parsed = parse_whitelist(entries)
+    normalized = {
+        (f"{subdomain}.{fld}" if subdomain else fld)
+        for fld, subdomains in parsed.items()
+        for subdomain in subdomains
+    }
+    assert expected <= normalized
