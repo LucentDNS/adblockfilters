@@ -1,17 +1,17 @@
 from readme import ReadMe, Rule
 
 
-def test_regenerated_readme_preserves_original_project_notice(tmp_path):
+def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
     readme_path = tmp_path / "README.md"
     readme = ReadMe(str(readme_path))
 
     readme.regenerate()
 
     generated = readme_path.read_text(encoding="utf-8")
-    assert "## 重要公告" in generated
-    assert "20261120" in generated
+    assert "## 重要公告" not in generated
+    assert "20261120" not in generated
     assert "217heidai/adblockfilters" in generated
-    assert "dist 分支和 GitHub Releases 分发" in generated
+    assert "## 正式订阅（仅列出构建验证通过的产物）" in generated
     assert "myblock.txt（补充拦截）" in generated
     assert "white.txt（放行例外）" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
