@@ -520,7 +520,7 @@ def main():
         required_names = production_names | browser_names
         failed_required = [row["name"] for row in results
                            if row["name"] in required_names and not row["download_ok"]]
-        critical_candidates = {"OISD Basic (upstream snapshot; candidate only)"}
+        critical_candidates = {"OISD upstream release snapshot (README says Basic; payload title says Small)"}
         failed_candidates = [name for name in critical_candidates
                              if not downloads.get(name, {}).get("ok")]
         if failed_required or failed_candidates:
@@ -858,8 +858,8 @@ def main():
             report += f"| {domain} | {', '.join(matches)} |\n"
     report += f"\n- 当前编译 DNS 输出无法归一化的规则行：{compiled_unparsed} 条；这些行另需结合原始语法审查。\n"
 
-    report += "\n### 原作者 OISD Basic 候选来源对基线差异的覆盖\n\n"
-    report += "- OISD Basic 仅作为审计候选，不进入 AdBlock DNS 正式来源或构建。\n"
+    report += "\n### 原作者 OISD 来源快照对基线差异的覆盖\n\n"
+    report += "- 上游 README 标注为 OISD Basic 的 release 资产，实际 payload 标题为 OISD Small；此快照仅用于审计，不作为独立新增来源。\n"
     report += "| 候选来源 | 可解析域名 | 基线独有精确重合 | 父域名覆盖 | 合计覆盖 | 未覆盖 |\n|---|---:|---:|---:|---:|---:|\n"
     for candidate, stats in sorted(baseline_candidate_analysis.items()):
         if not stats.get("available"):
@@ -944,7 +944,7 @@ def main():
     required_names = production_names | browser_names
     failed_required = [row["name"] for row in results
                        if row["name"] in required_names and not row["download_ok"]]
-    critical_candidates = {"OISD Basic (upstream snapshot; candidate only)"}
+    critical_candidates = {"OISD upstream release snapshot (README says Basic; payload title says Small)"}
     failed_candidates = [name for name in critical_candidates
                          if not downloads.get(name, {}).get("ok")]
     if failed_required or failed_candidates:
