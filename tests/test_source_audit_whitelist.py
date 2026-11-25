@@ -18,7 +18,6 @@ def test_project_whitelist_excludes_modifier_scoped_browser_exceptions(tmp_path,
     }
 
 
-
 def test_source_audit_gate_accepts_fully_explained_output():
     assert audit_sources.source_audit_gate_failures(0, set(), set(), set()) == []
 
