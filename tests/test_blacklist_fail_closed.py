@@ -70,3 +70,50 @@ def test_empty_china_list_overwrites_stale_previous_state(tmp_path):
     instance._BlackList__generateChinaList([])
 
     assert path.read_text(encoding="utf-8") == ""
+
+
+def _fake_http_client(monkeypatch, *, content_type, body):
+    import blacklist as blacklist_module
+
+    class Response:
+        headers = {"Content-Type": content_type}
+        content = body
+
+        @staticmethod
+        def raise_for_status():
+            return None
+
+    class Client:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        @staticmethod
+        def get(_url):
+            return Response()
+
+    monkeypatch.setattr(blacklist_module.httpx, "Client", Client)
+
+
+def test_non_text_dns_source_response_is_rejected_without_replacing_cache(tmp_path, monkeypatch):
+    instance = BlackList.__new__(BlackList)
+    target = tmp_path / "direct.txt"
+    target.write_text("domain:qq.com\\n", encoding="utf-8")
+    _fake_http_client(monkeypatch, content_type="text/html; charset=utf-8", body=b"<html>error</html>")
+
+    assert instance._BlackList__download(str(target), "https://example.invalid/direct.txt") is False
+    assert target.read_text(encoding="utf-8") == "domain:qq.com\\n"
+    assert not (tmp_path / "direct.txt.download").exists()
+
+
+def test_empty_text_dns_source_response_is_rejected_without_replacing_cache(tmp_path, monkeypatch):
+    instance = BlackList.__new__(BlackList)
+    target = tmp_path / "ipv4_china.txt"
+    target.write_text("1.0.1.0-1.0.3.255\\n", encoding="utf-8")
+    _fake_http_client(monkeypatch, content_type="text/plain; charset=utf-8", body=b"")
+
+    assert instance._BlackList__download(str(target), "https://example.invalid/ipv4_china.txt") is False
+    assert target.read_text(encoding="utf-8") == "1.0.1.0-1.0.3.255\\n"
+    assert not (tmp_path / "ipv4_china.txt.download").exists()
