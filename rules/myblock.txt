@@ -58,6 +58,16 @@
 ! https://gridinsoft.com/online-virus-scanner/url/whatsappcore-com
 ||whatsappcore.com^
 
+
+! SBI Securities lookalike campaign; listed by PhishTank/Phishing Army and multiple security vendors.
+! https://gtldti.com/tld/cfd?page=8
+! https://phishing.jp/phishing/
+||sbi-sens.cfd^
+||sbi-sesh.cfd^
+! Gridinsoft reports 13 external phishing warnings for this SBI lookalike.
+! https://gridinsoft.com/online-virus-scanner/url/sbi_srees-cfd
+||sbi-srees.cfd^
+
 ! OpenPhish-referenced Suricata antiphishing signature for this exact host (2026-11-22).
 ! https://dev.evebox.org/pub/julioliraup/antiphishing/changelog/684101
 ||app-conbase.com^
