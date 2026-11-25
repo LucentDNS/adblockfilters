@@ -28,12 +28,15 @@ class AdGuard(APPBase):
                 f.write("!\n")
                 if isLite:
                     f.write("! Title: AdBlock Filter Lite\n")
+                    f.write("! Description: 适用于 AdGuard 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版仅针对国内域名拦截。\n"%(self.sourceRule))
                 else:
                     f.write("! Title: AdBlock Filter\n")
+                    f.write("! Description: 适用于 AdGuard 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
                 f.write("! Homepage: %s\n"%(self.homepage))
                 f.write("! Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("! Version: %s\n"%(self.version))
                 f.write("! Last modified: %s\n"%(self.time))
+                f.write("! Blocked Filters: %s\n"%(len(filterList)))
                 f.write("!\n")
                 for fiter in self.filterList_var:
                     f.write("%s\n"%(fiter))
@@ -45,5 +48,4 @@ class AdGuard(APPBase):
             else:
                 logger.info("adblock AdGuard: block=%d"%(len(filterList)))
         except Exception as e:
-            logger.exception(e)
-            raise
+            logger.error("%s"%(e))
