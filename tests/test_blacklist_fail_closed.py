@@ -9,6 +9,8 @@ def test_generate_fails_when_domain_input_is_unavailable(monkeypatch):
     def fail_domain_input():
         raise RuntimeError("domain source unavailable")
 
+    instance._BlackList__db = object()
+    monkeypatch.setattr("blacklist._apply_dns_block_policy_version", lambda _database: 0)
     monkeypatch.setattr(instance, "_BlackList__getDomainDict", fail_domain_input)
 
     with pytest.raises(RuntimeError, match="domain source unavailable"):
