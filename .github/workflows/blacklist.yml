@@ -8,7 +8,7 @@ permissions:
 
 concurrency:
   group: dns-validation-state
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 on:
   workflow_dispatch:
