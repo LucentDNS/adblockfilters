@@ -146,18 +146,56 @@ jobs:
       - name: Compare with upstream published DNS baseline
         run: |
           mkdir -p .cache/baseline .cache/report
-          curl -fsSL --retry 3 --retry-all-errors -o .cache/baseline/upstream-adblockdns.txt https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt
+          curl --fail --location --silent --show-error --retry 3 --retry-all-errors --connect-timeout 20 --max-time 300 \
+            -o .cache/baseline/upstream-adblockdns.txt \
+            https://github.com/217heidai/adblockfilters/releases/download/rule/adblockdns.txt
           python - <<'PY'
           from pathlib import Path
           import json
+
+          baseline_path = Path(".cache/baseline/upstream-adblockdns.txt")
+          baseline_lines = baseline_path.read_text(encoding="utf-8", errors="replace").splitlines()
+          baseline_title = next((line for line in baseline_lines if line.startswith("! Title:")), None)
+          baseline_version = next((line.partition(": ")[2] for line in baseline_lines if line.startswith("! Version:")), "")
+          baseline_rules = [
+              line.strip()
+              for line in baseline_lines
+              if line.strip() and not line.lstrip().startswith(("!", "#"))
+          ]
+          if baseline_title != "! Title: AdBlock DNS":
+              raise SystemExit(f"Unexpected upstream baseline title: {baseline_title!r}")
+          if not baseline_version:
+              raise SystemExit("Upstream baseline is missing its version marker")
+          if len(baseline_rules) < 100000:
+              raise SystemExit(f"Upstream baseline is unexpectedly small: {len(baseline_rules)} rules")
+          invalid_rules = [
+              line for line in baseline_rules
+              if not line.startswith(("||", "@@||"))
+          ]
+          if invalid_rules:
+              raise SystemExit(
+                  "Upstream DNS baseline contains unsupported lines: "
+                  + ", ".join(invalid_rules[:10])
+              )
+
           def read(path):
-              return {line.strip() for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines() if line.strip() and not line.lstrip().startswith("!")}
+              return {
+                  line.strip()
+                  for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
+                  if line.strip() and not line.lstrip().startswith(("!", "#"))
+              }
+
           current = read(".cache/out/adblockdns.txt")
-          baseline = read(".cache/baseline/upstream-adblockdns.txt")
+          baseline = set(baseline_rules)
+          if not current:
+              raise SystemExit("Compiled DNS output is empty; baseline comparison is unsafe")
+
           optimized_only = sorted(current - baseline)
           baseline_only = sorted(baseline - current)
           report = {
               "baseline": "217heidai/adblockfilters release rule/adblockdns.txt",
+              "baseline_title": baseline_title,
+              "baseline_version": baseline_version,
               "baseline_rules": len(baseline),
               "optimized_rules": len(current),
               "shared_rules": len(current & baseline),
@@ -166,14 +204,31 @@ jobs:
               "optimized_only_sample": optimized_only[:100],
               "baseline_only_sample": baseline_only[:100],
           }
-          Path(".cache/report/comparison.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path(".cache/report/comparison.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
           Path(".cache/report/optimized-only.txt").write_text(
-              "\n".join(optimized_only) + ("\n" if optimized_only else "! No project-only rules in this comparison.\n"),
-              encoding="utf-8")
+              "\n".join(optimized_only)
+              + ("\n" if optimized_only else "! No project-only rules in this comparison.\n"),
+              encoding="utf-8",
+          )
           Path(".cache/report/baseline-only.txt").write_text(
-              "\n".join(baseline_only) + ("\n" if baseline_only else "! No upstream-only rules in this comparison.\n"),
-              encoding="utf-8")
-          lines = ["# DNS output comparison", "", f"- Baseline rules: {len(baseline)}", f"- Optimized rules: {len(current)}", f"- Shared: {len(current & baseline)}", f"- Optimized-only: {len(optimized_only)}", f"- Baseline-only: {len(baseline_only)}", ""]
+              "\n".join(baseline_only)
+              + ("\n" if baseline_only else "! No upstream-only rules in this comparison.\n"),
+              encoding="utf-8",
+          )
+          lines = [
+              "# DNS output comparison",
+              "",
+              f"- Baseline version: {baseline_version}",
+              f"- Baseline rules: {len(baseline)}",
+              f"- Optimized rules: {len(current)}",
+              f"- Shared: {len(current & baseline)}",
+              f"- Optimized-only: {len(optimized_only)}",
+              f"- Baseline-only: {len(baseline_only)}",
+              "",
+          ]
           Path(".cache/report/comparison.md").write_text("\n".join(lines), encoding="utf-8")
           print("\n".join(lines))
           PY
