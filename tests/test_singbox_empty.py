@@ -16,4 +16,5 @@ def test_singbox_writes_valid_empty_full_and_lite_files(tmp_path):
     assert full["version"] == 3
     assert full["rules"][0]["domain_suffix"] == []
     assert lite["version"] == 3
-    assert lite["rules"][0]["domain_suffix"] == []
+    assert lite["rules"][0]["domain"] == []
+    assert "domain_suffix" not in lite["rules"][0]
