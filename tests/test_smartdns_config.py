@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def test_dns_validation_uses_separate_non_filtering_regional_groups():
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
 
@@ -33,6 +34,7 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
     assert "101.226.4.6" not in config  # 360 security-filtering DNS
     assert "114.114.114.114" not in config  # 114DNS standard resolver has ad filtering
 
+
 def test_dns_validation_constructs_both_smartdns_resolvers(monkeypatch):
     from blacklist import BlackList
 
@@ -55,6 +57,7 @@ def test_dns_validation_constructs_both_smartdns_resolvers(monkeypatch):
     assert [resolver.port for resolver in ports] == [5053, 5054]
     assert all(resolver.nameservers == ["127.0.0.1"] for resolver in ports)
 
+
 def test_dns_validation_workflow_pins_and_verifies_smartdns_binary():
     workflow = (
         Path(__file__).parents[1] / ".github" / "workflows" / "blacklist.yml"
@@ -70,6 +73,7 @@ def test_dns_validation_workflow_pins_and_verifies_smartdns_binary():
     assert "dpkg-deb --extract" in workflow
     assert "wget --https-only --timeout=30 --tries=3 --waitretry=2" in workflow
 
+
 def test_ci_workflows_install_dev_tools_and_run_static_analysis():
     root = Path(__file__).parents[1]
     for name in ("audit-sources.yml", "update.yml", "blacklist.yml"):
@@ -79,6 +83,7 @@ def test_ci_workflows_install_dev_tools_and_run_static_analysis():
         assert "python -m pip install -r requirements-dev.txt" in workflow
         assert "python -m ruff check --no-cache ." in workflow
         assert "python -m ruff check --no-cache --select F401 scripts tests" in workflow
+
 
 def test_upstream_baseline_is_validated_before_comparison():
     workflow = (
@@ -90,6 +95,7 @@ def test_upstream_baseline_is_validated_before_comparison():
     assert "len(baseline_rules) < 100000" in workflow
     assert "invalid_rules" in workflow
     assert '"baseline_version": baseline_version' in workflow
+
 
 def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
     workflow = (
