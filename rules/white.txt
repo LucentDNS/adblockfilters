@@ -350,3 +350,11 @@ consent.dropbox.com
 # Google lists this endpoint for FCM connectivity on mobile devices behind organizational firewalls.
 # https://support.google.com/work/android/answer/10513641
 device-provisioning.googleapis.com
+
+# Official OISD exclusions: these are service/content endpoints, not DNS-wide ad hosts.
+# https://oisd.nl/excludes
+content.canadiantire.ca
+content.discover.com
+content22.online.citi.com
+contents1.00110.citi.com
+contents2.00110.citi.com
