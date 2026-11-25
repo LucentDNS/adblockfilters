@@ -231,6 +231,47 @@ jobs:
           test -s .cache/out/adblockv2raylite.dat
           rm -f .cache/out/adblockv2ray.txt .cache/out/adblockv2raylite.txt
       
+      - name: Validate complete client output matrix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          output = Path(".cache/out")
+          expected = {
+              "adblockdns.txt", "adblockdnslite.txt",
+              "adblockfilters.txt", "adblockfilterslite.txt",
+              "adblockdomain.txt", "adblockdomainlite.txt",
+              "adblockdnsmasq.txt", "adblockdnsmasqlite.txt",
+              "adblocksmartdns.conf", "adblocksmartdnslite.conf",
+              "adblockclash.list", "adblockclashlite.list",
+              "adblockshadowrocket.sgmodule", "adblockshadowrocketlite.sgmodule",
+              "adblockqx.conf", "adblockqxlite.conf",
+              "adblockmihomo.yaml", "adblockmihomolite.yaml",
+              "adblockmihomo.mrs", "adblockmihomolite.mrs",
+              "adblockhosts.txt", "adblockhostslite.txt",
+              "adblocksingbox.json", "adblocksingboxlite.json",
+              "adblocksingbox.srs", "adblocksingboxlite.srs",
+              "adblockloon.list", "adblockloonlite.list",
+              "adblocksurge.list", "adblocksurgelite.list",
+              "adblockmosdns.txt", "adblockmosdnslite.txt",
+              "adblockv2ray.dat", "adblockv2raylite.dat",
+          }
+          if not output.is_dir():
+              raise SystemExit("Compiled output directory is missing")
+          actual = {path.name for path in output.iterdir() if path.is_file()}
+          missing = sorted(expected - actual)
+          unexpected = sorted(actual - expected)
+          empty = sorted(name for name in expected & actual if (output / name).stat().st_size == 0)
+          if missing or unexpected or empty:
+              raise SystemExit(
+                  f"Client output matrix invalid: missing={missing}, unexpected={unexpected}, empty={empty}"
+              )
+          for name in ("adblocksingbox.json", "adblocksingboxlite.json"):
+              json.loads((output / name).read_text(encoding="utf-8"))
+          print(f"Validated all {len(expected)} expected non-empty client outputs; no unexpected files.")
+          PY
+
       - name: Validate audit report assets
         run: |
           python - <<'PY'
