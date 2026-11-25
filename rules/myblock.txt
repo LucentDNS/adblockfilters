@@ -57,6 +57,18 @@
 ! https://github.com/vhvg/Surge-2/blob/master/Module/Ad%20Block.sgmodule
 ||apxadtracking.net^
 
+! Gridinsoft phishing verdict with 17 external provider warnings; ScamAdviser also reports iQ Abuse Scan and IPQS phishing flags.
+! https://gridinsoft.com/online-virus-scanner/url/iplog-co
+! https://www.scamadviser.com/check-website/iplog.co
+||iplog.co^
+! Established iQIYI ad-tracking endpoint listed in multiple maintained ad-block rule sets.
+! https://github.com/fmz200/wool_scripts/blob/main/Shadowrocket/module/blockAds.srmodule
+! https://github.com/zqzess/rule_for_quantumultX/blob/master/Loon/Plugin/AdBlock.plugin
+||iqiyim.adtrack.enlightent.cn^
+! Ad-network ad host; DNS intelligence shows this CNAME under Fortunedancer alongside MythAd/Adaether ad-serving endpoints.
+! https://dnsrepo.noc.org/?ip=103.167.27.38
+||kix-ad.sg.fortunedancer.com^
+
 ||antrenbitapptech.com^
 ! Gridinsoft phishing verdict (1/100) with DNS8 and SOCRadar external phishing warnings.
 ! https://gridinsoft.com/online-virus-scanner/url/atlasfaktow-com
