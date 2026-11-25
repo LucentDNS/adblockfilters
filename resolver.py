@@ -65,7 +65,9 @@ class Resolver(object):
                 raise Exception('"%s": not keep'%(line))
             return block
         except Exception as e:
-            logger.error("%s"%(e))
+            # Hosts files routinely contain localhost, loopback and other
+            # intentionally ignored entries; these are not parser failures.
+            logger.debug("%s"%(e))
             return block
 
     # 从 filter 规则中找出包含的域名
@@ -254,7 +256,9 @@ class Resolver(object):
                     raise Exception('"%s": not include domain or ip'%(filter))
             return filter,domain
         except Exception as e:
-            logger.error("%s"%(e))
+            # Many valid browser rules are cosmetic, regex or path-scoped and
+            # intentionally have no DNS-domain equivalent. Keep them quietly.
+            logger.debug("%s"%(e))
             return filter,domain
 
     # dns 模式
