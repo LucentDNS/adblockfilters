@@ -32,10 +32,6 @@
 ||trustwallet-eng.org^
 ||official-trustwallet.com^
 ||en-trustwallet.org^
-! Independent phishing intelligence: recently registered AI-account storefront with multiple provider detections.
-! https://gridinsoft.com/online-virus-scanner/url/168ai-store
-! https://www.scamadviser.com/check-website/168ai.store
-||168ai.store^
 ! Independent phishing report: newly registered bank-impersonation site; IPQS phishing report and Gridinsoft detection.
 ! https://www.scamadviser.com/check-website/swifttrustcb.com
 ! https://es.gridinsoft.com/online-virus-scanner/url/swifttrustcb-com
