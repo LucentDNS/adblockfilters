@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT))
 from resolver import Resolver
 
 CRITICAL_FILE = ROOT / "tests" / "data" / "critical-domains.txt"
+MANUAL_BLOCK_FILE = ROOT / "tests" / "data" / "manual-block-domains.txt"
 DNS_OUTPUT = ROOT / ".cache" / "out" / "adblockdns.txt"
 FILTER_OUTPUT = ROOT / ".cache" / "out" / "adblockfilters.txt"
 SOURCE_DIR = ROOT / ".cache" / "source"
@@ -123,7 +124,7 @@ def parse_rules(path, browser_filter=False):
 
 
 def main():
-    if not CRITICAL_FILE.is_file() or not DNS_OUTPUT.is_file() or not FILTER_OUTPUT.is_file():
+    if not CRITICAL_FILE.is_file() or not MANUAL_BLOCK_FILE.is_file() or not DNS_OUTPUT.is_file() or not FILTER_OUTPUT.is_file():
         raise SystemExit("Critical-domain regression inputs or compiled DNS/browser outputs are missing")
 
     critical_domains = [
@@ -133,6 +134,14 @@ def main():
     ]
     if not critical_domains:
         raise SystemExit("Critical-domain regression list is empty")
+
+    manual_block_domains = [
+        line.strip().lower()
+        for line in MANUAL_BLOCK_FILE.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if not manual_block_domains:
+        raise SystemExit("Manual-block regression list is empty")
 
     dns_rule_count = sum(
         1 for line in DNS_OUTPUT.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -144,6 +153,7 @@ def main():
         )
 
     failures = []
+    manual_block_failures = []
     output_summaries = []
     for label, path, browser_filter in (
         ("DNS", DNS_OUTPUT, False),
@@ -157,10 +167,26 @@ def main():
             if blocks and not allows:
                 failures.append((label, domain, blocks))
 
-    if failures:
+        if label == "DNS":
+            for domain in manual_block_domains:
+                blocks = sorted(rule for rule in block_domains if is_covered(domain, {rule}))
+                allows = sorted(rule for rule in allow_domains if is_covered(domain, {rule}))
+                if not blocks or allows:
+                    manual_block_failures.append((domain, blocks, allows))
+
+    if failures or manual_block_failures:
         for label, domain, blocks in failures:
             print(f"BLOCKED CRITICAL DOMAIN ({label}): {domain}; matching block rules: {', '.join(blocks)}")
-        raise SystemExit(f"{len(failures)} critical service/output combinations are blocked")
+        for domain, blocks, allows in manual_block_failures:
+            print(
+                f"MANUAL BLOCK MISSING OR OVERRIDDEN: {domain}; "
+                f"matching block rules: {', '.join(blocks) or '(none)'}; "
+                f"matching allow rules: {', '.join(allows) or '(none)'}"
+            )
+        raise SystemExit(
+            f"{len(failures)} critical service/output combinations blocked; "
+            f"{len(manual_block_failures)} required manual block rules missing or overridden"
+        )
 
     summary = "; ".join(
         f"{label}: {blocks} block domains, {allows} allow domains"
@@ -168,7 +194,8 @@ def main():
     )
     print(
         f"Build quality gate passed: {dns_rule_count}/{MAX_DNS_RULES} DNS rules; "
-        f"{len(critical_domains)} critical service roots checked in DNS and browser outputs; {summary}"
+        f"{len(critical_domains)} critical service roots checked in DNS and browser outputs; "
+        f"{len(manual_block_domains)} required manual threat domains checked in DNS; {summary}"
     )
 
 

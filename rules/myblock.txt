@@ -16,6 +16,13 @@
 ! https://someonewhocares.org/hosts/hosts
 ||2006mindfreaklike.blogspot.com^
 ||girlownedbypolicelike.blogspot.com^
+! High-confidence phishing domains verified by multiple independent reputation providers (2026-11-23/25).
+! https://gridinsoft.com/online-virus-scanner/url/easywebtd_authenticate-com
+||easywebtd-authenticate.com^
+! Arbitrum brand-impersonation phishing host; multiple phishing/Spamhaus-related signals.
+! https://gridinsoft.com/online-virus-scanner/url/arbitrum_one-com
+! https://phishdestroy.io/domain/arbitrum-one.com/
+||arbitrum-one.com^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
