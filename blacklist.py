@@ -41,6 +41,8 @@ def _blacklist_abnormal(black_count:int, total:int) -> bool:
 
 DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
+# Bump when the evidence required to classify a domain as NXDOMAIN changes.
+DNS_BLOCK_POLICY_VERSION = "2"
 
 
 def _needs_dns_validation(ip_list, last_checked, now, is_new=False) -> bool:
@@ -120,6 +122,31 @@ class DomainDatabase(object):
                                                     tld TEXT)'%(self.__table_domain))
             self.__execute('CREATE UNIQUE INDEX INDEX_%s_UNIQUE on %s (domain)'%(self.__table_domain, self.__table_domain))
             self.__execute('CREATE INDEX index_%s on %s (isBlock, isChina, timeStamp, tld, fld, domain, ip, port)'%(self.__table_domain, self.__table_domain))
+        self.__execute(
+            "CREATE TABLE IF NOT EXISTS T_META (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+
+    def getMeta(self, key: str):
+        row = self.__conn.execute(
+            "SELECT value FROM T_META WHERE key = ?", (key,)
+        ).fetchone()
+        return row[0] if row else None
+
+    def setMeta(self, key: str, value: str):
+        self.__conn.execute(
+            "INSERT OR REPLACE INTO T_META (key, value) VALUES (?, ?)",
+            (key, value),
+        )
+        self.__conn.commit()
+
+    def resetBlockedForRevalidation(self) -> int:
+        """Clear cached negative decisions so a new policy can re-evaluate them."""
+        cursor = self.__conn.execute(
+            "UPDATE T_DOMAIN SET isBlock = 0, timeStamp = 0, ipList = NULL "
+            "WHERE isBlock = 1"
+        )
+        self.__conn.commit()
+        return cursor.rowcount
 
     def getAll(self) -> List[Tuple]:
         sql = "SELECT domain,tld,fld,subdomain,ip,port,isBlock,isChina,timeStamp,ipList FROM %s"%(self.__table_domain)
@@ -156,6 +183,16 @@ class DomainDatabase(object):
             raise
 
         return total_deleted
+
+def _apply_dns_block_policy_version(database: DomainDatabase) -> int:
+    """Invalidate cached NXDOMAIN decisions whenever the decision policy changes."""
+    stored_version = database.getMeta("dns_block_policy_version")
+    if stored_version == DNS_BLOCK_POLICY_VERSION:
+        return 0
+    reset_count = database.resetBlockedForRevalidation()
+    database.setMeta("dns_block_policy_version", DNS_BLOCK_POLICY_VERSION)
+    return reset_count
+
 
 class DOMAIN(object):
     def __init__(self, domain:str, tld:str=None, fld:str=None, subdomain:str=None, ip:str=None, port:int=None, isBlock:int=None, isChina:int=None, timeStamp:int=None, ipList:str=None):
@@ -232,6 +269,11 @@ class DOMAIN(object):
     def setIPList(self, ipList:List[str]):
         # 此处改为强制更新，解决超过 36 天后重新解析出来的 IP 与原记录一致不更新，导致每次都重新解析的问题。
         self.__ipList = ipList
+        self.__timeStamp = int(time.time())
+        self.__update = True
+
+    def setCheckedAtNow(self):
+        """Remember an inconclusive check without changing the known DNS state."""
         self.__timeStamp = int(time.time())
         self.__update = True
 
@@ -521,9 +563,11 @@ class BlackList(object):
                 domain.setIPList([])
                 domain.setBlock(False)
             else:
-                # Inconclusive DNS/TCP results preserve the previous known state.
+                # Inconclusive DNS/TCP results preserve the previous known state,
+                # but receive the same short retry cooldown as other empty answers.
                 if domain.ip:
                     logger.warning('"%s": TCP check inconclusive; preserve previous state' % domain.domain)
+                domain.setCheckedAtNow()
 
             return domain
 
@@ -675,6 +719,14 @@ class BlackList(object):
 
     def generate(self):
         try:
+            reset_count = _apply_dns_block_policy_version(self.__db)
+            if reset_count:
+                logger.warning(
+                    "DNS block policy upgraded to %s; reset %d cached NXDOMAIN decisions",
+                    DNS_BLOCK_POLICY_VERSION,
+                    reset_count,
+                )
+
             # 获取域名清单 https://raw.githubusercontent.com/217heidai/adblockfilters/refs/heads/main/rules/domain.txt
             domainDict = self.__getDomainDict()
             if len(domainDict) < 1:
