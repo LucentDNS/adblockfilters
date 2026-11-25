@@ -17,7 +17,7 @@ def test_regenerated_readme_preserves_original_project_notice(tmp_path):
     assert "每 8 小时自动构建" in generated
     import re
     subscriptions = re.findall(
-        r"https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^\s|)]+)",
+        r"\[原始链接\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
         generated,
     )
     assert len(subscriptions) == 34
