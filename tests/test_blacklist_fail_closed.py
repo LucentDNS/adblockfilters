@@ -100,31 +100,42 @@ def _fake_http_client(monkeypatch, *, content_type, body):
 def test_non_text_dns_source_response_is_rejected_without_replacing_cache(tmp_path, monkeypatch):
     instance = BlackList.__new__(BlackList)
     target = tmp_path / "direct.txt"
-    target.write_text("domain:qq.com\\n", encoding="utf-8")
+    target.write_text("domain:qq.com\n", encoding="utf-8")
     _fake_http_client(monkeypatch, content_type="text/html; charset=utf-8", body=b"<html>error</html>")
 
     assert instance._BlackList__download(str(target), "https://example.invalid/direct.txt") is False
-    assert target.read_text(encoding="utf-8") == "domain:qq.com\\n"
+    assert target.read_text(encoding="utf-8") == "domain:qq.com\n"
     assert not (tmp_path / "direct.txt.download").exists()
 
 
 def test_empty_text_dns_source_response_is_rejected_without_replacing_cache(tmp_path, monkeypatch):
     instance = BlackList.__new__(BlackList)
     target = tmp_path / "ipv4_china.txt"
-    target.write_text("1.0.1.0-1.0.3.255\\n", encoding="utf-8")
+    target.write_text("1.0.1.0-1.0.3.255\n", encoding="utf-8")
     _fake_http_client(monkeypatch, content_type="text/plain; charset=utf-8", body=b"")
 
     assert instance._BlackList__download(str(target), "https://example.invalid/ipv4_china.txt") is False
-    assert target.read_text(encoding="utf-8") == "1.0.1.0-1.0.3.255\\n"
+    assert target.read_text(encoding="utf-8") == "1.0.1.0-1.0.3.255\n"
     assert not (tmp_path / "ipv4_china.txt.download").exists()
 
 
 def test_html_error_page_with_text_plain_header_is_rejected(tmp_path, monkeypatch):
     instance = BlackList.__new__(BlackList)
     target = tmp_path / "direct.txt"
-    target.write_text("domain:qq.com\\n", encoding="utf-8")
+    target.write_text("domain:qq.com\n", encoding="utf-8")
     _fake_http_client(monkeypatch, content_type="text/plain", body=b"<!DOCTYPE html><html>error</html>")
 
     assert instance._BlackList__download(str(target), "https://example.invalid/direct.txt") is False
-    assert target.read_text(encoding="utf-8") == "domain:qq.com\\n"
+    assert target.read_text(encoding="utf-8") == "domain:qq.com\n"
+    assert not (tmp_path / "direct.txt.download").exists()
+
+
+def test_valid_text_response_atomically_replaces_cache(tmp_path, monkeypatch):
+    instance = BlackList.__new__(BlackList)
+    target = tmp_path / "direct.txt"
+    target.write_text("domain:old.example\n", encoding="utf-8")
+    _fake_http_client(monkeypatch, content_type="text/plain; charset=utf-8", body=b"domain:new.example\n")
+
+    assert instance._BlackList__download(str(target), "https://example.invalid/direct.txt") is True
+    assert target.read_text(encoding="utf-8") == "domain:new.example\n"
     assert not (tmp_path / "direct.txt.download").exists()
