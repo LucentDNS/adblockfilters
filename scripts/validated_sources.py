@@ -21,11 +21,11 @@ VALIDATION_LOGIC_FILES = (
     "resolver.py",
     "smartdns.conf",
     "requirements.txt",
+    "readme.py",
+    "updater.py",
     "scripts/generate_domain_input.py",
     "scripts/validated_sources.py",
     "scripts/verify_critical_domains.py",
-    "rules/direct.txt",
-    "rules/ipv4_china.txt",
     "rules/myblock.txt",
 )
 
