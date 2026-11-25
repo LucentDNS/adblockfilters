@@ -45,19 +45,15 @@ def test_unblocked_whitelist_domain_does_not_add_redundant_exception():
     assert instance._Filter__getWhiteExceptions(white_dict, ["tracker.example.com"]) == []
 
 
-def test_lite_generic_filter_domain_scope_uses_china_domain_set():
+def test_lite_filter_keeps_exact_china_domains_and_unrestricted_generic_rules():
     from app.adguard import AdGuard
 
-    china = {"qq.com", "example.cn"}
+    china = {"ad.qq.com"}
     rules = {
-        "||tracker^$script,domain=mail.qq.com|~login.qq.com": None,
-        "||tracker^$script,domain=google.com": None,
-        "||tracker^$script,domain=~qq.com": None,
-        "||tracker^$script": None,
+        "||ad.qq.com^": "ad.qq.com",
+        "||ad.google.com^": "ad.google.com",
+        "##.sponsored": None,
     }
     generator = AdGuard([], [], rules, list(rules), [], china, "out.txt", "test")
-    assert generator.filterListLite == [
-        "||tracker^$script,domain=mail.qq.com|~login.qq.com",
-        "||tracker^$script,domain=~qq.com",
-        "||tracker^$script",
-    ]
+
+    assert generator.filterListLite == ["||ad.qq.com^", "##.sponsored"]
