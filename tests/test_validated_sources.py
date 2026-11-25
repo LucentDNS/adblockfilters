@@ -31,15 +31,18 @@ def _prepare_state(tmp_path, monkeypatch):
     myblock_path = rules_dir / "myblock.txt"
     myblock_path.write_text("||custom.example.test^\n", encoding="utf-8")
     domain_path = domain_dir / "domain.txt"
-    domain_path.write_text(
-        "ads.example.test\ncustom.example.test\n", encoding="utf-8"
-    )
-    black_path = domain_dir / "black.txt"
-    black_path.write_text("! no invalid domains\n", encoding="utf-8")
-    china_path = domain_dir / "china.txt"
-    china_path.write_text("ads.example.test\n", encoding="utf-8")
-    marker_path = domain_dir / "dns-validation-bootstrap-complete-v2.txt"
-    marker_path.write_text("fresh validation\n", encoding="utf-8")
+    domain_bytes = b"ads.example.test\ncustom.example.test\n"
+    domain_path.write_bytes(domain_bytes)
+    black_bytes = b"! no invalid domains\n"
+    china_bytes = b"ads.example.test\n"
+    marker_bytes = b"fresh validation\n"
+    (domain_dir / "black.txt").write_bytes(black_bytes)
+    (domain_dir / "china.txt").write_bytes(china_bytes)
+    (domain_dir / "dns-validation-bootstrap-complete-v2.txt").write_bytes(marker_bytes)
+    (root / "black.txt").write_bytes(black_bytes)
+    (root / "china.txt").write_bytes(china_bytes)
+    (root / "domain.txt").write_bytes(domain_bytes)
+    (root / "dns-validation-bootstrap-complete-v2.txt").write_bytes(marker_bytes)
 
     archive_path = domain_dir / "validated-dns-sources.tar.gz"
     with tarfile.open(archive_path, "w:gz") as archive:
@@ -59,13 +62,6 @@ def _prepare_state(tmp_path, monkeypatch):
         "validation_logic_sha256": "logic-hash",
         "unique_validation_domains": 2,
         "domain_file_sha256": _sha256(domain_path),
-        "validation_state": {
-            "black_sha256": _sha256(black_path),
-            "china_sha256": _sha256(china_path),
-            "domain_sha256": _sha256(domain_path),
-            "bootstrap_marker_sha256": _sha256(marker_path),
-            "source_archive_sha256": _sha256(archive_path),
-        },
     }
     provenance_path.write_text(json.dumps(provenance), encoding="utf-8")
 
@@ -86,7 +82,23 @@ def _prepare_state(tmp_path, monkeypatch):
     monkeypatch.setattr(
         validated_sources, "validation_logic_sha256", lambda: "logic-hash"
     )
+    validated_sources.seal()
     return domain_dir, source_dir, myblock_path, archive_path
+
+
+def test_seal_records_hashes_for_every_published_validation_asset(tmp_path, monkeypatch):
+    domain_dir, _, _, _ = _prepare_state(tmp_path, monkeypatch)
+    provenance = json.loads(
+        (domain_dir / "domain-input-provenance.json").read_text(encoding="utf-8")
+    )
+
+    assert set(provenance["validation_state"]) == {
+        "black_sha256",
+        "china_sha256",
+        "domain_sha256",
+        "bootstrap_marker_sha256",
+        "source_archive_sha256",
+    }
 
 
 def test_check_current_accepts_a_complete_matching_state(tmp_path, monkeypatch):
@@ -128,5 +140,5 @@ def test_restore_extracts_only_verified_dns_source_snapshots(tmp_path, monkeypat
 
     validated_sources.restore()
 
-    restored = next(source_dir.iterdir())
+    restored = source_dir / "Test DNS source.txt"
     assert restored.read_text(encoding="utf-8") == "||ads.example.test^\n"

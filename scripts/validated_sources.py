@@ -131,6 +131,8 @@ def seal():
     provenance = _read_provenance()
     expected_sources()
     _verify_current_inputs(provenance)
+    files = expected_sources()
+    _verify_source_archive(files)
     state_files = {
         "black_sha256": ROOT / "black.txt",
         "china_sha256": ROOT / "china.txt",
@@ -147,7 +149,7 @@ def seal():
         raise SystemExit("DNS validation domain input changed before state publication")
     provenance["validation_state"] = state
     PROVENANCE.write_text(
-        json.dumps(provenance, ensure_ascii=False, indent=2) + "\\n",
+        json.dumps(provenance, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     print("Sealed DNS validation outputs, source archive, and bootstrap marker hashes")
