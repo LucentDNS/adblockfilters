@@ -27,9 +27,9 @@ class Loon(APPBase):
             with open(fileName, 'a') as f:
                 f.write("#\n")
                 if isLite:
-                    f.write("#!name=LucentDNS AdBlock Loon Lite\n")
+                    f.write("#!name=AdBlock Loon Lite\n")
                 else:
-                    f.write("#!name=LucentDNS AdBlock Loon\n")
+                    f.write("#!name=AdBlock Loon\n")
                 f.write("#!homepage=%s\n"%(self.homepage))
                 f.write("#!raw-url=%s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("#!tag=AdBlock, LucentDNS\n")
