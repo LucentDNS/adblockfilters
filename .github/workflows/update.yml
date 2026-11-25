@@ -274,7 +274,19 @@ jobs:
               )
           for name in ("adblocksingbox.json", "adblocksingboxlite.json"):
               json.loads((output / name).read_text(encoding="utf-8"))
-          print(f"Validated all {len(expected)} expected non-empty client outputs; no unexpected files.")
+
+          readme = Path("README.md").read_text(encoding="utf-8")
+          subscriptions = re.findall(
+              r"\\[原始链接\\]\\(https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/dist/([^)]+)\\)",
+              readme,
+          )
+          if len(subscriptions) != len(expected) or set(subscriptions) != expected:
+              raise SystemExit(
+                  f"README direct subscription manifest mismatch: count={len(subscriptions)}, "
+                  f"missing={sorted(expected - set(subscriptions))}, "
+                  f"unexpected={sorted(set(subscriptions) - expected)}"
+              )
+          print(f"Validated {len(expected)} client outputs and matching direct README subscriptions.")
           PY
 
       - name: Validate audit report assets
