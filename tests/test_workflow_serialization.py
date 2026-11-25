@@ -59,6 +59,7 @@ def test_production_build_rechecks_main_before_publishing():
 
     assert "Refuse to publish if main advanced during the build" in workflow
     assert "git rev-parse origin/main" in workflow
+    assert workflow.index("Refuse to publish if main advanced during the build") < workflow.index("- name: Upload rules to release")
     publish = workflow.split("- name: Publish to dist branch", 1)[1]
     assert 'build_main_sha="$(git rev-parse HEAD)"' in publish
     assert "main advanced before dist publication" in publish

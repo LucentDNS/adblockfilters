@@ -464,6 +464,15 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+      - name: Refuse to publish if main advanced during the build
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced during the build; refusing to publish stale output."
+            exit 1
+          fi
+
       - name: Upload rules to release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
@@ -560,15 +569,6 @@ jobs:
           files: .cache/domain/domain.txt
           overwrite_files: true
           fail_on_unmatched_files: true
-
-      - name: Refuse to publish if main advanced during the build
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "::error::main advanced during the build; refusing to publish stale output."
-            exit 1
-          fi
 
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7
