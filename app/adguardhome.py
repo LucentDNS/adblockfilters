@@ -47,4 +47,5 @@ class AdGuardHome(APPBase):
             else:
                 logger.info("adblock AdGuardHome: block=%d, unblock=%d"%(len(blockList), len(unblockList)))
         except Exception as e:
-            logger.error("%s"%(e))
+            logger.exception(e)
+            raise
