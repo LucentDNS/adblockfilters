@@ -47,3 +47,21 @@ def test_unterminated_domain_allow_is_retained_as_filter():
     assert block is None
     assert unblock is None
     assert filt == ("@@||example.org/path", "example.org")
+
+
+def test_project_googleusercontent_exception_is_path_scoped_and_valid():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    rules = (root / "rules" / "myblock.txt").read_text(encoding="utf-8")
+    expected = "@@||clients2.googleusercontent.com/crx/blobs/Ad_*^"
+
+    assert expected in rules
+    assert "@@||lients2.googleusercontent.com/crx/blobs/Ad_*" not in rules
+
+    resolver = Resolver(".")
+    block, unblock, filt = resolver._Resolver__resolveDNS(expected)
+
+    assert block is None
+    assert unblock is None
+    assert filt == (expected, "clients2.googleusercontent.com")
