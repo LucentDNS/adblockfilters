@@ -32,11 +32,11 @@ class ShadowrocketModule(APPBase):
     def generate(self, isLite: bool = False):
         try:
             if isLite:
-                logger.info("generate LucentDNS Shadowrocket Module Lite...")
+                logger.info("generate AdBlock Shadowrocket Module Lite...")
                 fileName = self.fileNameLite
                 blockList = self.blockListLite
             else:
-                logger.info("generate LucentDNS Shadowrocket Module...")
+                logger.info("generate AdBlock Shadowrocket Module...")
                 fileName = self.fileName
                 blockList = self.blockList
 
@@ -58,8 +58,9 @@ class ShadowrocketModule(APPBase):
                     f.write(f"DOMAIN-SUFFIX,{domain},REJECT-DROP\n")
 
             if isLite:
-                logger.info("LucentDNS Shadowrocket Module Lite: block=%d" % len(blockList))
+                logger.info("AdBlock Shadowrocket Module Lite: block=%d" % len(blockList))
             else:
-                logger.info("LucentDNS Shadowrocket Module: block=%d" % len(blockList))
+                logger.info("AdBlock Shadowrocket Module: block=%d" % len(blockList))
         except Exception as e:
-            logger.error("%s" % e)
+            logger.exception("%s" % e)
+            raise
