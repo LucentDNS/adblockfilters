@@ -13,7 +13,7 @@ def test_regenerated_readme_omits_obsolete_migration_announcement(tmp_path):
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
     assert generated.count("https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt") == 1
-    assert "每日自动构建" in generated
+    assert "每 8 小时自动构建" in generated
 
 
 def test_release_asset_filename_is_github_safe_and_stable():
