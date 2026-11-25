@@ -386,3 +386,4 @@ api-yuedu.iqiyi.com
 # Legacy Blogspot entries from the upstream baseline were not retained without current threat evidence.
 2006mindfreaklike.blogspot.com
 girlownedbypolicelike.blogspot.com
+# These two legacy Blogspot hosts are excluded from baseline carry-forward until current threat evidence exists.
