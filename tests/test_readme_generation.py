@@ -12,7 +12,7 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
     assert "20261120" not in generated
     assert "217heidai/adblockfilters" in generated
     assert "## 正式订阅（仅列出构建验证通过的产物）" in generated
-    assert "myblock.txt（补充拦截及浏览器例外）" in generated
+    assert "myblock.txt 包含有证据的补充拦截、为避免规则退化而保留的原作者基线兼容项及浏览器例外" in generated
     assert "white.txt（误拦截放行例外）" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
