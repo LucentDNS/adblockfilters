@@ -10,3 +10,4 @@ en-trustwallet.org
 168ai.store
 swifttrustcb.com
 app-conbase.com
+official-phantom.com
