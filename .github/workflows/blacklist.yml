@@ -87,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$SMARTDNS_PATH"
-          wget --https-only "$SMARTDNS_URL" -O "$SMARTDNS_PATH/smartdns.tar.gz"
+          wget --https-only --timeout=30 --tries=3 --waitretry=2 "$SMARTDNS_URL" -O "$SMARTDNS_PATH/smartdns.tar.gz"
           echo "$SMARTDNS_SHA256  $SMARTDNS_PATH/smartdns.tar.gz" | sha256sum --check -
           tar -xzf "$SMARTDNS_PATH/smartdns.tar.gz" -C "$SMARTDNS_PATH"
           SMARTDNS_BIN="$(find "$SMARTDNS_PATH" -type f -name smartdns -print -quit)"
