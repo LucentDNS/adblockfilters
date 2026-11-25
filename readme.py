@@ -136,6 +136,8 @@ class ReadMe(object):
                 adapter = "AdGuard 等浏览器插件" if client == "AdGuard 浏览器过滤" else client
                 write_subscription(rule_no, filename, adapter)
                 write_subscription(rule_no + "'", lite_filename, adapter)
+                if client == "InviZible Pro DNSCrypt":
+                    write_subscription(rule_no + " allowlist", "adblockdomainallow.txt", "InviZible Pro DNSCrypt allowed_names_file; use with the blocklist")
             f.write("\n")
             f.write("## 上游来源\n\n")
             f.write("以下为本项目实际使用的上游源；本表仅用于来源追溯，不是客户端订阅地址。\n\n")

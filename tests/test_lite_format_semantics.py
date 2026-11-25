@@ -115,3 +115,39 @@ def test_surge_lite_uses_exact_domain_set_entry(tmp_path):
     output = generate_lite(Surge, tmp_path, "adblocksurge.list")
     assert "\ncn.example.com\n" in output
     assert "\n.cn.example.com\n" not in output
+
+
+
+def test_dnsmasq_full_uses_specific_server_allow_override(tmp_path):
+    generator = DNSMasq(
+        ["parent.example.com"],
+        ["safe.parent.example.com"],
+        {},
+        [],
+        [],
+        set(),
+        str(tmp_path / "adblockdnsmasq.txt"),
+        "test",
+    )
+    generator.generate(isLite=False)
+    output = Path(generator.fileName).read_text(encoding="utf-8")
+    assert "local=/parent.example.com/" in output
+    assert "server=/safe.parent.example.com/#" in output
+
+
+def test_invizible_full_emits_a_separate_dnscrypt_allowlist(tmp_path):
+    generator = InviZible(
+        ["parent.example.com"],
+        ["safe.parent.example.com", "project-safe.example.net"],
+        {},
+        [],
+        [],
+        set(),
+        str(tmp_path / "adblockdomain.txt"),
+        "test",
+    )
+    generator.generate(isLite=False)
+    allow_path = tmp_path / "adblockdomainallow.txt"
+    output = allow_path.read_text(encoding="utf-8")
+    assert "safe.parent.example.com" in output
+    assert "project-safe.example.net" in output

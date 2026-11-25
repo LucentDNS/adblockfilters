@@ -18,7 +18,7 @@ class Hosts(APPBase):
             else:
                 logger.info("generate adblock Hosts...")
                 fileName = self.fileName
-                blockList = self.blockList
+                blockList = getattr(self, "blockListHosts", self.blockList)
             
             if os.path.exists(fileName):
                 os.remove(fileName)

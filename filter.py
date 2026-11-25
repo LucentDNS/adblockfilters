@@ -25,26 +25,37 @@ def _is_ip_literal(value: str) -> bool:
         return False
 
 
-def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklist):
-    """Build exact-host Lite rules from validated source domains before suffix compression."""
+def _build_exact_block_list(block_domains, allow_domains, blacklist, include_domains=None):
+    """Build exact-host entries before Full suffix compression, with hierarchical allow rules."""
     allow_domains = {str(domain).strip().lower() for domain in allow_domains if str(domain).strip()}
     blacklist = {str(domain).strip().lower() for domain in blacklist if str(domain).strip()}
-    china_domains = {str(domain).strip().lower() for domain in china_domains if str(domain).strip()}
-    lite_domains = {
+    included = None if include_domains is None else {
+        str(domain).strip().lower() for domain in include_domains if str(domain).strip()
+    }
+    candidates = {
         str(domain).strip().lower()
         for domain in block_domains
         if str(domain).strip()
-    } & china_domains
+    }
+    if included is not None:
+        candidates &= included
     result = []
-    for domain in lite_domains:
+    for domain in candidates:
         if domain in blacklist:
             continue
         labels = domain.split(".")
-        # A source allow rule OR project whitelist parent must protect descendants too.
+        # A source allow rule or project whitelist parent protects descendants too.
         if any(".".join(labels[index:]) in allow_domains for index in range(len(labels))):
             continue
         result.append(domain)
     return sorted(result)
+
+
+def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklist):
+    """Build exact-host Lite rules from validated domestic source domains."""
+    return _build_exact_block_list(
+        block_domains, allow_domains, blacklist, include_domains=china_domains
+    )
 
 
 class Filter(object):
@@ -360,11 +371,21 @@ class Filter(object):
             for fld, subdomains in whiteDict.items()
             for subdomain in subdomains
         }
+        allowDomainSet = unblockSet_unblock | whiteDomainSet
         liteBlockList = _build_lite_block_list(
-            blockSet_block, ChinaSet, unblockSet_unblock | whiteDomainSet, blackSet
+            blockSet_block, ChinaSet, allowDomainSet, blackSet
+        )
+        hostsFullBlockList = _build_exact_block_list(
+            blockSet_block, allowDomainSet, blackSet
         )
         for g in generaterList:
             g.blockListLite = liteBlockList
+            if isinstance(g, Hosts):
+                # Hosts files only match exact hostnames; never feed them a suffix-compressed list.
+                g.blockListHosts = hostsFullBlockList
+            if isinstance(g, InviZible):
+                # DNSCrypt allowlists are a separate native file, not inline blocklist syntax.
+                g.unblockList = sorted(allowDomainSet)
             g.generateAll()
         
         # 生成用于域名连通性检测的全域名清单

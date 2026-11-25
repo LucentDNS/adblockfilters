@@ -1029,6 +1029,58 @@ def main():
         json.dumps(lite_scope, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    invizible_allow_path = ROOT / ".cache" / "out" / "adblockdomainallow.txt"
+    invizible_allowlist_audit = {
+        "available": False,
+        "allowlist_rules": 0,
+        "expected_source_and_project_allow_domains": 0,
+        "missing_allow_domains": 0,
+    }
+    invizible_allowlist_missing = set()
+    if invizible_allow_path.exists():
+        invizible_allow_domains = {
+            line.strip().lower()
+            for line in invizible_allow_path.read_text(encoding="utf-8", errors="replace").splitlines()
+            if line.strip() and not line.lstrip().startswith(("!", "#"))
+        }
+        current_source_allow_domains = set().union(
+            *(allow_sets.get(name, set()) for name in production_names)
+        ) if production_names else set()
+        expected_invizible_allow_domains = (
+            current_source_allow_domains - blacklist_domains
+        ) | project_whitelist
+        invizible_allowlist_missing = {
+            domain for domain in expected_invizible_allow_domains
+            if not covered_by_rule_domain(domain, invizible_allow_domains)
+        }
+        invizible_allowlist_audit = {
+            "available": True,
+            "allowlist_rules": len(invizible_allow_domains),
+            "expected_source_and_project_allow_domains": len(expected_invizible_allow_domains),
+            "missing_allow_domains": len(invizible_allowlist_missing),
+        }
+    (OUT_DIR / "invizible-allowlist-audit.json").write_text(
+        json.dumps(invizible_allowlist_audit, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    write_domain_list(
+        OUT_DIR / "invizible-allowlist-missing.txt",
+        invizible_allowlist_missing,
+        "All current source allow rules and project whitelist domains are present in the InviZible allowlist."
+    )
+    if invizible_allowlist_audit["available"] and invizible_allowlist_missing:
+        raise SystemExit(
+            "InviZible allowlist quality gate failed: "
+            + json.dumps(invizible_allowlist_audit, ensure_ascii=False, sort_keys=True)
+        )
+
+    if invizible_allowlist_audit["available"]:
+        report += "\n## InviZible DNSCrypt allowlist 覆盖审计\n\n"
+        report += f"- allowlist 规则：{invizible_allowlist_audit['allowlist_rules']} 条；应覆盖的上游 allow 与项目白名单：{invizible_allowlist_audit['expected_source_and_project_allow_domains']} 条。\n"
+        report += f"- 未覆盖例外：{invizible_allowlist_audit['missing_allow_domains']} 条。\n"
+    else:
+        report += "\n## InviZible DNSCrypt allowlist 覆盖审计\n\n- 未执行：当前运行没有完整构建产物。\n"
+
     if lite_scope["available"]:
         if (
             lite_scope["lite_rules_not_classified_china"]

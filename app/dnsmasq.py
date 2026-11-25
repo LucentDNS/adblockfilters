@@ -15,10 +15,12 @@ class DNSMasq(APPBase):
                 logger.info("generate adblock DNSMasq Lite...")
                 fileName = self.fileNameLite
                 blockList = self.blockListLite
+                unblockList = self.unblockListLite
             else:
                 logger.info("generate adblock DNSMasq...")
                 fileName = self.fileName
                 blockList = self.blockList
+                unblockList = self.unblockList
             
             if os.path.exists(fileName):
                 os.remove(fileName)
@@ -37,12 +39,18 @@ class DNSMasq(APPBase):
                 f.write("# Version: %s\n"%(self.version))
                 f.write("# Last modified: %s\n"%(self.time))
                 f.write("# Blocked domains: %s\n"%(len(blockList)))
+                f.write("# Allowed domains: %s\n"%(len(unblockList)))
                 f.write("#\n")
                 for domain in blockList:
                     if isLite:
                         f.write("host-record=%s,0.0.0.0,::\n" % (domain))
                     else:
                         f.write("local=/%s/\n" % (domain))
+                if not isLite:
+                    # dnsmasq gives more-specific server rules precedence over local suffix rules.
+                    # '#' forwards these allowlisted names through the configured default resolvers.
+                    for domain in unblockList:
+                        f.write("server=/%s/#\n" % (domain))
             
             if isLite:
                 logger.info("adblock DNSMasq Lite: block=%d"%(len(blockList)))

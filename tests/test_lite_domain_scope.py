@@ -1,4 +1,4 @@
-from filter import _build_lite_block_list
+from filter import _build_exact_block_list, _build_lite_block_list
 
 
 def test_lite_keeps_domestic_child_after_full_parent_compression():
@@ -40,3 +40,20 @@ def test_lite_respects_project_whitelist_parent_and_case_insensitive_domains():
         {"example.com"},
         set(),
     ) == ["ads.example.net"]
+
+
+
+def test_hosts_full_exact_list_retains_children_after_suffix_compression():
+    assert _build_exact_block_list(
+        {"example.com", "api.example.com", "ads.example.net"},
+        set(),
+        set(),
+    ) == ["ads.example.net", "api.example.com", "example.com"]
+
+
+def test_hosts_full_exact_list_respects_parent_allowlist():
+    assert _build_exact_block_list(
+        {"example.com", "api.example.com", "other.example.net"},
+        {"example.com"},
+        set(),
+    ) == ["other.example.net"]

@@ -44,10 +44,27 @@ class InviZible(APPBase):
                     else:
                         f.write("%s\n" % (domain))
             
+            if not isLite:
+                allowFileName = os.path.splitext(self.fileName)[0] + "allow" + os.path.splitext(self.fileName)[1]
+                if os.path.exists(allowFileName):
+                    os.remove(allowFileName)
+                allowList = sorted(set(self.unblockList))
+                with open(allowFileName, "w", encoding="utf-8") as f:
+                    f.write("!\n")
+                    f.write("! Title: AdBlock DNS Allowlist\n")
+                    f.write("! Description: 适用于 InviZible Pro DNSCrypt allowed_names_file 的放行例外列表。\n")
+                    f.write("! Homepage: %s\n" % (self.homepage))
+                    f.write("! Source: %s/%s\n" % (self.source, os.path.basename(allowFileName)))
+                    f.write("! Version: %s\n" % (self.version))
+                    f.write("! Last modified: %s\n" % (self.time))
+                    f.write("! Allowed domains: %s\n" % (len(allowList)))
+                    f.write("!\n")
+                    for domain in allowList:
+                        f.write("%s\n" % (domain))
             if isLite:
                 logger.info("adblock InviZible Lite: block=%d"%(len(blockList)))
             else:
-                logger.info("adblock InviZible: block=%d"%(len(blockList)))
+                logger.info("adblock InviZible: block=%d, allow=%d"%(len(blockList), len(self.unblockList)))
         except Exception as e:
             logger.exception("%s"%(e))
             raise
