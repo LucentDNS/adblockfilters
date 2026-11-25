@@ -57,3 +57,25 @@ def test_lite_filter_keeps_exact_china_domains_and_unrestricted_generic_rules():
     generator = AdGuard([], [], rules, list(rules), [], china, "out.txt", "test")
 
     assert generator.filterListLite == ["||ad.qq.com^", "##.sponsored"]
+
+
+def test_lite_filter_domain_scopes_only_keep_china_or_unrestricted_rules():
+    from app.adguard import AdGuard
+
+    china = {"ad.qq.com", "qq.com"}
+    rules = {
+        "||ad.qq.com^": "ad.qq.com",
+        "||ad.google.com^": "ad.google.com",
+        "||tracker^$script,domain=mail.qq.com|~login.qq.com": None,
+        "||tracker^$script,domain=google.com": None,
+        "||tracker^$script,domain=~qq.com": None,
+        "||tracker^$script": None,
+    }
+    generator = AdGuard([], [], rules, list(rules), [], china, "out.txt", "test")
+
+    assert set(generator.filterListLite) == {
+        "||ad.qq.com^",
+        "||tracker^$script,domain=mail.qq.com|~login.qq.com",
+        "||tracker^$script,domain=~qq.com",
+        "||tracker^$script",
+    }
