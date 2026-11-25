@@ -443,7 +443,7 @@ class BlackList(object):
         # Regional disagreement or an inconclusive group must never create a block.
         return [], "unknown"
 
-    async def __pingx(self, dnsresolver:DNSResolver, domain:DOMAIN, semaphore):
+    async def __pingx(self, dnsresolver:List[DNSResolver], domain:DOMAIN, semaphore):
         async def connect_with_timeout(ip, port, timeout=5):
             writer = None
             try:
@@ -532,7 +532,7 @@ class BlackList(object):
             logger.error("%s"%(e))
             raise
 
-    def __testDomain(self, domainDict:Dict[str,DOMAIN], nameservers:str, port=53):
+    def __testDomain(self, domainDict:Dict[str,DOMAIN], nameservers:List[str], port=53):
         logger.info("resolve domain...")
 
         async def _resolve_all():
