@@ -41,3 +41,20 @@ def test_source_audit_excludes_ip_literals_from_domain_counts():
     assert full_domain(("198.51.100.4:443", "")) is None
     assert full_domain(("2001:db8::1", "")) is None
     assert full_domain(("example.com", "")) == "example.com"
+
+
+def test_dns_source_bare_wildcard_is_retained_only_in_browser_filter_output():
+    generator = Filter([], ".")
+    rule = "*-ad.sm.cn*"
+
+    _, filter_list, domain_set = generator._Filter__filterSort(
+        {rule: None},
+        set(),
+        set(),
+        set(),
+        set(),
+        {},
+    )
+
+    assert rule in filter_list
+    assert domain_set == set()
