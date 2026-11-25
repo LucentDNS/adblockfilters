@@ -22,6 +22,19 @@ def _ip_in_ranges(ip_int:int, starts:List[int], ends:List[int]) -> bool:
     return i >= 0 and ip_int <= ends[i]
 
 
+def _merge_ip_ranges(pairs):
+    """Return sorted, merged inclusive IPv4 ranges for binary-search membership."""
+    merged = []
+    for start, end in sorted(pairs):
+        if start < 0 or end > 0xFFFFFFFF or start > end:
+            raise ValueError(f"Invalid IPv4 range: {start}-{end}")
+        if merged and start <= merged[-1][1] + 1:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    return [item[0] for item in merged], [item[1] for item in merged]
+
+
 def _blacklist_abnormal(black_count:int, total:int) -> bool:
     # 黑名单占比超过一半即异常（正常比例远低于该阈值）；防止 DNS 故障污染名单。
     return total > 0 and black_count > total // 2
@@ -373,14 +386,18 @@ class BlackList(object):
             with open(self.__IPlistFile, 'r') as f:
                     for line in f.readlines():
                         row = line.replace('\r', '').replace("\n", "").split("/")
+                        if len(row) != 2:
+                            raise ValueError(f"Invalid IPv4 CIDR entry: {line!r}")
                         ip, offset = row[0], int(row[1])
+                        if not 0 <= offset <= 32:
+                            raise ValueError(f"Invalid IPv4 prefix length: {line!r}")
                         start = IPy.parseAddress(ip)[0]
+                        if start > 0xFFFFFFFF:
+                            raise ValueError(f"Expected IPv4 address: {line!r}")
                         starts.append(start)
                         ends.append(start + (1 << (32 - offset)) - 1)
-            # 上游文件已排序且无重叠，这里再排一次，去掉对文件顺序的隐含依赖
-            pairs = sorted(zip(starts, ends))
-            starts = [p[0] for p in pairs]
-            ends = [p[1] for p in pairs]
+            # Normalize order and merge overlapping/adjacent ranges before binary search.
+            starts, ends = _merge_ip_ranges(zip(starts, ends))
             if not starts:
                 raise RuntimeError("China IPv4 range source contains no usable ranges")
             logger.info("China IP list: %d"%(len(starts)))
