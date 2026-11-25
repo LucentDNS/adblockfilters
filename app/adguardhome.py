@@ -42,10 +42,7 @@ class AdGuardHome(APPBase):
                 f.write("! unBlocked domains: %s\n"%(len(unblockList)))
                 f.write("!\n")
                 for domain in blockList:
-                    if isLite:
-                        f.write("%s\n" % (domain))
-                    else:
-                        f.write("||%s^\n" % (domain))
+                    f.write("||%s^\n" % (domain))
                 for domain in unblockList:
                     f.write("@@||%s^\n" % (domain))
             
