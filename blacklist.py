@@ -302,7 +302,7 @@ class BlackList(object):
                 if not response.content or not response.content.strip():
                     logger.error("download %s: empty response; refusing to replace cached data" % fileName)
                     return False
-                body_prefix = response.content.lstrip(b"\\xef\\xbb\\xbf \\t\\r\\n").lower()
+                body_prefix = response.content.lstrip(b"\xef\xbb\xbf \t\r\n").lower()
                 if body_prefix.startswith((b"<!doctype html", b"<html")):
                     logger.error("download %s: HTML error page; refusing to replace cached data" % fileName)
                     return False
