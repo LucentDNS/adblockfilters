@@ -56,6 +56,13 @@
 ! WhatsApp impersonation domain; 1/100 trust score and four external security warnings (DNS8, SOCRadar phishing; alphaMountain, Fortinet spam).
 ! https://gridinsoft.com/online-virus-scanner/url/whatsappdns-com
 ||whatsappdns.com^
+
+! PhishDestroy critical verdict (95/100), VirusTotal 18/91, Cloudflare Radar malware classification.
+! https://phishdestroy.io/domain/antrenbitapptech.com/
+||antrenbitapptech.com^
+! Gridinsoft phishing verdict (1/100) with DNS8 and SOCRadar external phishing warnings.
+! https://gridinsoft.com/online-virus-scanner/url/atlasfaktow-com
+||atlasfaktow.com^
 ! Fake WhatsApp login page; PhishDestroy listing and multiple Gridinsoft detections.
 ! https://phishdestroy.io/domain/whatsappcore.com/
 ! https://gridinsoft.com/online-virus-scanner/url/whatsappcore-com
