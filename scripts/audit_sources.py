@@ -74,7 +74,7 @@ async def download_all(rules, candidate_names):
     sem = asyncio.Semaphore(5)
     results = {}
     async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True,
-                                 headers={"User-Agent": "LucentDNS-Source-Audit/1.0"}) as client:
+                                 headers={"User-Agent": "AdBlock-DNS-Source-Audit/1.0"}) as client:
         async def one(rule):
             async with sem:
                 try:
