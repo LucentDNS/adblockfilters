@@ -133,7 +133,7 @@ jobs:
             curl -fsSL --retry 3 --retry-all-errors -o domain.db \
               "https://github.com/${{ github.repository }}/releases/download/dev-domain-noble/domain.db"
             test -s domain.db || { echo "DNS validation database is missing or empty"; exit 1; }
-            echo "Using the previously generated AdBlock DNS DNS-validation database."
+            echo "Using the previously generated DNS-validation database."
           else
             echo "No DNS validation marker found; starting with an empty database for a full independent DNS pass."
             : > domain.db
