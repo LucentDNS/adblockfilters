@@ -39,3 +39,12 @@ def test_china_direct_source_must_exist_or_have_a_valid_cache(tmp_path, monkeypa
 
     with pytest.raises(RuntimeError, match="missing or empty"):
         instance._BlackList__getDomainSet_CN()
+
+
+def test_blacklist_abnormal_threshold_blocks_mass_dns_failure():
+    from blacklist import _blacklist_abnormal
+
+    assert _blacklist_abnormal(195001, 390000) is True
+    assert _blacklist_abnormal(195000, 390000) is False
+    assert _blacklist_abnormal(61000, 390000) is False
+    assert _blacklist_abnormal(0, 0) is False
