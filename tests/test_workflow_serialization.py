@@ -40,7 +40,7 @@ def test_dns_and_build_workflows_use_independent_concurrency_groups():
 
     assert "group: update-filters-${{ github.repository }}" in update
     assert "group: dns-validation-state-${{ github.repository }}" in dns
-    assert "cancel-in-progress: false" in update
+    assert "cancel-in-progress: true" in update
     assert "cancel-in-progress: true" in dns
 
 
@@ -52,6 +52,17 @@ def test_production_build_waits_for_a_complete_matching_dns_state():
     assert "validated-dns-sources.tar.gz" in workflow
     assert "validation logic, and myblock.txt" in workflow
     assert "git rev-parse origin/main" in workflow
+
+
+def test_production_build_aborts_promptly_when_main_advances_while_waiting():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    wait_step = workflow.split(
+        "- name: Wait for a complete DNS state matching current inputs", 1
+    )[1].split("- name: Prepare domain inputs", 1)[0]
+
+    assert "git fetch origin main --quiet" in wait_step
+    assert "main advanced while waiting for DNS state" in wait_step
+    assert wait_step.index("git fetch origin main --quiet") < wait_step.index("sleep 30")
 
 
 def test_production_build_rechecks_main_before_publishing():
@@ -91,6 +102,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "rules/filter-exclude.txt",
         "rules/white.txt",
         "scripts/compare_baseline.py",
+        ".github/workflows/update.yml",
     } <= set(update_paths)
     assert "rules/white.txt" not in dns_paths
     assert ".github/workflows/update.yml" not in dns_paths
