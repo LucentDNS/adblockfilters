@@ -47,6 +47,9 @@ class DummyDomain:
     def setBlock(self, value):
         self.blocked = value
 
+    def setCheckedAtNow(self):
+        self.timestamp = 1
+
 
 def pingx(answers, initially_blocked=False):
     instance = BlackList.__new__(BlackList)
