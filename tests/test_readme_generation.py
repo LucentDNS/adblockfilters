@@ -11,6 +11,8 @@ def test_regenerated_readme_preserves_original_project_notice(tmp_path):
     assert "## 重要公告" in generated
     assert "20261120" in generated
     assert "dist 分支和 GitHub Releases 分发" in generated
+    assert "myblock.txt（补充拦截）" in generated
+    assert "white.txt（放行例外）" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
     assert generated.count("https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt") == 1
