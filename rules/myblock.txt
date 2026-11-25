@@ -16,6 +16,13 @@
 ! Newly registered brand-impersonation host; multiple Google/Polymarket lookalike subdomains resolve to a Spamhaus DROP address.
 ! https://domainspoof.com/brands/polymarket
 ||com-polybets-a1.com^
+! Gridinsoft phishing verdict (1/100), DNS8 and SOCRadar phishing detections, and a Bitdefender warning.
+! https://gridinsoft.com/online-virus-scanner/url/168ai-store
+! https://www.scamadviser.com/check-website/168ai.store
+||168ai.store^
+! ThreatFox-sourced Remcos RAT domain IOC (www host); block the registered parent domain.
+! https://fluxrein.com/iocs?malware=Remcos
+||osamaphplogisticesbackup1.com^
 ! Newly registered Google-lookalike domain resolving to a Spamhaus DROP address; certificate cluster also contains multiple impersonation hosts.
 ! https://domainspoof.com/brands/google
 ||google-store.cn^
