@@ -136,7 +136,7 @@ def test_check_current_rejects_mixed_release_assets(tmp_path, monkeypatch):
 
 def test_restore_extracts_only_verified_dns_source_snapshots(tmp_path, monkeypatch):
     _, source_dir, _, _ = _prepare_state(tmp_path, monkeypatch)
-    (source_dir / "Test DNS source.txt").unlink(missing_ok=True)
+    next(source_dir.iterdir()).unlink()
 
     validated_sources.restore()
 
