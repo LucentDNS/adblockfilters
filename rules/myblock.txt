@@ -40,6 +40,24 @@
 ! https://www.scamadviser.com/check-website/swifttrustcb.com
 ! https://es.gridinsoft.com/online-virus-scanner/url/swifttrustcb-com
 ||swifttrustcb.com^
+
+! Goldman Sachs impersonation; Gridinsoft phishing and three external provider warnings.
+! https://gridinsoft.com/online-virus-scanner/url/goldmansachjp-net
+||goldmansachjp.net^
+! Habib Card phishing; Gridinsoft and three external provider warnings.
+! https://gridinsoft.com/online-virus-scanner/url/habib_card-com
+||habib-card.com^
+! ClearFake payload-delivery IOC, ThreatFox confidence 90%.
+! https://threatfox.abuse.ch/ioc/2033151/
+||intuit-office-login.com^
+! WhatsApp lookalike; phishing-host infrastructure and PhishDestroy community listing.
+! https://domainspoof.com/brands/whatsapp
+||m-whatsapp.net^
+! Fake WhatsApp login page; PhishDestroy listing and multiple Gridinsoft detections.
+! https://phishdestroy.io/domain/whatsappcore.com/
+! https://gridinsoft.com/online-virus-scanner/url/whatsappcore-com
+||whatsappcore.com^
+
 ! OpenPhish-referenced Suricata antiphishing signature for this exact host (2026-11-22).
 ! https://dev.evebox.org/pub/julioliraup/antiphishing/changelog/684101
 ||app-conbase.com^
