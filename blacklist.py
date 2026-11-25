@@ -389,19 +389,25 @@ class BlackList(object):
             logger.error("%s"%(e))
             raise
     
-    async def __resolve(self, dnsresolver, domain) -> Tuple[List[str], str]:
-        # Query A and AAAA independently in each regional resolver group.
-        # A valid answer from either group is sufficient; NXDOMAIN is accepted
-        # only when both domestic and global groups independently agree.
-        resolvers = list(dnsresolver) if isinstance(dnsresolver, (list, tuple)) else [dnsresolver]
+    async def __resolve(self, dnsresolvers, domain) -> Tuple[List[str], str]:
+        """Resolve through independent domestic/global SmartDNS groups.
 
-        async def resolve_group(group_resolver):
+        A domain is marked nonexistent only when every configured group returns
+        NXDOMAIN. Any valid address from either group wins; disagreement or
+        transient failures are inconclusive and must not create blacklist entries.
+        """
+        if not isinstance(dnsresolvers, (list, tuple)):
+            dnsresolvers = [dnsresolvers]
+
+        all_ips = []
+        group_statuses = []
+        for dnsresolver in dnsresolvers:
             ip_list = []
             no_answer_count = 0
             saw_nxdomain = False
             for rdtype in ("A", "AAAA"):
                 try:
-                    query_object = await group_resolver.resolve(qname=domain, rdtype=rdtype)
+                    query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
                     for item in query_object:
                         ip = str(item)
                         if ip not in ("0.0.0.0", "::") and ip not in ip_list:
@@ -409,40 +415,31 @@ class BlackList(object):
                 except NXDOMAIN:
                     saw_nxdomain = True
                 except NoAnswer:
-                    # NOERROR/NODATA is not proof that the name does not exist.
+                    # NOERROR/NODATA only applies to this RR type.
                     no_answer_count += 1
                 except Exception:
-                    # Timeout, SERVFAIL and resolver-specific errors are inconclusive.
+                    # Timeout, SERVFAIL and resolver failures are inconclusive.
                     continue
 
             if ip_list:
-                return ip_list, "resolved"
-            if saw_nxdomain:
-                return [], "not_found"
-            if no_answer_count == 2:
-                return [], "no_address"
-            return [], "unknown"
+                group_statuses.append("resolved")
+                all_ips.extend(ip for ip in ip_list if ip not in all_ips)
+            elif saw_nxdomain:
+                group_statuses.append("not_found")
+            elif no_answer_count == 2:
+                group_statuses.append("no_address")
+            else:
+                group_statuses.append("unknown")
 
-        results = await asyncio.gather(*(resolve_group(item) for item in resolvers))
-        ip_list = []
-        for addresses, _ in results:
-            for address in addresses:
-                if address not in ip_list:
-                    ip_list.append(address)
-        if ip_list:
-            return ip_list, "resolved"
-
-        statuses = [status for _, status in results]
-        if len(statuses) == 1:
-            return results[0]
-        if all(status == "not_found" for status in statuses):
+        if all_ips:
+            return all_ips, "resolved"
+        if group_statuses and all(status == "not_found" for status in group_statuses):
             return [], "not_found"
-        if all(status == "no_address" for status in statuses):
+        if group_statuses and all(status == "no_address" for status in group_statuses):
             return [], "no_address"
-
-        # Regional disagreement or an inconclusive group must never create a block.
         return [], "unknown"
 
+    
     async def __pingx(self, dnsresolver:List[DNSResolver], domain:DOMAIN, semaphore):
         async def connect_with_timeout(ip, port, timeout=5):
             writer = None
