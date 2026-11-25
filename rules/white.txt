@@ -39,7 +39,6 @@ px.ucweb.com
 # https://github.com/217heidai/adblockfilters/issues/228
 link.axios.com
 # https://github.com/217heidai/adblockfilters/issues/220
-shouji.360.cn
 ai.shouji.360.cn
 # https://github.com/217heidai/adblockfilters/issues/219
 oth.eve.mdt.qq.com
@@ -97,7 +96,6 @@ msdk.qq.com
 ssl.msdk.qq.com
 ap6.ssl.msdk.qq.com
 # https://github.com/217heidai/adblockfilters/issues/173
-ads.heytapmobi.com
 sms.ads.heytapmobi.com
 # https://github.com/217heidai/adblockfilters/issues/171
 client-uc.heytapmobi.com
@@ -255,8 +253,7 @@ campaign.adobe.com
 ynuf.aliapp.org
 # 影响 deepin 登陆，https://login.deepin.org
 ac.dun.163.com
-# https://github.com/217heidai/adblockfilters/issues/48
-tanx.com
+# Issue #48 follow-up: tanx.com and its subdomains were confirmed as advertising infrastructure; keep blocked.
 # https://github.com/217heidai/adblockfilters/issues/46
 sentry.io
 # https://github.com/217heidai/adblockfilters/issues/44
@@ -304,7 +301,13 @@ api.shayujizhang.com
 # https://github.com/217heidai/adblockfilters/issues/8
 dig.bdurl.net
 # https://github.com/217heidai/adblockfilters/issues/3
-360.cn
+sdk.live.360.cn
+video-cloudcontrol.iot.360.cn
+mdm.openapi.360.cn
+fastconn-api.iot.360.cn
+app.home.360.cn
+video-licenseauth.iot.360.cn
+dp.push.dc.360.cn
 www.360.cn
 bce.baidu.com
 
