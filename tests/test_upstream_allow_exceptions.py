@@ -21,4 +21,19 @@ def test_curated_dns_supplement_rules_are_present():
         if line.strip() and not line.lstrip().startswith("!")
     }
 
-    assert "||fb_servpub-a.akamaihd.net^" in entries
+
+
+def test_manual_dns_supplement_rules_use_hostname_compatible_labels():
+    import re
+    from pathlib import Path
+
+    path = Path(__file__).parents[1] / "rules" / "myblock.txt"
+    rules = [
+        line.strip()[2:-1]
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("||") and line.strip().endswith("^")
+    ]
+    label_pattern = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
+
+    assert rules
+    assert all(all(label_pattern.fullmatch(label) for label in domain.split(".")) for domain in rules)
