@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.dat binary
+*.mrs binary
+*.srs binary
+*.zip binary
+*.gz binary
+*.tar binary

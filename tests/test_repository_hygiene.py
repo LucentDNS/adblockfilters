@@ -109,3 +109,12 @@ def test_readme_generator_uses_a_real_newline_for_dns_validation_policy():
 
     assert r"均不会作为删除依据。\\n" not in source
     assert r"均不会作为删除依据。\n" in source
+
+
+
+def test_git_attributes_enforce_lf_and_preserve_binary_build_outputs():
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+
+    assert "* text=auto eol=lf" in attributes
+    for extension in ("dat", "mrs", "srs", "zip", "gz", "tar"):
+        assert f"*.{extension} binary" in attributes

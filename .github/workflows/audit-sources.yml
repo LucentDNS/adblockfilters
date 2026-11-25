@@ -9,6 +9,7 @@ on:
       - 'app/**'
       - 'requirements.txt'
       - '.editorconfig'
+      - '.gitattributes'
       - 'pyproject.toml'
       - 'requirements-dev.txt'
       - '.github/workflows/audit-sources.yml'
