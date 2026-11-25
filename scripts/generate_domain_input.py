@@ -85,6 +85,7 @@ def main():
                 "name": rule.name,
                 "type": rule.type,
                 "url": rule.url,
+                "latest": rule.latest,
                 "sha256": hashlib.sha256((SOURCE_DIR / rule.filename).read_bytes()).hexdigest(),
                 "parsed_block_domains": source_counts[rule.name],
             }
