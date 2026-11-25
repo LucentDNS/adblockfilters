@@ -65,9 +65,11 @@ def test_dns_validation_workflow_pins_and_verifies_smartdns_binary():
     ).read_text(encoding="utf-8")
 
     assert "Release48.4" in workflow
-    expected_sha256 = "9d2164922dc8e822935e444d69a678636c5e7f8155e6ab4e81561d2d43cb9a0f"
+    expected_sha256 = "4cc1b8f9db10110e1212d981cfee7eb89a3c80f5766760e3b5f7541c8da8b546"
     assert f"SMARTDNS_SHA256: {expected_sha256}" in workflow
+    assert "x86_64-debian-all.deb" in workflow
     assert "sha256sum --check -" in workflow
+    assert "dpkg-deb --extract" in workflow
     assert "wget --https-only --timeout=30 --tries=3 --waitretry=2" in workflow
 
 
