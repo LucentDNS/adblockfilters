@@ -118,3 +118,5 @@ perplexity.ai
 notion.so
 figma.com
 canva.com
+# Content-delivery host: retain the host while path-specific ad rules remain active.
+evtubescms.phncdn.com
