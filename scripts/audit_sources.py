@@ -332,7 +332,7 @@ def main():
         Rule("Pollock hosts (candidate only)", "host",
              "https://someonewhocares.org/hosts/hosts", "2026/11/22"),
         # The upstream author's current source table uses OISD Basic, while
-        # NobleDNS currently evaluates OISD Small. Audit the exact upstream
+        # This repository currently evaluates OISD Small. Audit the exact upstream
         # cached snapshot as a candidate; do not add it to production inputs.
         Rule("OISD Basic (upstream snapshot; candidate only)", "dns",
              "https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt",
@@ -714,7 +714,7 @@ def main():
                 input_provenance[key] = value
 
     # Attribute baseline-only DNS blocks to the upstream author's OISD Basic
-    # snapshot separately from the current NobleDNS OISD Small source.
+    # snapshot separately from the current AdBlock DNS OISD Small source.
     baseline_candidate_analysis = {}
     for candidate in sorted(candidate_names):
         candidate_row = next(row for row in results if row["name"] == candidate)
@@ -846,8 +846,8 @@ def main():
     report += "\n## 原作者基线 allow 例外规则复核\n\n"
     report += f"- 原作者独有 allow 规则：{len(baseline_allow_domains)} 条。\n"
     report += f"- 当前编译输出中有精确或父域名 allow 覆盖：{len(baseline_allow_current_covered)} 条。\n"
-    report += f"- 当前没有 allow 覆盖、但仍被 NobleDNS block 规则覆盖：{len(baseline_allow_missing_still_blocked)} 条（需要人工判断是否应保留例外）。\n"
-    report += f"- 当前没有 allow 覆盖且也没有被 NobleDNS block 规则覆盖：{len(baseline_allow_missing_not_needed)} 条（目前不需要额外例外）。\n"
+    report += f"- 当前没有 allow 覆盖、但仍被 AdBlock DNS block 规则覆盖：{len(baseline_allow_missing_still_blocked)} 条（需要人工判断是否应保留例外）。\n"
+    report += f"- 当前没有 allow 覆盖且也没有被 AdBlock DNS block 规则覆盖：{len(baseline_allow_missing_not_needed)} 条（目前不需要额外例外）。\n"
     if baseline_allow_missing_still_blocked:
         report += "\n| 原作者 allow 域名 | 当前覆盖它的 block 规则 |\n|---|---|\n"
         for domain in sorted(baseline_allow_missing_still_blocked):
@@ -857,7 +857,7 @@ def main():
     report += f"\n- 当前编译 DNS 输出无法归一化的规则行：{compiled_unparsed} 条；这些行另需结合原始语法审查。\n"
 
     report += "\n### 原作者 OISD Basic 候选来源对基线差异的覆盖\n\n"
-    report += "- OISD Basic 仅作为审计候选，不进入 NobleDNS 正式来源或构建。\n"
+    report += "- OISD Basic 仅作为审计候选，不进入 AdBlock DNS 正式来源或构建。\n"
     report += "| 候选来源 | 可解析域名 | 基线独有精确重合 | 父域名覆盖 | 合计覆盖 | 未覆盖 |\n|---|---:|---:|---:|---:|---:|\n"
     for candidate, stats in sorted(baseline_candidate_analysis.items()):
         if not stats.get("available"):
