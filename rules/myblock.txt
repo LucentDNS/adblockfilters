@@ -23,6 +23,12 @@
 ! https://gridinsoft.com/online-virus-scanner/url/arbitrum_one-com
 ! https://phishdestroy.io/domain/arbitrum-one.com/
 ||arbitrum-one.com^
+! Newly registered brand-impersonation host; multiple Google/Polymarket lookalike subdomains resolve to a Spamhaus DROP address.
+! https://domainspoof.com/brands/polymarket
+||com-polybets-a1.com^
+! Newly registered Google-lookalike domain resolving to a Spamhaus DROP address; certificate cluster also contains multiple impersonation hosts.
+! https://domainspoof.com/brands/google
+||google-store.cn^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
