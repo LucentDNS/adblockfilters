@@ -11,7 +11,7 @@ def test_regenerated_readme_omits_obsolete_migration_announcement(tmp_path):
     assert "重要公告" not in generated
     assert "20261120" not in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
-    assert generated.splitlines()[0] == "# DNS Adblock Filters"
+    assert generated.splitlines()[0] == "# AdBlock DNS Filters"
     assert generated.count("https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt") == 1
     assert "每日自动构建" in generated
 
