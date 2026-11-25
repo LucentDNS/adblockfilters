@@ -32,7 +32,7 @@ class Loon(APPBase):
                     f.write("#!name=AdBlock Loon\n")
                 f.write("#!homepage=%s\n"%(self.homepage))
                 f.write("#!raw-url=%s/%s\n"%(self.source, os.path.basename(fileName)))
-                f.write("#!tag=AdBlock, LucentDNS\n")
+                f.write("#!tag=AdBlock, 217heidai\n")
                 f.write("#!system=iOS, iPadOS\n")
                 f.write("#!date=%s\n"%(self.time))
                 f.write("#!support=%s\n"%(len(blockList)))
