@@ -58,3 +58,22 @@ def test_dns_source_bare_wildcard_is_retained_only_in_browser_filter_output():
 
     assert rule in filter_list
     assert domain_set == set()
+
+def test_browser_only_wildcard_and_path_allow_exceptions_never_enter_dns_output():
+    generator = Filter([], ".")
+    rules = {
+        "@@||r.*.awstrack.me^": None,
+        "@@||clients2.googleusercontent.com/crx/blobs/Ad_*^": None,
+    }
+
+    _, filter_list, domain_set = generator._Filter__filterSort(
+        rules,
+        set(),
+        set(),
+        set(),
+        set(),
+        {},
+    )
+
+    assert set(filter_list) == set(rules)
+    assert domain_set == set()
