@@ -309,10 +309,8 @@ class BlackList(object):
                 with open(fileNameDownload, 'wb') as f:
                     f.write(response.content)
             
-            if os.path.exists(fileName):
-                os.remove(fileName)
-
-            os.rename(fileNameDownload, fileName)
+            # Atomic replacement preserves the last known-good cache if the final move fails.
+            os.replace(fileNameDownload, fileName)
 
             return True
         except Exception as e:
