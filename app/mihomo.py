@@ -28,9 +28,9 @@ class Mihomo(APPBase):
                 f.write("payload:\n")
                 f.write("  #\n")
                 if isLite:
-                    f.write("  # Title: LucentDNS AdBlock Clash Meta(Mihomo) Lite\n")
+                    f.write("  # Title: AdBlock Clash Meta(Mihomo) Lite\n")
                 else:
-                    f.write("  # Title: LucentDNS AdBlock Clash Meta(Mihomo)\n")
+                    f.write("  # Title: AdBlock Clash Meta(Mihomo)\n")
                 f.write("  # Homepage: %s\n"%(self.homepage))
                 f.write("  # Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("  # Version: %s\n"%(self.version))
