@@ -507,7 +507,7 @@ def main():
         )
 
     (OUT_DIR / "whitelist-coverage.json").write_text(
-        json.dumps(whitelist_coverage, ensure_ascii=False, indent=2) + "\\n",
+        json.dumps(whitelist_coverage, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     write_domain_list(
@@ -540,10 +540,10 @@ def main():
         results, production_names, browser_names, candidate_names,
         overlap, unique_total, pairwise, candidate_overlaps
     )
-    report += "\\n## 项目白名单当前来源覆盖审计\\n\\n"
-    report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\\n"
-    report += f"- 被当前 DNS/Hosts 或浏览器补充来源实际覆盖：{len(project_whitelist) - len(whitelist_unused)} 条。\\n"
-    report += f"- 未命中当前任何来源、仅作为未来防误杀保护的候选项：{len(whitelist_unused)} 条（不自动删除，需逐项确认）。\\n"
+    report += "\n## 项目白名单当前来源覆盖审计\n\n"
+    report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\n"
+    report += f"- 被当前 DNS/Hosts 或浏览器补充来源实际覆盖：{len(project_whitelist) - len(whitelist_unused)} 条。\n"
+    report += f"- 未命中当前任何来源、仅作为未来防误杀保护的候选项：{len(whitelist_unused)} 条（不自动删除，需逐项确认）。\n"
 
     # Explain whether baseline-only DNS block rules were extracted from browser filters.
     baseline_path = ROOT / ".cache" / "report" / "baseline-only.txt"
