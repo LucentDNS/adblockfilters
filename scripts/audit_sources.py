@@ -368,6 +368,39 @@ def main():
 
     production_sets = {name: domain_sets.get(name, set()) for name in production_names}
     project_whitelist = load_project_whitelist()
+
+    def domain_suffixes(domain):
+        labels = domain.lower().split(".")
+        return {".".join(labels[index:]) for index in range(len(labels))}
+
+    whitelist_dns_sources = {domain: set() for domain in project_whitelist}
+    for whitelist_domain in project_whitelist:
+        for source_name in production_names:
+            if domain_suffixes(whitelist_domain) & production_sets.get(source_name, set()):
+                whitelist_dns_sources[whitelist_domain].add(source_name)
+
+    whitelist_browser_sources = {domain: set() for domain in project_whitelist}
+    for source_name in browser_names:
+        for source_domain in domain_sets.get(source_name, set()):
+            for suffix in domain_suffixes(source_domain):
+                if suffix in whitelist_browser_sources:
+                    whitelist_browser_sources[suffix].add(source_name)
+
+    whitelist_coverage = {
+        domain: {
+            "dns_sources": sorted(whitelist_dns_sources[domain]),
+            "browser_sources": sorted(whitelist_browser_sources[domain]),
+            "used_by_current_sources": bool(
+                whitelist_dns_sources[domain] or whitelist_browser_sources[domain]
+            ),
+        }
+        for domain in sorted(project_whitelist)
+    }
+    whitelist_unused = {
+        domain for domain, data in whitelist_coverage.items()
+        if not data["used_by_current_sources"]
+    }
+
     memberships = defaultdict(set)
     for name, domains in production_sets.items():
         for domain in domains:
@@ -473,6 +506,16 @@ def main():
             "No source allow domains."
         )
 
+    (OUT_DIR / "whitelist-coverage.json").write_text(
+        json.dumps(whitelist_coverage, ensure_ascii=False, indent=2) + "\\n",
+        encoding="utf-8",
+    )
+    write_domain_list(
+        OUT_DIR / "whitelist-unused.txt",
+        whitelist_unused,
+        "Every project whitelist domain is exercised by a current upstream source."
+    )
+
     (OUT_DIR / "source-audit.json").write_text(
         json.dumps({
             "audit_generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -497,6 +540,10 @@ def main():
         results, production_names, browser_names, candidate_names,
         overlap, unique_total, pairwise, candidate_overlaps
     )
+    report += "\\n## 项目白名单当前来源覆盖审计\\n\\n"
+    report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\\n"
+    report += f"- 被当前 DNS/Hosts 或浏览器补充来源实际覆盖：{len(project_whitelist) - len(whitelist_unused)} 条。\\n"
+    report += f"- 未命中当前任何来源、仅作为未来防误杀保护的候选项：{len(whitelist_unused)} 条（不自动删除，需逐项确认）。\\n"
 
     # Explain whether baseline-only DNS block rules were extracted from browser filters.
     baseline_path = ROOT / ".cache" / "report" / "baseline-only.txt"
