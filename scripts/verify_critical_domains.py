@@ -76,10 +76,22 @@ def parse_domain_wide_browser_rule(raw):
         for option in (match.group("options") or "").split(",")
         if option.strip()
     }
-    if "badfilter" in options or options - DOMAIN_WIDE_OPTIONS:
+    if "badfilter" in options:
         return None
 
-    return host, is_allow
+    if is_allow:
+        if "document" in options:
+            if options <= {"document", "important", "match-case"}:
+                return host, True
+            return None
+        if options - {"important", "match-case"}:
+            return None
+        return host, True
+
+    if options - DOMAIN_WIDE_OPTIONS:
+        return None
+
+    return host, False
 
 
 def parse_rules(path, browser_filter=False):
