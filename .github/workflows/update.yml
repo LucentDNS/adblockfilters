@@ -8,6 +8,23 @@ concurrency:
   group: update-filters-${{ github.ref }}
   cancel-in-progress: false
 on:
+  # Rebuild after changes to rule logic, source parsing, tests, or build configuration.
+  # Generated README/report-only edits do not trigger another production build.
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/update.yml"
+      - "adblock.py"
+      - "blacklist.py"
+      - "filter.py"
+      - "resolver.py"
+      - "updater.py"
+      - "readme.py"
+      - "smartdns.conf"
+      - "requirements.txt"
+      - "app/**"
+      - "scripts/**"
+      - "tests/**"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   workflow_dispatch:
   schedule:
