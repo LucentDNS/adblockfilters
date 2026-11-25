@@ -34,13 +34,12 @@ def test_production_workflow_checks_out_current_main_after_queueing():
     assert "stale event SHA" in checkout
 
 
-def test_dns_validation_has_priority_in_shared_production_concurrency_group():
+def test_dns_and_build_workflows_use_independent_concurrency_groups():
     update = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
     dns = (WORKFLOWS / "blacklist.yml").read_text(encoding="utf-8")
-    group = "production-rule-pipeline-${{ github.repository }}"
 
-    assert f"group: {group}" in update
-    assert f"group: {group}" in dns
+    assert "group: update-filters-${{ github.repository }}" in update
+    assert "group: dns-validation-state-${{ github.repository }}" in dns
     assert "cancel-in-progress: false" in update
     assert "cancel-in-progress: true" in dns
 
@@ -54,6 +53,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert len(dns_paths) == len(set(dns_paths))
     assert set(update_paths).isdisjoint(dns_paths)
     assert all(not path.startswith("tests/") for path in update_paths)
+    assert all(not path.startswith("tests/") for path in dns_paths)
 
     assert {
         ".github/workflows/update.yml",
@@ -69,12 +69,12 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "filter.py",
         "app/**",
         "rules/filter-exclude.txt",
-        "scripts/audit_sources.py",
         "rules/white.txt",
     } <= set(update_paths)
     assert "rules/white.txt" not in dns_paths
     assert "scripts/review_baseline_only.py" in dns_paths
-    assert not any(path.startswith("tests/") for path in dns_paths)
+    assert "scripts/audit_sources.py" not in update_paths
+    assert "scripts/audit_sources.py" in audit_paths
 
     ci_only_paths = {".editorconfig", "pyproject.toml", "requirements-dev.txt"}
     assert ci_only_paths.isdisjoint(update_paths)

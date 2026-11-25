@@ -6,7 +6,7 @@ permissions:
 # 避免连续提交触发多个发布任务并发覆盖 Releases 和 dist。
 concurrency:
   # Serialize with DNS validation; never let a build consume an older validation snapshot.
-  group: production-rule-pipeline-${{ github.repository }}
+  group: update-filters-${{ github.repository }}
   cancel-in-progress: false
 on:
   # Build-only changes may reuse the current validated DNS state.
@@ -20,7 +20,6 @@ on:
       - "app/**"
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
-      - "scripts/audit_sources.py"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # Tests run in audit-sources.yml; test-only changes must not launch release builds.
   workflow_dispatch:
