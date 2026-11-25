@@ -107,6 +107,7 @@ class ReadMe(object):
             f.write("# AdBlock DNS Filters\n")
             f.write("去广告合并规则，每8个小时更新一次。\n")
             f.write("个人收藏了不少广告过滤规则，但是每次往新设备添加的时候很是头疼，于是写了这个项目，定时自动获取各规则源更新，生成合并规则库。\n\n")
+            f.write("本仓库基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 持续维护，保留原作者的规则组织和 Full/Lite 设计，并加强来源校验、双组 DNS 交叉验证与构建回归检查。\n\n")
             f.write("## 重要公告\n")
             f.write("1. 20261120：为解决仓库不断膨胀变大问题，规则文件通过 dist 分支和 GitHub Releases 分发，请及时更新订阅链接。\n\n")
             f.write("## 说明\n")
