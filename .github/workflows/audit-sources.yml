@@ -18,6 +18,7 @@ on:
       - 'smartdns.conf'
       - '.gitignore'
       - '.github/workflows/blacklist.yml'
+      - '.github/workflows/update.yml'
       - 'filter.py'
       - 'rules/**'
       - 'tests/**'
