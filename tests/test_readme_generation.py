@@ -15,6 +15,13 @@ def test_regenerated_readme_preserves_original_project_notice(tmp_path):
     assert generated.splitlines()[0] == "# AdBlock DNS Filters"
     assert generated.count("https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt") == 1
     assert "每 8 小时自动构建" in generated
+    import re
+    subscriptions = re.findall(
+        r"https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/dist/([^\\s|)]+)",
+        generated,
+    )
+    assert len(subscriptions) == 34
+    assert len(subscriptions) == len(set(subscriptions))
 
 
 def test_release_asset_filename_is_github_safe_and_stable():
