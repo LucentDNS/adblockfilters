@@ -79,7 +79,7 @@ jobs:
               -o ".cache/domain/$name" \
               "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/$name"
             test -s ".cache/domain/$name" || { echo "::error::Validated dns-validation-state/$name is missing or empty"; exit 1; }
-            printf '%s\t%s\n' "$name" "independent DNS validation" >> .cache/domain/input-provenance.txt
+            printf '%s\t%s\n' "$name" "dual-group DNS validation v2" >> .cache/domain/input-provenance.txt
           done
           curl -fsSL --retry 3 --retry-all-errors \
             -o .cache/domain/validated-dns-sources.tar.gz \
