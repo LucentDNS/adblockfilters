@@ -561,6 +561,15 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
 
+      - name: Refuse to publish if main advanced during the build
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced during the build; refusing to publish stale output."
+            exit 1
+          fi
+
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7
         with:
@@ -570,10 +579,17 @@ jobs:
         # 必须放在 Commit Changes 之后：孤儿分支切换会清空工作区（含刚生成的 README），
         # 若放前面，README 更新会丢失。dist 为孤儿分支，每轮 force-push 单提交，不产生历史。
         run: |
+          set -euo pipefail
+          build_main_sha="$(git rev-parse HEAD)"
           cp -r .cache/out /tmp/dist-out
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout --orphan dist
+          git fetch origin main
+          if [ "$build_main_sha" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced before dist publication; refusing to publish stale output."
+            exit 1
+          fi
           git rm -rf . || true
           # git rm 只删已跟踪文件，.gitignore 也被删了，未跟踪的 .cache/ 会留下来并被 git add -A 收入；
           # clean 掉所有未跟踪文件（runner 用完即弃，此步已是任务最后一步），只留刚拷入的产物

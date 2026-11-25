@@ -20,7 +20,6 @@ on:
       - main
     paths:
       - .github/workflows/blacklist.yml
-      - .github/workflows/update.yml
       - blacklist.py
       - smartdns.conf
       - resolver.py

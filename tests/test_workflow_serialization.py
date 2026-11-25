@@ -54,6 +54,16 @@ def test_production_build_waits_for_a_complete_matching_dns_state():
     assert "git rev-parse origin/main" in workflow
 
 
+def test_production_build_rechecks_main_before_publishing():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+
+    assert "Refuse to publish if main advanced during the build" in workflow
+    assert "git rev-parse origin/main" in workflow
+    publish = workflow.split("- name: Publish to dist branch", 1)[1]
+    assert 'build_main_sha="$(git rev-parse HEAD)"' in publish
+    assert "main advanced before dist publication" in publish
+
+
 def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     update_paths = _push_paths("update.yml")
     dns_paths = _push_paths("blacklist.yml")
@@ -66,7 +76,6 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert all(not path.startswith("tests/") for path in dns_paths)
 
     assert {
-        ".github/workflows/update.yml",
         "blacklist.py",
         "resolver.py",
         "README.md",
@@ -82,6 +91,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "rules/white.txt",
     } <= set(update_paths)
     assert "rules/white.txt" not in dns_paths
+    assert ".github/workflows/update.yml" not in dns_paths
     assert "scripts/review_baseline_only.py" in dns_paths
     assert "scripts/audit_sources.py" not in update_paths
     assert "scripts/**" in audit_paths
