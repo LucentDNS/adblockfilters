@@ -97,4 +97,5 @@
 ! Tencent MDT telemetry/tracking endpoint independently listed by multiple maintained hosts blocklists.
 ! https://github.com/TonyRL/blocklist/blob/master/hosts
 ! https://github.com/ultranity/ultranity.github.io/blob/master/hosts0.txt
+! Exact telemetry host only; no parent qq.com suffix block is introduced.
 ||oth.str.mdt.qq.com^
