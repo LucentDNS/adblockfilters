@@ -154,10 +154,10 @@ def test_legacy_baseline_only_domains_are_reviewed_with_all_five_upstreams():
     assert "baseline-only-not-effectively-covered-by-current-dns.txt" in workflow
     assert "python scripts/review_baseline_only.py" in workflow
     assert "nxdomain-all-five-upstreams.txt" in review_script
-    assert "Upload legacy baseline review" in workflow
+    assert "Publish legacy baseline DNS review to audit release" in workflow
     review_step = workflow.split(
         "- name: Review legacy upstream-only domains with all five DNS upstreams", 1
-    )[1].split("- name: Upload legacy baseline review", 1)[0]
+    )[1].split("- name: Publish legacy baseline DNS review to audit release", 1)[0]
     assert "all five independent upstreams" in review_script
     assert all(not line.endswith("\\\\") for line in review_step.splitlines())
 

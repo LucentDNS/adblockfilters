@@ -90,7 +90,8 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert {
         "blacklist.py",
         "resolver.py",
-        "README.md",
+        "sources.json",
+        "scripts/generate_domain_input.py",
         "requirements.txt",
         "rules/myblock.txt",
     } <= set(dns_paths)

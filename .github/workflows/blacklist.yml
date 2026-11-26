@@ -1,6 +1,6 @@
 name: Generate DNS State
 
-# The versioned sources.json manifest defines upstream inputs; changes require fresh DNS validation.
+# Only DNS inputs and validation logic trigger a fresh state; documentation is not DNS input.
 permissions:
   contents: write
   actions: write

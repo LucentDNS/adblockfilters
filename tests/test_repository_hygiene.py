@@ -105,12 +105,13 @@ def test_test_runner_is_a_development_dependency():
     assert "ruff==0.17.6" in development_requirements
 
 
-def test_readme_generator_uses_a_real_newline_for_dns_validation_policy():
+def test_readme_parser_cannot_overwrite_maintained_documentation():
     source = (ROOT / "readme.py").read_text(encoding="utf-8")
 
-    assert r"均不会作为删除依据。\\n" not in source
-    assert r"均不会作为删除依据。\n" in source
-
+    assert "def regenerate(" not in source
+    assert "gh-proxy.com" not in source
+    assert "ghfast.top" not in source
+    assert "ghproxy.net" not in source
 
 
 def test_git_attributes_enforce_lf_and_preserve_binary_build_outputs():
