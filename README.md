@@ -39,11 +39,21 @@ Lite 为精简版本，规则覆盖范围与 Full 不同。请按客户端支持
 - [dist 订阅目录](https://github.com/LucentDNS/adblockfilters/tree/dist)
 - [上游来源清单](sources.json)
 
-## 上游来源
+## 集成的上游规则源
 
-感谢以下项目及维护者。各来源的具体订阅地址和类型以 [sources.json](sources.json) 为准。
+以下来源参与正式构建；订阅地址以 `sources.json` 为准。
 
-[AdGuard](https://github.com/AdguardTeam/AdguardFilters) · [AdGuard DNS](https://github.com/AdguardTeam/AdGuardSDNSFilter) · [CJX's Annoyance List](https://github.com/cjx82630/cjxlist) · [EasyList](https://easylist.to/) · [AWAvenue Ads Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) · [HaGeZi DNS Blocklists](https://github.com/hagezi/dns-blocklists) · [StevenBlack hosts](https://github.com/StevenBlack/hosts)
+- AdGuard Base filter — [来源](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt)
+- AdGuard Chinese filter — [来源](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt)
+- AdGuard Mobile Ads filter — [来源](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt)
+- AdGuard DNS filter — [来源](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)
+- CJX's Annoyance List — [来源](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt)
+- EasyList — [来源](https://easylist-downloads.adblockplus.org/easylist.txt)
+- EasyList China — [来源](https://easylist-downloads.adblockplus.org/easylistchina.txt)
+- EasyPrivacy — [来源](https://easylist-downloads.adblockplus.org/easyprivacy.txt)
+- AWAvenue Ads Rule (Only.Ads) — [来源](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)
+- HaGeZi DNS-Blocklists (Pro Mini) — [来源](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)
+- StevenBlack hosts — [来源](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)
 
 ## 反馈与贡献
 
