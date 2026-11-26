@@ -250,6 +250,29 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: Publish legacy baseline DNS review to audit release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload audit \
+            .cache/baseline-review/summary.md \
+            .cache/baseline-review/results.json \
+            .cache/baseline-review/resolved.txt \
+            .cache/baseline-review/nxdomain-all-five-upstreams.txt \
+            .cache/baseline-review/no-address-both-groups.txt \
+            .cache/baseline-review/inconclusive.txt \
+            .cache/baseline-review/invalid-lines.txt \
+            --repo "$GITHUB_REPOSITORY" --clobber
+
+          assets="$(gh release view audit --json assets --jq '.assets[].name')"
+          for name in summary.md results.json resolved.txt nxdomain-all-five-upstreams.txt no-address-both-groups.txt inconclusive.txt invalid-lines.txt; do
+            if ! grep -Fxq "$name" <<< "$assets"; then
+              echo "::error::Audit release is missing legacy DNS review asset $name"
+              exit 1
+            fi
+          done
+
       - name: Upload log on failure
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
