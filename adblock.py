@@ -138,21 +138,12 @@ class ADBlock(object):
         readme = ReadMe(self.pwd + '/README.md')
         ruleList = readme.getRules()
         '''
-        # for test
-        testList = []
-        for rule in ruleList:
-            if rule.type in ['filter']:
-                testList.append(rule)
-        #    if rule.name in ["AdGuard Mobile Ads filter"]: # "AdRules DNS List", "CJX's Annoyance List", "EasyList China", "EasyList", "EasyPrivacy", "jiekouAD", "xinggsf mv", "xinggsf rule"
-        #        testList.append(rule)
-        ruleList = testList
-        '''
         # 更新上游规则（下载到 .cache/source）
         update, ruleList = update_sources_preserving_validated_dns(
             ruleList, self.sourceDir, self.domainDir
         )
 
-        # Dev builds must use the exact DNS/Hosts snapshots that produced black.txt/china.txt.
+        # Verify DNS/Hosts inputs against the validated snapshots.
         verify_domain_validation_provenance(ruleList, self.sourceDir, self.domainDir)
 
         # 每次都重新生成：black/china/white/myblock 等输入也会变化。
@@ -163,13 +154,10 @@ class ADBlock(object):
         filter = Filter(ruleList, self.domainDir, self.outDir, self.sourceDir)
         filter.generate(readme.getRulesNames())
 
-        # README is maintained documentation, not a generated build artifact.
-        # The upstream source manifest is maintained separately in sources.json.
 
 if __name__ == '__main__':
     configure_logging()
-    '''
-    # for test
+    # 更新 tld
     logFile = os.getcwd() + "/adblock.log"
     if os.path.exists(logFile):
         os.remove(logFile)
