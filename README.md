@@ -28,7 +28,14 @@
 | MosDNS | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmosdns.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmosdnslite.txt) |
 | V2Ray / Xray | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockv2ray.dat) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockv2raylite.dat) |
 
-Lite 为精简版本，规则覆盖范围与 Full 不同。请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。
+### Full 与 Lite 的区别
+
+本项目不会仅因某一次 DNS 查询失败就删除上游规则中的域名。DNS 验证由 5 个独立上游共同完成：只有当 5 个上游对域名的 A、AAAA 查询均返回 NXDOMAIN 时，才将该域名判定为不存在并从有效规则中排除。只要任一上游返回有效地址，域名就保留；NODATA、超时、SERVFAIL 或上游结果不一致均视为证据不足，不据此删除域名。
+
+- **Full**：包含通过上述 DNS 有效性验证、并经规则处理流程保留的完整规则范围。
+- **Lite**：在域名规则基础上，进一步依据国内域名识别数据筛选；识别依据包括国内直连域名规则及中国 IPv4 地址段。它不是简单按数量截短规则，也不是随意删减规则。对于浏览器过滤规则，Lite 按规则关联域名及规则自身的匹配范围筛选，并保留原有匹配语义。
+
+请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。
 
 ## 规则与审计
 
