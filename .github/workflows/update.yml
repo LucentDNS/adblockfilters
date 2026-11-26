@@ -5,7 +5,7 @@ permissions:
 
 # 避免连续提交触发多个发布任务并发覆盖 Releases 和 dist。
 concurrency:
-  # Serialize production builds; DNS-state freshness is checked independently before building.
+  # Latest-run-wins: newer builds cancel older ones; the main-SHA guard protects publication.
   group: update-filters-${{ github.repository }}
   cancel-in-progress: true
 on:
@@ -42,8 +42,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          # workflow_dispatch runs may wait behind the concurrency queue.
-          # Use the current main tip, not the stale event SHA captured when queued.
+          # A newer dispatch may supersede an in-flight build.
+          # Always use the current main tip, not the stale event SHA.
           ref: main
 
       - name: Checkout domain-list-community

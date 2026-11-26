@@ -7,7 +7,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  # Serialize DNS validation runs only; production builds use a separate queue and verify provenance.
+  # Latest-run-wins for DNS validation; production builds use a separate concurrency group.
   group: dns-validation-state-${{ github.repository }}
   cancel-in-progress: true
 
