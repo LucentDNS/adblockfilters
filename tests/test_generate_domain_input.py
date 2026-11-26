@@ -34,7 +34,7 @@ def test_resolver_tracks_wildcard_and_explicit_dns_block_domains_separately(tmp_
     from resolver import Resolver
 
     (tmp_path / "wildcard.txt").write_text(
-        "||*.wild.example^\\n||exact.example^\\n", encoding="utf-8"
+        "||*.wild.example^\n||exact.example^\n", encoding="utf-8"
     )
     resolver = Resolver(str(tmp_path))
     block, _, _ = resolver.resolveDNS(Rule("wildcard", "dns", "", ""))
