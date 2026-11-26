@@ -32,3 +32,6 @@ adssend.net
 adserver.ibjmedia.com
 cdn-new-ad.wtzw.com
 kix-ad.sg.fortunedancer.com
+fly-analytics.com
+hasofferstracking.betterhelp.com
+liveclix.net

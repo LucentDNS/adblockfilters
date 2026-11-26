@@ -109,6 +109,18 @@
 ! DNS intelligence maps this host to Kwai/MythAd and Adaether ad-serving infrastructure.
 ! https://dnsrepo.noc.org/?ip=103.167.27.38
 ||kix-ad.sg.fortunedancer.com^
+! Peter Lowe's maintained advertising and tracking server list.
+! https://gist.github.com/yunus25jmi1/5fee4052678355814ec33c2c40c4cd02
+||fly-analytics.com^
+! BetterHelp affiliate links use this HasOffers redirect/tracking endpoint.
+! https://www.cass.ai/blog-chat/depression-test
+! https://hypestat.com/info/hasofferstracking.betterhelp.com
+||hasofferstracking.betterhelp.com^
+! Listed in independent ad-block rule sets and described as an advertising network.
+! https://gist.github.com/luckydevil13/ad591e777e6c7bff3f9476f06b13932c
+! https://gist.github.com/jezifm/5ee6ae920dfb17e160bcc6e90b41a6cd
+! https://liveclix.net.clearwebstats.com/
+||liveclix.net^
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Confirmed phishing domains; independent security-provider and PhishTank signals reviewed 2026-11-26.
