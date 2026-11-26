@@ -130,8 +130,8 @@ def test_daily_dns_validation_is_the_only_scheduled_production_build():
     update = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "cron: '37 8 * * *'" in dns
-    assert "16:37 Beijing time" in dns
+    assert "cron: '43 8 * * *'" in dns
+    assert "16:43 Beijing time" in dns
     assert "schedule:" not in update
     assert "gh workflow run update.yml --ref main" in dns
     assert "每日自动更新一次" in readme
