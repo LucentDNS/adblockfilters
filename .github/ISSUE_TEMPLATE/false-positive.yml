@@ -1,0 +1,51 @@
+name: 误拦截反馈
+description: 报告 AdBlock DNS 规则导致正常网站、应用或服务异常。
+title: "[误拦截] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先确认最新订阅仍可复现问题。不要提交密码、Cookie、令牌或私人日志。
+  - type: input
+    id: domain
+    attributes:
+      label: 受影响的完整域名
+      description: 请填写实际被拦截的主机名。
+      placeholder: api.example.com
+    validations:
+      required: true
+  - type: input
+    id: subscription
+    attributes:
+      label: 使用的订阅文件
+      placeholder: adblockdns.txt / adblockdnslite.txt / adblockfilters.txt
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: 客户端及版本
+      placeholder: AdGuard for Android x.y.z
+    validations:
+      required: true
+  - type: textarea
+    id: symptom
+    attributes:
+      label: 故障表现与复现步骤
+      description: 请说明关闭本项目规则后是否恢复，以及复现时间和时区。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 证明该域名属于正常业务的证据
+      description: 官方文档、域名所有者说明或可公开核验的资料链接。
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他信息
+      description: 可选。请勿粘贴含个人信息的完整网络日志。
+    validations:
+      required: false
