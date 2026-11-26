@@ -33,7 +33,7 @@ def source_audit_gate_failures(
     current_source_parent_inactive_unexplained: set[str],
     baseline_allow_missing_still_blocked: set[str],
 ) -> list[str]:
-    """Return hard failures where selected source intent is lost or upstream allows regress."""
+    """Fail on active source loss and upstream allow regressions, not historical baseline-only deltas."""
     failures = []
     if compiled_unparsed:
         failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
