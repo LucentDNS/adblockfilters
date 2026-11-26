@@ -73,7 +73,7 @@ class Updater(object):
     async def __QueryLastModified(self, url: str) -> str:
         """查询 raw.githubusercontent.com 文件的最后修改日期（返回 YYYY/MM/DD，失败返回空串）
         优先 GitHub API（带 GITHUB_TOKEN），403/失败回退 GitHub commits .atom 网页端点（无 API 限流）"""
-        match = re.match(r"https://raw\\.githubusercontent\\.com/([^/]+)/([^/]+)/([^/]+)/(.+)", url)
+        match = re.match(r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)", url)
         if not match:
             return ""
         owner, repo, branch, path = match.group(1), match.group(2), match.group(3), match.group(4)
