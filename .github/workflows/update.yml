@@ -21,6 +21,7 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
+      - "scripts/check_source_anomalies.py"
       - "scripts/verify_critical_domains.py"
       - "scripts/audit_sources.py"
       - ".github/workflows/update.yml"
@@ -88,7 +89,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py
           python -m compileall -q app
           python -m pytest -q tests
 
@@ -160,6 +161,18 @@ jobs:
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
 
+      - name: Restore previous upstream snapshots for anomaly checks
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/previous-source
+          gh release download source --dir .cache/previous-source
+          if ! find .cache/previous-source -maxdepth 1 -type f -name '*.txt' -print -quit | grep -q .; then
+            echo "::error::Previous upstream source snapshots are missing; refusing an unguarded build."
+            exit 1
+          fi
+
       - name: Update Filters
         id: update
         env:
@@ -169,6 +182,12 @@ jobs:
           rm -rf __pycache__
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
+
+      - name: Check upstream source size anomalies
+        run: |
+          python scripts/check_source_anomalies.py \
+            --previous .cache/previous-source \
+            --current .cache/source
 
       - name: Verify critical service domains are not blocked
         run: |
