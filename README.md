@@ -4,9 +4,9 @@
 
 本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生，独立维护规则源、DNS 有效性验证及多客户端构建流程。项目不以逐条复刻上游结果为目标；规则差异通过审计追踪。
 
-## 订阅地址
+## 支持的客户端与订阅
 
-优先使用原始订阅链接。所有文件均由构建流程生成并发布至 [GitHub Releases](https://github.com/LucentDNS/adblockfilters/releases/tag/rule) 与 [dist 分支](https://github.com/LucentDNS/adblockfilters/tree/dist)。
+目前提供 **17 类客户端 / 格式集成、35 个正式订阅文件**，支持 Full 与 Lite 两种版本（InviZible Pro 另提供独立放行列表）。优先使用原始订阅链接。所有文件均由构建流程生成并发布至 [GitHub Releases](https://github.com/LucentDNS/adblockfilters/releases/tag/rule) 与 [dist 分支](https://github.com/LucentDNS/adblockfilters/tree/dist)。
 
 | 客户端 / 格式 | Full | Lite |
 |---|---|---|
