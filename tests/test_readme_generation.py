@@ -11,6 +11,8 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
     assert "## 重要公告" not in generated
     assert "20261120" not in generated
     assert "217heidai/adblockfilters" in generated
+    assert "项目独立维护上游源集合" in generated
+    assert "双组 DNS" not in generated
     assert "## 正式订阅（仅列出构建验证通过的产物）" in generated
     assert "myblock.txt（补充拦截及浏览器例外）仅保留有可复现证据的项目自维护拦截" in generated
     assert "white.txt（误拦截放行例外）" in generated

@@ -31,6 +31,7 @@ def test_dns_validation_uses_five_isolated_non_filtering_upstreams():
     assert "9.9.9.11" not in config
     assert "101.226.4.6" not in config
     assert "114.114.114.114" not in config
+    assert "180.184.1.1" not in config
 
 def test_dns_validation_constructs_five_smartdns_resolvers(monkeypatch):
     from blacklist import BlackList
