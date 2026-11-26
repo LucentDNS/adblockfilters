@@ -34,8 +34,32 @@
 
 规则源定时同步、合并去重，并通过多上游 DNS 一致性验证及关键域名回归检查。DNS 验证结果不确定时不会据此删除规则。构建、来源及差异审计见 [audit Release](https://github.com/LucentDNS/adblockfilters/releases/tag/audit)。
 
-## 来源与许可
+## 集成的上游规则源
 
-本项目使用并致谢以下规则源：[AdGuard Base](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt)、[AdGuard Chinese](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt)、[AdGuard Mobile Ads](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt)、[AdGuard DNS](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)、[AdRules](https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt)、[CJX's Annoyance List](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt)、[EasyList](https://easylist-downloads.adblockplus.org/easylist.txt)、[EasyList China](https://easylist-downloads.adblockplus.org/easylistchina.txt)、[EasyPrivacy](https://easylist-downloads.adblockplus.org/easyprivacy.txt)、[xinggsf](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt)、[jiekouAD](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt)、[AWAvenue Ads Rule](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)、[HaGeZi DNS-Blocklists](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)、[OISD Small](https://small.oisd.nl/)、[StevenBlack hosts](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)。
+当前构建集成 **15 个上游规则源**。下表列出实际使用的来源及订阅地址；来源清单以仓库根目录的 `sources.json` 为准。
 
-项目代码遵循 [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html)。上游规则分别遵循其原始许可证及使用条款。
+| 上游项目 / 规则 | 类型 | 实际使用的规则地址 |
+|---|---|---|
+| AdGuard Base filter | 浏览器过滤 | [filter.txt](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt) |
+| AdGuard Chinese filter | 浏览器过滤 | [filter.txt](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt) |
+| AdGuard Mobile Ads filter | 浏览器过滤 | [adservers.txt](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt) |
+| AdGuard DNS filter | DNS 过滤 | [filter.txt](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt) |
+| AdRules DNS List | DNS 过滤 | [dns.txt](https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt) |
+| CJX's Annoyance List | 浏览器过滤 | [cjx-annoyance.txt](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt) |
+| EasyList | 浏览器过滤 | [easylist.txt](https://easylist-downloads.adblockplus.org/easylist.txt) |
+| EasyList China | 浏览器过滤 | [easylistchina.txt](https://easylist-downloads.adblockplus.org/easylistchina.txt) |
+| EasyPrivacy | 浏览器过滤 | [easyprivacy.txt](https://easylist-downloads.adblockplus.org/easyprivacy.txt) |
+| xinggsf mv | 浏览器过滤 | [mv.txt](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt) |
+| jiekouAD | 浏览器过滤 | [jiekouAD.txt](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt) |
+| AWAvenue Ads Rule (Only.Ads) | DNS 规则 | [Only.Ads](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt) |
+| HaGeZi DNS-Blocklists (Pro Mini) | DNS 规则 | [pro.mini.txt](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt) |
+| OISD Small | DNS 规则 | [OISD Small](https://small.oisd.nl/) |
+| StevenBlack hosts | Hosts | [hosts](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) |
+
+其中“浏览器过滤”来源用于生成浏览器补充规则；DNS 过滤和 Hosts 来源参与域名规则构建。实际纳入范围、类型及更新地址以 `sources.json` 为准，来源的上游归属不会因聚合而改变。
+
+## 许可与归属
+
+本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生，并在此基础上独立维护来源清单、DNS 有效性验证、规则处理和多客户端构建流程。感谢上述 15 个上游规则项目的维护者。
+
+项目代码遵循 [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html)。各上游规则分别遵循其原始许可证及使用条款。
