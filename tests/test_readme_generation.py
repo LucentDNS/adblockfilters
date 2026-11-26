@@ -29,6 +29,7 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
     assert "python -m pytest -q tests" in generated
     assert "本项目聚合多个公开维护的广告、跟踪及浏览器过滤规则源" in generated
     assert "精确主机或路径例外" in generated
+    assert "\\n4. 规则文件托管" not in generated
     import re
     subscriptions = re.findall(
         r"\[原始链接\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
