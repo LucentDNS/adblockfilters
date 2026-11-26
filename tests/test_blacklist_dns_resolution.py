@@ -5,6 +5,7 @@ from dns.resolver import NXDOMAIN, NoAnswer
 from blacklist import (
     BlackList,
     DNS_NEGATIVE_RECHECK_SECONDS,
+    DNS_VALIDATION_PORTS,
     DNS_POSITIVE_REFRESH_SECONDS,
     _needs_dns_validation,
 )
@@ -24,8 +25,8 @@ class FakeResolver:
 
 
 def _fake_resolvers(answers):
-    groups = answers if isinstance(answers, list) else [answers]
-    return [FakeResolver(group) for group in groups]
+    upstreams = answers if isinstance(answers, list) else [answers] * len(DNS_VALIDATION_PORTS)
+    return [FakeResolver(group) for group in upstreams]
 
 
 def resolve(answers):
@@ -98,7 +99,7 @@ def test_nxdomain_and_timeout_for_different_record_types_are_inconclusive():
     )
 
 
-def test_nxdomain_requires_both_record_types_in_one_dns_group():
+def test_all_six_upstreams_must_return_nxdomain_for_both_record_types():
     assert resolve({"A": NXDOMAIN(), "AAAA": NXDOMAIN()}) == ([], "not_found")
 
 
@@ -214,56 +215,55 @@ def test_nxdomain_plus_valid_other_family_keeps_domain():
     )
 
 
-def resolve_groups(domestic_answers, global_answers):
+def resolve_upstreams(*answers):
+    if len(answers) == 1:
+        answers = answers * len(DNS_VALIDATION_PORTS)
     instance = BlackList.__new__(BlackList)
-    resolvers = [FakeResolver(domestic_answers), FakeResolver(global_answers)]
+    resolvers = [FakeResolver(answer) for answer in answers]
     return asyncio.run(instance._BlackList__resolve(resolvers, "example.test"))
 
 
-def test_nxdomain_requires_both_record_types_in_both_dns_groups():
-    assert resolve_groups(
-        {"A": NXDOMAIN(), "AAAA": NXDOMAIN()},
-        {"A": NXDOMAIN(), "AAAA": NXDOMAIN()},
-    ) == ([], "not_found")
+def test_nxdomain_requires_all_six_independent_upstreams():
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
+    assert resolve_upstreams(*([dead] * 6)) == ([], "not_found")
 
 
-def test_matching_nxdomain_and_nodata_mixtures_remain_inconclusive():
-    assert resolve_groups(
-        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
-        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
-    ) == ([], "unknown")
+def test_one_resolver_returning_an_address_prevents_blacklisting():
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
+    alive = {"A": ["192.0.2.10"], "AAAA": NoAnswer()}
+    assert resolve_upstreams(*([dead] * 5 + [alive])) == (["192.0.2.10"], "resolved")
 
 
-def test_one_resolving_group_prevents_blacklisting():
-    assert resolve_groups(
-        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
-        {"A": ["192.0.2.10"], "AAAA": NoAnswer()},
-    ) == (["192.0.2.10"], "resolved")
+def test_one_resolver_nodata_prevents_nxdomain_classification():
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
+    nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
+    assert resolve_upstreams(*([dead] * 5 + [nodata])) == ([], "unknown")
 
 
-def test_nxdomain_and_nodata_disagreement_is_inconclusive():
-    assert resolve_groups(
-        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
-        {"A": NoAnswer(), "AAAA": NoAnswer()},
-    ) == ([], "unknown")
+def test_one_resolver_timeout_prevents_nxdomain_classification():
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
+    timeout = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
+    assert resolve_upstreams(*([dead] * 5 + [timeout])) == ([], "unknown")
 
 
-def test_nxdomain_and_timeout_disagreement_is_inconclusive():
-    assert resolve_groups(
-        {"A": NXDOMAIN(), "AAAA": NoAnswer()},
-        {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")},
-    ) == ([], "unknown")
+def test_no_address_requires_all_six_upstreams_to_agree():
+    nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
+    assert resolve_upstreams(*([nodata] * 6)) == ([], "no_address")
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
+    assert resolve_upstreams(*([nodata] * 5 + [dead])) == ([], "unknown")
 
 
-def test_no_address_requires_both_groups_to_agree():
-    assert resolve_groups(
-        {"A": NoAnswer(), "AAAA": NoAnswer()},
-        {"A": NoAnswer(), "AAAA": NoAnswer()},
-    ) == ([], "no_address")
+def test_missing_upstream_is_inconclusive_not_dead():
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
+    instance = BlackList.__new__(BlackList)
+    resolvers = [FakeResolver(dead) for _ in range(5)]
+    assert asyncio.run(instance._BlackList__resolve(resolvers, "example.test")) == (
+        [], "unknown"
+    )
 
 
-def test_dns_group_disagreement_preserves_previous_unblocked_state():
-    dead = {"A": NXDOMAIN(), "AAAA": TimeoutError("AAAA timeout")}
+def test_dns_upstream_disagreement_preserves_previous_unblocked_state():
+    dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
-    domain = pingx([dead, unavailable], initially_blocked=False)
+    domain = pingx([dead] * 5 + [unavailable], initially_blocked=False)
     assert domain.blocked is False

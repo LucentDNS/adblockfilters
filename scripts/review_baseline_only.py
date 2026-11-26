@@ -13,8 +13,7 @@ import dns.exception
 import dns.resolver
 
 DOMAIN_LABEL = re.compile(r"^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$")
-DEFAULT_DOMESTIC_PORT = 5053
-DEFAULT_GLOBAL_PORT = 5054
+DEFAULT_UPSTREAM_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
 
 
 def valid_domain(domain: str) -> bool:
@@ -60,9 +59,13 @@ def classify_rrtype_results(statuses: list[str]) -> str:
 def classify_groups(statuses: list[str]) -> str:
     if "resolved" in statuses:
         return "resolved"
-    if statuses and all(status == "not_found" for status in statuses):
+    if len(statuses) == len(DEFAULT_UPSTREAM_PORTS) and all(
+        status == "not_found" for status in statuses
+    ):
         return "nxdomain"
-    if statuses and all(status == "no_address" for status in statuses):
+    if len(statuses) == len(DEFAULT_UPSTREAM_PORTS) and all(
+        status == "no_address" for status in statuses
+    ):
         return "no_address"
     return "inconclusive"
 
@@ -113,8 +116,7 @@ async def resolve_group(
 
 async def review_candidates(
     domains: list[str],
-    domestic_port: int,
-    global_port: int,
+    ports: tuple[int, ...],
     timeout: float,
     lifetime: float,
     concurrency: int,
@@ -123,16 +125,16 @@ async def review_candidates(
 
     async def review_one(domain: str) -> dict[str, Any]:
         async with semaphore:
-            domestic, global_result = await asyncio.gather(
-                resolve_group(domain, domestic_port, timeout, lifetime),
-                resolve_group(domain, global_port, timeout, lifetime),
+            upstreams = await asyncio.gather(
+                *(resolve_group(domain, port, timeout, lifetime) for port in ports)
             )
-        status = classify_groups([domestic["status"], global_result["status"]])
+        status = classify_groups([result["status"] for result in upstreams])
         return {
             "domain": domain,
             "status": status,
-            "domestic": domestic,
-            "global": global_result,
+            "upstreams": [
+                {"port": port, **result} for port, result in zip(ports, upstreams, strict=True)
+            ],
         }
 
     return await asyncio.gather(*(review_one(domain) for domain in domains))
@@ -151,7 +153,7 @@ def write_reports(
         "valid_unique_domains": len(results),
         "invalid_lines": len(invalid),
         "resolved": counts["resolved"],
-        "nxdomain_both_groups": counts["nxdomain"],
+        "nxdomain_all_six_upstreams": counts["nxdomain"],
         "no_address_both_groups": counts["no_address"],
         "inconclusive": counts["inconclusive"],
     }
@@ -165,7 +167,7 @@ def write_reports(
 
     report_files = (
         ("resolved", "resolved.txt"),
-        ("nxdomain", "nxdomain-both-groups.txt"),
+        ("nxdomain", "nxdomain-all-six-upstreams.txt"),
         ("no_address", "no-address-both-groups.txt"),
         ("inconclusive", "inconclusive.txt"),
     )
@@ -188,7 +190,7 @@ def write_reports(
         "# Legacy upstream-only DNS candidate review",
         "",
         "Report only: this review does not add or remove production rules.",
-        "NXDOMAIN requires confirmation from both independent DNS groups.",
+        "NXDOMAIN requires all six independent upstreams to return NXDOMAIN for both A and AAAA.",
         "",
         *[f"- {key}: {value}" for key, value in summary.items()],
         "",
@@ -209,8 +211,10 @@ def main() -> int:
     )
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--domestic-port", type=int, default=DEFAULT_DOMESTIC_PORT)
-    parser.add_argument("--global-port", type=int, default=DEFAULT_GLOBAL_PORT)
+    parser.add_argument(
+        "--ports", type=int, nargs=6, default=DEFAULT_UPSTREAM_PORTS,
+        help="six local SmartDNS ports, one per independent upstream",
+    )
     parser.add_argument("--timeout", type=float, default=2.0)
     parser.add_argument("--lifetime", type=float, default=5.0)
     parser.add_argument("--concurrency", type=int, default=100)
@@ -220,15 +224,16 @@ def main() -> int:
         parser.error("--concurrency must be at least 1")
     if args.timeout <= 0 or args.lifetime <= 0:
         parser.error("--timeout and --lifetime must be positive")
-    if args.domestic_port == args.global_port:
-        parser.error("Domestic and global DNS ports must be different")
+    if len(set(args.ports)) != len(DEFAULT_UPSTREAM_PORTS) or any(
+        port < 1 or port > 65535 for port in args.ports
+    ):
+        parser.error("--ports must contain six distinct valid TCP/UDP ports")
 
     domains, invalid, candidate_count = read_candidates(args.input)
     results = asyncio.run(
         review_candidates(
             domains,
-            args.domestic_port,
-            args.global_port,
+            tuple(args.ports),
             args.timeout,
             args.lifetime,
             args.concurrency,

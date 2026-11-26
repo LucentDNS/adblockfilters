@@ -42,7 +42,8 @@ def _blacklist_abnormal(black_count:int, total:int) -> bool:
 DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 # Bump when the evidence required to classify a domain as NXDOMAIN changes.
-DNS_BLOCK_POLICY_VERSION = "2"
+DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
+DNS_BLOCK_POLICY_VERSION = "3"
 
 
 def _needs_dns_validation(ip_list, last_checked, now, is_new=False) -> bool:
@@ -458,18 +459,20 @@ class BlackList(object):
             raise
 
     async def __resolve(self, dnsresolvers, domain) -> Tuple[List[str], str]:
-        """Resolve through independent domestic/global SmartDNS groups.
+        """Require six independent upstreams to agree before classifying NXDOMAIN.
 
-        A domain is marked nonexistent only when both A and AAAA queries in
-        every configured group return NXDOMAIN. Any valid address from either group wins; disagreement or
-        transient failures are inconclusive and must not create blacklist entries.
+        Each local SmartDNS port maps to exactly one upstream provider. Any
+        positive address from any provider keeps the domain active. A domain is
+        marked nonexistent only when all six providers return NXDOMAIN for
+        both A and AAAA. NODATA, timeout, SERVFAIL, missing providers, or any
+        disagreement remain inconclusive and must never create a blacklist entry.
         """
         if not isinstance(dnsresolvers, (list, tuple)):
             dnsresolvers = [dnsresolvers]
+        if len(dnsresolvers) != len(DNS_VALIDATION_PORTS):
+            return [], "unknown"
 
-        all_ips = []
-        group_statuses = []
-        for dnsresolver in dnsresolvers:
+        async def resolve_one_upstream(dnsresolver):
             ip_list = []
             no_answer_count = 0
             nxdomain_count = 0
@@ -483,30 +486,34 @@ class BlackList(object):
                 except NXDOMAIN:
                     nxdomain_count += 1
                 except NoAnswer:
-                    # NOERROR/NODATA only applies to this RR type.
                     no_answer_count += 1
                 except Exception:
-                    # Timeout, SERVFAIL and resolver failures are inconclusive.
                     continue
 
             if ip_list:
-                group_statuses.append("resolved")
-                all_ips.extend(ip for ip in ip_list if ip not in all_ips)
-            elif nxdomain_count == 2:
-                group_statuses.append("not_found")
-            elif no_answer_count == 2:
-                group_statuses.append("no_address")
-            else:
-                group_statuses.append("unknown")
+                return ip_list, "resolved"
+            if nxdomain_count == 2:
+                return [], "not_found"
+            if no_answer_count == 2:
+                return [], "no_address"
+            return [], "unknown"
 
+        upstream_results = await asyncio.gather(
+            *(resolve_one_upstream(resolver) for resolver in dnsresolvers)
+        )
+        all_ips = []
+        for ip_list, _status in upstream_results:
+            for ip in ip_list:
+                if ip not in all_ips:
+                    all_ips.append(ip)
         if all_ips:
             return all_ips, "resolved"
-        if group_statuses and all(status == "not_found" for status in group_statuses):
+        statuses = [status for _ip_list, status in upstream_results]
+        if all(status == "not_found" for status in statuses):
             return [], "not_found"
-        if group_statuses and all(status == "no_address" for status in group_statuses):
+        if all(status == "no_address" for status in statuses):
             return [], "no_address"
         return [], "unknown"
-
 
     async def __pingx(self, dnsresolver:List[DNSResolver], domain:DOMAIN, semaphore):
         async def connect_with_timeout(ip, port, timeout=5):
@@ -607,8 +614,9 @@ class BlackList(object):
 
         async def _resolve_all():
             dnsresolvers = []
-            ports = (port, 5054) if port == 5053 else (port,)
-            for resolver_port in ports:
+            if port != DNS_VALIDATION_PORTS[0]:
+                raise ValueError("DNS validation must start at the first independent SmartDNS port")
+            for resolver_port in DNS_VALIDATION_PORTS:
                 dnsresolver = DNSResolver()
                 dnsresolver.nameservers = nameservers
                 dnsresolver.port = resolver_port

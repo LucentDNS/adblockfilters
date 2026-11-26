@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from scripts.review_baseline_only import (
+    DEFAULT_UPSTREAM_PORTS,
     classify_groups,
     classify_rrtype_results,
     read_candidates,
@@ -8,20 +9,21 @@ from scripts.review_baseline_only import (
 )
 
 
-def test_only_two_group_nxdomain_is_classified_as_dead():
-    assert classify_groups(["not_found", "not_found"]) == "nxdomain"
-    assert classify_groups(["not_found", "no_address"]) == "inconclusive"
-    assert classify_groups(["not_found", "unknown"]) == "inconclusive"
+def test_only_all_six_upstreams_nxdomain_is_classified_as_dead():
+    assert classify_groups(["not_found"] * 6) == "nxdomain"
+    assert classify_groups(["not_found"] * 5 + ["no_address"]) == "inconclusive"
+    assert classify_groups(["not_found"] * 5 + ["unknown"]) == "inconclusive"
+    assert classify_groups(["not_found"] * 5) == "inconclusive"
 
 
-def test_any_successful_dns_group_keeps_domain_active():
-    assert classify_groups(["resolved", "not_found"]) == "resolved"
-    assert classify_groups(["unknown", "resolved"]) == "resolved"
+def test_any_successful_upstream_keeps_domain_active():
+    assert classify_groups(["resolved"] + ["not_found"] * 5) == "resolved"
+    assert classify_groups(["unknown", "resolved"] + ["not_found"] * 4) == "resolved"
 
 
-def test_no_address_requires_both_groups():
-    assert classify_groups(["no_address", "no_address"]) == "no_address"
-    assert classify_groups(["no_address", "unknown"]) == "inconclusive"
+def test_no_address_requires_all_six_upstreams():
+    assert classify_groups(["no_address"] * 6) == "no_address"
+    assert classify_groups(["no_address"] * 5 + ["unknown"]) == "inconclusive"
 
 
 def test_mixed_a_and_aaaa_nxdomain_responses_are_inconclusive():
@@ -34,13 +36,11 @@ def test_mixed_a_and_aaaa_nxdomain_responses_are_inconclusive():
 def test_candidate_parser_normalizes_deduplicates_and_rejects_patterns(tmp_path: Path):
     path = tmp_path / "baseline-only.txt"
     path.write_text(
-        "! generated report\nExample.COM\nexample.com\n*.example.net\n"
-        "invalid-domain\nmail.example.org.\n",
+        "! generated report\\nExample.COM\\nexample.com\\n*.example.net\\n"
+        "invalid-domain\\nmail.example.org.\\n",
         encoding="utf-8",
     )
-
     domains, invalid, candidate_count = read_candidates(path)
-
     assert domains == ["example.com", "mail.example.org"]
     assert invalid == ["*.example.net", "invalid-domain"]
     assert candidate_count == 5
@@ -53,3 +53,7 @@ def test_domain_validator_rejects_empty_and_non_domain_inputs():
     assert not valid_domain("bad.example.")
     assert not valid_domain("*.example")
     assert not valid_domain("example/path")
+
+
+def test_review_uses_six_distinct_independent_resolver_ports():
+    assert DEFAULT_UPSTREAM_PORTS == (5053, 5054, 5055, 5056, 5057, 5058)

@@ -1,30 +1,27 @@
 from pathlib import Path
 
 
-def test_dns_validation_uses_separate_non_filtering_regional_groups():
+def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
+    from blacklist import DNS_VALIDATION_PORTS
+
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
-
-    assert "bind 127.0.0.1:5053 -group domestic" in config
-    assert "bind 127.0.0.1:5054 -group global" in config
-
-    domestic = [
-        line for line in config.splitlines()
-        if line.startswith(("server ", "server-tls ", "server-https ")) and "-group domestic" in line
-    ]
-    global_servers = [
-        line for line in config.splitlines()
-        if line.startswith(("server ", "server-tls ", "server-https ")) and "-group global" in line
-    ]
-    assert len(domestic) >= 3
-    assert len(global_servers) >= 3
+    groups = (
+        "domestic_doh", "domestic_baidu", "domestic_bytedance",
+        "global_google", "global_quad9", "global_cloudflare",
+    )
+    server_prefixes = ("server ", "server-tls ", "server-https ")
+    for port, group in zip(DNS_VALIDATION_PORTS, groups, strict=True):
+        assert f"bind 127.0.0.1:{port} -group {group}" in config
+        servers = [
+            line for line in config.splitlines()
+            if line.startswith(server_prefixes) and f"-group {group} " in line
+        ]
+        assert len(servers) == 1, f"{group} must map to exactly one upstream"
+        assert "-exclude-default-group" in servers[0]
 
     for provider in (
-        "https://doh.pub/dns-query",
-        "180.76.76.76",
-        "180.184.1.1",
-        "8.8.8.8",
-        "9.9.9.10",
-        "1.1.1.1",
+        "https://doh.pub/dns-query", "180.76.76.76", "180.184.1.1",
+        "8.8.8.8", "9.9.9.10", "1.1.1.1",
     ):
         assert provider in config
 
@@ -32,12 +29,11 @@ def test_dns_validation_uses_separate_non_filtering_regional_groups():
     assert config.count("-exclude-default-group") == 6
     assert "force-AAAA-SOA" not in config
     assert "-force-aaaa-soa" not in config
-    assert "9.9.9.11" not in config  # Quad9 threat-blocking resolver
-    assert "101.226.4.6" not in config  # 360 security-filtering DNS
-    assert "114.114.114.114" not in config  # 114DNS standard resolver has ad filtering
+    assert "9.9.9.11" not in config
+    assert "101.226.4.6" not in config
+    assert "114.114.114.114" not in config
 
-
-def test_dns_validation_constructs_both_smartdns_resolvers(monkeypatch):
+def test_dns_validation_constructs_six_smartdns_resolvers(monkeypatch):
     from blacklist import BlackList
 
     instance = BlackList.__new__(BlackList)
@@ -56,7 +52,9 @@ def test_dns_validation_constructs_both_smartdns_resolvers(monkeypatch):
 
     instance._BlackList__testDomain({}, ["127.0.0.1"], 5053)
 
-    assert [resolver.port for resolver in ports] == [5053, 5054]
+    from blacklist import DNS_VALIDATION_PORTS
+
+    assert [resolver.port for resolver in ports] == list(DNS_VALIDATION_PORTS)
     assert all(resolver.nameservers == ["127.0.0.1"] for resolver in ports)
 
 
@@ -138,14 +136,13 @@ def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
     )
     assert launch_command in workflow
     assert 'kill -0 "$SMARTDNS_PID"' in workflow
-    assert "127\\.0\\.0\\.1:5053" in workflow
-    assert "127\\.0\\.0\\.1:5054" in workflow
+    assert all(f"127\\.0\\.0\\.1:{port}" in workflow for port in (5053, 5054, 5055, 5056, 5057, 5058))
     assert "sock.recvfrom(1024)" not in workflow
     assert 'cat "$SMARTDNS_LOG"' in workflow
 
 
 
-def test_legacy_baseline_only_domains_are_reviewed_with_both_dns_groups():
+def test_legacy_baseline_only_domains_are_reviewed_with_all_six_upstreams():
     root = Path(__file__).parents[1]
     workflow = (root / ".github" / "workflows" / "blacklist.yml").read_text(
         encoding="utf-8"
@@ -156,11 +153,12 @@ def test_legacy_baseline_only_domains_are_reviewed_with_both_dns_groups():
 
     assert "baseline-only-not-effectively-covered-by-current-dns.txt" in workflow
     assert "python scripts/review_baseline_only.py" in workflow
-    assert "nxdomain-both-groups.txt" in review_script
+    assert "nxdomain-all-six-upstreams.txt" in review_script
     assert "Upload legacy baseline review" in workflow
     review_step = workflow.split(
-        "- name: Review legacy upstream-only domains with both DNS groups", 1
+        "- name: Review legacy upstream-only domains with all six DNS upstreams", 1
     )[1].split("- name: Upload legacy baseline review", 1)[0]
+    assert "all six independent upstreams" in review_script
     assert all(not line.endswith("\\\\") for line in review_step.splitlines())
 
 
