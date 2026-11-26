@@ -1,0 +1,50 @@
+name: 漏拦截反馈
+description: 报告广告、跟踪或恶意域名未被当前规则覆盖。
+title: "[漏拦截] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请提供可复核证据。仅凭域名名称或主观判断不会直接加入拦截。
+  - type: input
+    id: domain
+    attributes:
+      label: 漏拦截的完整域名
+      placeholder: ads.example.com
+    validations:
+      required: true
+  - type: input
+    id: subscription
+    attributes:
+      label: 使用的订阅文件
+      placeholder: adblockdns.txt / adblockdnslite.txt / adblockfilters.txt
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: 客户端及版本
+      placeholder: AdGuard Home x.y.z
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 广告、跟踪或恶意行为证据
+      description: 请提供可公开核验的分析链接、请求来源或具体行为。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤与时间
+      description: 请说明应用/网站、复现步骤及时间（含时区）。
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他信息
+      description: 可选。不要提交密码、Cookie、令牌或私人日志。
+    validations:
+      required: false
