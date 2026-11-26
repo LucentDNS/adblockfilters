@@ -34,6 +34,15 @@
 
 规则源定时同步、合并去重，并通过多上游 DNS 一致性验证及关键域名回归检查。DNS 验证结果不确定时不会据此删除规则。构建、来源及差异审计见 [audit Release](https://github.com/LucentDNS/adblockfilters/releases/tag/audit)。
 
+## 反馈与贡献
+
+欢迎报告可复现的误拦截、漏拦截和构建问题。提交前请阅读 [反馈与贡献指南](CONTRIBUTING.md)。
+
+- [提交误拦截反馈](https://github.com/LucentDNS/adblockfilters/issues/new?template=false-positive.yml)
+- [提交漏拦截反馈](https://github.com/LucentDNS/adblockfilters/issues/new?template=missed-domain.yml)
+
+每项规则变更都应有可复核证据；不会仅凭域名名称或单条主观反馈直接扩大拦截范围。
+
 ## 集成的上游规则源
 
 当前构建集成 **11 个上游规则源**。下表列出实际使用的来源及订阅地址；来源清单以仓库根目录的 `sources.json` 为准。
