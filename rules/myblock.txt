@@ -97,15 +97,6 @@
 ! https://github.com/ultranity/ultranity.github.io/blob/master/hosts0.txt
 ! Exact-host scope only; the parent qq.com namespace is never blocked.
 ||oth.str.mdt.qq.com^
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! 放行规则
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! The following wildcard/path-scoped exceptions are browser-filter rules, not DNS-domain rules.
-! 部分邮件确认按钮跳转
-@@||r.*.awstrack.me^
-! https://github.com/217heidai/adblockfilters/issues/131
-@@||clients2.googleusercontent.com/crx/blobs/Ad_*^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Confirmed phishing domains; independent security-provider and PhishTank signals reviewed 2026-11-26.
 ! Block exact registered domains only; do not widen to unrelated parent namespaces.
@@ -125,3 +116,12 @@
 ||rutor-15.com^
 ||rutor-20.com^
 ||rutor21.net^
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! 放行规则
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! The following wildcard/path-scoped exceptions are browser-filter rules, not DNS-domain rules.
+! 部分邮件确认按钮跳转
+@@||r.*.awstrack.me^
+! https://github.com/217heidai/adblockfilters/issues/131
+@@||clients2.googleusercontent.com/crx/blobs/Ad_*^
