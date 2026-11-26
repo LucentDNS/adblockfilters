@@ -133,3 +133,15 @@ def test_daily_dns_validation_is_the_only_scheduled_production_build():
     assert "schedule:" not in update
     assert "gh workflow run update.yml --ref main" in dns
     assert "每日自动更新一次" in readme
+
+
+def test_dns_state_dispatch_guard_tracks_only_dns_validation_inputs():
+    workflow = (WORKFLOWS / "blacklist.yml").read_text(encoding="utf-8")
+    guard = workflow.split("changed_paths", 1)[1].split("then", 1)[0]
+
+    assert "sources\\\\.json" in guard
+    assert "requirements\\\\.txt" in guard
+    assert "README" not in guard
+    assert "readme\\\\.py" not in guard
+    assert "updater\\\\.py" not in guard
+    assert "verify_critical_domains" not in guard
