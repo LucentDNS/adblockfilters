@@ -148,6 +148,7 @@ def write_reports(
     output_dir: Path,
     candidate_count: int,
 ) -> dict[str, int]:
+    # Keep empty categories as comment-only files so release assets are never zero-byte.
     output_dir.mkdir(parents=True, exist_ok=True)
     counts = Counter(result["status"] for result in results)
     summary = {
