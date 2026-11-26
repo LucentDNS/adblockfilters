@@ -760,7 +760,7 @@ class BlackList(object):
             domainDict = self.__testDomain(first_1000, ["192.168.3.1"], 5053)
             #################################################################
             '''
-            domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 使用本地 smartdns 进行域名解析，配置3组国内、3组国际域名解析服务器，提高识别效率
+            domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过5个独立上游分别验证，国内2个、国际3个；全部一致才确认NXDOMAIN
 
             # 国内域名识别
             thread_pool = ThreadPoolExecutor(max_workers=os.cpu_count() if os.cpu_count() > 4 else 4)
