@@ -1,6 +1,6 @@
 # AdBlock DNS
 
-自动聚合、清理并编译广告与跟踪拦截规则，提供多客户端订阅，按计划自动更新。
+自动聚合、清理并编译广告与跟踪拦截规则，提供多客户端订阅，每日自动更新一次。
 
 本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生，独立维护规则来源、DNS 验证、审计与构建流程。
 
