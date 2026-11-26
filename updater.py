@@ -152,8 +152,7 @@ class Updater(object):
                     except (TypeError, ValueError):
                         delay = float(2 ** attempt)
                     logger.warning(
-                        "temporary raw GitHub HTTP %s; retry %s/%s in %ss: %s",
-                        response.status_code, attempt + 1, attempts - 1, delay, url
+                        f"temporary raw GitHub HTTP {response.status_code}; retry {attempt + 1}/{attempts - 1} in {delay}s: {url}"
                     )
                     await asyncio.sleep(delay)
                     continue
@@ -164,8 +163,7 @@ class Updater(object):
                     raise
                 delay = float(2 ** attempt)
                 logger.warning(
-                    "temporary raw GitHub network error %s; retry %s/%s in %ss: %s",
-                    type(exc).__name__, attempt + 1, attempts - 1, delay, url
+                    f"temporary raw GitHub network error {type(exc).__name__}; retry {attempt + 1}/{attempts - 1} in {delay}s: {url}"
                 )
                 await asyncio.sleep(delay)
 
