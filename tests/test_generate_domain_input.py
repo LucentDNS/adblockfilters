@@ -27,3 +27,18 @@ def test_wildcard_only_apex_is_not_used_as_dns_liveness_candidate():
         "exact.example",
         "normal.example",
     }
+
+
+def test_resolver_tracks_wildcard_and_explicit_dns_block_domains_separately(tmp_path):
+    from readme import Rule
+    from resolver import Resolver
+
+    (tmp_path / "wildcard.txt").write_text(
+        "||*.wild.example^\\n||exact.example^\\n", encoding="utf-8"
+    )
+    resolver = Resolver(str(tmp_path))
+    block, _, _ = resolver.resolveDNS(Rule("wildcard", "dns", "", ""))
+
+    assert "wild.example" in resolver.wildcard_block_domains
+    assert "exact.example" in resolver.explicit_block_domains
+    assert set(block) == {"wild.example", "exact.example"}
