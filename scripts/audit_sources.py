@@ -605,7 +605,7 @@ def main():
             "- 本次未执行：独立来源审计工作流没有运行完整规则构建，因此没有 baseline-only.txt。\n"
             "- 缺少基线数据不代表原作者独有规则为 0 条；请以完整构建工作流生成的差异报告为准。\n"
         )
-    (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
+        (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
         print(report)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
         if summary:
