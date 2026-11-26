@@ -41,16 +41,23 @@ class ReadMe(object):
             for index, entry in enumerate(entries):
                 if not isinstance(entry, dict):
                     raise ValueError(f"sources.json entry {index} must be an object")
-                if set(entry) != {"name", "type", "url", "latest"}:
+                required = {"name", "type", "url", "latest"}
+                allowed = required | {"enabled"}
+                if not required.issubset(entry) or not set(entry).issubset(allowed):
                     raise ValueError(
-                        f"sources.json entry {index} must contain exactly name, type, url, latest"
+                        f"sources.json entry {index} must contain name, type, url, latest "
+                        "and may optionally contain enabled"
                     )
                 if not all(isinstance(entry[key], str) and entry[key].strip()
                            for key in ("name", "type", "url", "latest")):
                     raise ValueError(f"sources.json entry {index} has an empty or non-string field")
-                self.ruleList.append(
-                    Rule(entry["name"], entry["type"], entry["url"], entry["latest"])
-                )
+                enabled = entry.get("enabled", True)
+                if not isinstance(enabled, bool):
+                    raise ValueError(f"sources.json entry {index} field enabled must be a boolean")
+                rule = Rule(entry["name"], entry["type"], entry["url"], entry["latest"])
+                rule.enabled = enabled
+                if enabled:
+                    self.ruleList.append(rule)
         else:
             # Compatibility path for isolated legacy callers and parser tests.
             # Production builds always use the versioned sources.json manifest.
