@@ -433,7 +433,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # These files belonged to removed source configurations or audit-only candidates.
-          for asset in AWAvenue_Ads_Rule.txt OISD_Basic.txt Pollock_hosts.txt Pollock_hosts_.candidate_only.txt; do
+          for asset in AWAvenue_Ads_Rule.txt DNS-Blocklists_PRO_mini.txt OISD_Basic.txt Pollock_hosts.txt Pollock_hosts_.candidate_only.txt; do
             if gh release view source --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
               gh release delete-asset source "$asset" --yes
             fi
