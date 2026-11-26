@@ -93,3 +93,16 @@ def test_legacy_source_table_parser_skips_other_markdown_tables(tmp_path):
     assert len(rules) == 1
     assert rules[0].name == "Example"
     assert rules[0].url == "https://example.org/source.txt"
+
+
+def test_readme_upstream_attribution_matches_the_source_manifest():
+    root = Path(__file__).parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    manifest = json.loads((root / "sources.json").read_text(encoding="utf-8"))
+    section = readme.split("## 集成的上游规则源", 1)[1].split("## 许可与归属", 1)[0]
+    linked_urls = re.findall(r"\]\((https://[^)]+)\)", section)
+    expected_urls = [source["url"] for source in manifest["sources"]]
+
+    assert len(linked_urls) == len(expected_urls) == 15
+    assert len(linked_urls) == len(set(linked_urls))
+    assert set(linked_urls) == set(expected_urls)
