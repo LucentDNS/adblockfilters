@@ -36,10 +36,7 @@
 
 ## 反馈与贡献
 
-欢迎报告可复现的误拦截、漏拦截和构建问题。提交前请阅读 [反馈与贡献指南](CONTRIBUTING.md)。
-
-- [提交误拦截反馈](https://github.com/LucentDNS/adblockfilters/issues/new?template=false-positive.yml)
-- [提交漏拦截反馈](https://github.com/LucentDNS/adblockfilters/issues/new?template=missed-domain.yml)
+欢迎报告可复现的误拦截、漏拦截和构建问题。提交前请阅读 [反馈与贡献指南](CONTRIBUTING.md)。仓库已准备误拦截和漏拦截专用反馈表单；启用 GitHub Issues 后即可使用。
 
 每项规则变更都应有可复核证据；不会仅凭域名名称或单条主观反馈直接扩大拦截范围。
 
