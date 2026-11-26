@@ -251,20 +251,26 @@ jobs:
           retention-days: 30
 
       - name: Publish legacy baseline DNS review to audit release
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
+        with:
+          tag_name: audit
+          files: |
+            .cache/baseline-review/summary.md
+            .cache/baseline-review/results.json
+            .cache/baseline-review/resolved.txt
+            .cache/baseline-review/nxdomain-all-five-upstreams.txt
+            .cache/baseline-review/no-address-both-groups.txt
+            .cache/baseline-review/inconclusive.txt
+            .cache/baseline-review/invalid-lines.txt
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          make_latest: false
+
+      - name: Verify legacy baseline DNS review assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release upload audit \
-            .cache/baseline-review/summary.md \
-            .cache/baseline-review/results.json \
-            .cache/baseline-review/resolved.txt \
-            .cache/baseline-review/nxdomain-all-five-upstreams.txt \
-            .cache/baseline-review/no-address-both-groups.txt \
-            .cache/baseline-review/inconclusive.txt \
-            .cache/baseline-review/invalid-lines.txt \
-            --repo "$GITHUB_REPOSITORY" --clobber
-
           assets="$(gh release view audit --json assets --jq '.assets[].name')"
           for name in summary.md results.json resolved.txt nxdomain-all-five-upstreams.txt no-address-both-groups.txt inconclusive.txt invalid-lines.txt; do
             if ! grep -Fxq "$name" <<< "$assets"; then
