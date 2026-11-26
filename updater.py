@@ -6,6 +6,7 @@ import email.utils
 import asyncio
 from datetime import datetime
 from typing import List,Tuple
+from urllib.parse import urlsplit
 
 import httpx
 from loguru import logger
@@ -14,6 +15,9 @@ from readme import Rule
 
 DOWNLOAD_TIMEOUT = httpx.Timeout(90.0, connect=30.0)
 METADATA_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
+RAW_DOWNLOAD_MAX_ATTEMPTS = 3
+RAW_DOWNLOAD_RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
+
 
 # 上游规则更新
 class Updater(object):
@@ -69,7 +73,7 @@ class Updater(object):
     async def __QueryLastModified(self, url: str) -> str:
         """查询 raw.githubusercontent.com 文件的最后修改日期（返回 YYYY/MM/DD，失败返回空串）
         优先 GitHub API（带 GITHUB_TOKEN），403/失败回退 GitHub commits .atom 网页端点（无 API 限流）"""
-        match = re.match(r"https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)", url)
+        match = re.match(r"https://raw\\.githubusercontent\\.com/([^/]+)/([^/]+)/([^/]+)/(.+)", url)
         if not match:
             return ""
         owner, repo, branch, path = match.group(1), match.group(2), match.group(3), match.group(4)
@@ -129,6 +133,44 @@ class Updater(object):
             logger.error(f'query atom failed: %s [%s] %s' % (url, type(e).__name__, e))
         return ""
 
+    async def __GetDownloadResponse(self, client, url: str):
+        """仅对 raw.githubusercontent.com 的临时网络错误、429 和 5xx 做有限重试。"""
+        is_raw_github = (urlsplit(url).hostname or "").lower() == "raw.githubusercontent.com"
+        attempts = RAW_DOWNLOAD_MAX_ATTEMPTS if is_raw_github else 1
+
+        for attempt in range(attempts):
+            try:
+                response = await client.get(url)
+                if (
+                    is_raw_github
+                    and response.status_code in RAW_DOWNLOAD_RETRYABLE_STATUSES
+                    and attempt + 1 < attempts
+                ):
+                    retry_after = response.headers.get("Retry-After", "")
+                    try:
+                        delay = min(max(float(retry_after), 0.0), 10.0)
+                    except (TypeError, ValueError):
+                        delay = float(2 ** attempt)
+                    logger.warning(
+                        "temporary raw GitHub HTTP %s; retry %s/%s in %ss: %s",
+                        response.status_code, attempt + 1, attempts - 1, delay, url
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                response.raise_for_status()
+                return response
+            except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                if not is_raw_github or attempt + 1 >= attempts:
+                    raise
+                delay = float(2 ** attempt)
+                logger.warning(
+                    "temporary raw GitHub network error %s; retry %s/%s in %ss: %s",
+                    type(exc).__name__, attempt + 1, attempts - 1, delay, url
+                )
+                await asyncio.sleep(delay)
+
+        raise RuntimeError(f"raw GitHub download exhausted {attempts} attempts: {url}")
+
     async def __Download(self, rule:Rule, path:str) -> Rule:
         fileName = path + "/" + rule.filename
         fileName_download = fileName + '.download'
@@ -138,8 +180,7 @@ class Updater(object):
                 os.remove(fileName_download)
 
             async with httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, follow_redirects=True) as client:
-                response = await client.get(rule.url)
-                response.raise_for_status()
+                response = await self.__GetDownloadResponse(client, rule.url)
                 contentType = response.headers.get("Content-Type") or ""
                 if "text/plain" not in contentType:
                     raise Exception("Content-Type[%s] error"%(contentType))
