@@ -21,6 +21,7 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
+      - "scripts/audit_sources.py"
       - ".github/workflows/update.yml"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # Tests run in audit-sources.yml; test-only changes must not launch release builds.
