@@ -32,6 +32,11 @@ def domains_from_block_dict(block_dict):
     return domains
 
 
+def exclude_wildcard_only_domains(domains, wildcard_domains, explicit_domains):
+    """Do not DNS-check an apex inferred only from a wildcard block rule."""
+    return set(domains) - (set(wildcard_domains) - set(explicit_domains))
+
+
 def main():
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     DOMAIN_DIR.mkdir(parents=True, exist_ok=True)
@@ -80,7 +85,9 @@ def main():
     # block for the same name.
     wildcard_only = resolver.wildcard_block_domains - resolver.explicit_block_domains
     if wildcard_only:
-        all_domains.difference_update(wildcard_only)
+        all_domains = exclude_wildcard_only_domains(
+            all_domains, resolver.wildcard_block_domains, resolver.explicit_block_domains
+        )
         print(f"Skipped wildcard-only DNS validation candidates: {len(wildcard_only)}")
 
     if not all_domains:
