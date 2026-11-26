@@ -21,10 +21,8 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
-      - "readme.py"
       - "scripts/verify_critical_domains.py"
       - "scripts/audit_sources.py"
-      - "updater.py"
       - ".github/workflows/update.yml"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
