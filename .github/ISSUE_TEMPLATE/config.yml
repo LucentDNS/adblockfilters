@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 规则订阅与自动审计报告
+    url: https://github.com/LucentDNS/adblockfilters/releases/tag/audit
+    about: 提交反馈前，请先查看当前审计结果和规则版本。
