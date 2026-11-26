@@ -36,7 +36,7 @@ env:
 jobs:
   Update_Filters:
     runs-on: ubuntu-26.04
-    timeout-minutes: 180
+    timeout-minutes: 360
 
     steps:
       - name: Checkout Repo
@@ -93,7 +93,7 @@ jobs:
           python -m pytest -q tests
 
       - name: Wait for a complete DNS state matching current inputs
-        timeout-minutes: 55
+        timeout-minutes: 190
         run: |
           set -euo pipefail
           mkdir -p .cache/domain
@@ -106,7 +106,7 @@ jobs:
             validated-dns-sources.tar.gz
           )
           state_ready=0
-          for attempt in $(seq 1 90); do
+          for attempt in $(seq 1 360); do
             git fetch origin main --quiet
             if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
               echo "::error::main advanced while waiting for DNS state; refusing a stale build."
@@ -132,11 +132,11 @@ jobs:
               state_ready=1
               break
             fi
-            echo "Waiting for a complete DNS state matching the current source manifest, validation logic, and myblock.txt ($attempt/90)"
+            echo "Waiting for a complete DNS state matching the current source manifest, validation logic, and myblock.txt ($attempt/360)"
             sleep 30
           done
           if [ "$state_ready" -ne 1 ]; then
-            echo "::error::No complete, current DNS validation state was published within 45 minutes."
+            echo "::error::No complete, current DNS validation state was published within 180 minutes."
             exit 1
           fi
           git fetch origin main
