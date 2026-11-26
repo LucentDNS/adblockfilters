@@ -26,8 +26,6 @@ on:
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
   workflow_dispatch:
-  schedule:
-    - cron: '0 */8 * * *'
 
 env:
   TZ: Asia/Shanghai
