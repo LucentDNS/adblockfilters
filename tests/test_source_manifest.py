@@ -57,3 +57,10 @@ def test_manifest_rejects_unknown_source_fields(tmp_path):
 
     with pytest.raises(ValueError, match="may optionally contain enabled"):
         ReadMe(str(readme)).getRules()
+
+
+def test_manifest_rejects_all_sources_disabled(tmp_path):
+    readme = _manifest(tmp_path, [_source("paused", enabled=False)])
+
+    with pytest.raises(ValueError, match="at least one enabled source"):
+        ReadMe(str(readme)).getRules()
