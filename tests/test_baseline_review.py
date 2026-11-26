@@ -10,7 +10,7 @@ from scripts.review_baseline_only import (
 
 
 def test_only_all_five_upstreams_nxdomain_is_classified_as_dead():
-    assert classify_groups(["not_found"] * 4) == "nxdomain"
+    assert classify_groups(["not_found"] * 5) == "nxdomain"
     assert classify_groups(["not_found"] * 4 + ["no_address"]) == "inconclusive"
     assert classify_groups(["not_found"] * 4 + ["unknown"]) == "inconclusive"
     assert classify_groups(["not_found"] * 4) == "inconclusive"

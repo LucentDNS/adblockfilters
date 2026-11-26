@@ -248,7 +248,7 @@ def test_one_resolver_timeout_prevents_nxdomain_classification():
 
 def test_no_address_requires_all_five_upstreams_to_agree():
     nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
-    assert resolve_upstreams(*([nodata] * 6)) == ([], "no_address")
+    assert resolve_upstreams(*([nodata] * 5)) == ([], "no_address")
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     assert resolve_upstreams(*([nodata] * 4 + [dead])) == ([], "unknown")
 
