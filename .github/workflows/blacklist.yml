@@ -13,7 +13,7 @@ concurrency:
 on:
   workflow_dispatch:
   schedule:
-# Run at 16:37 Beijing time (08:37 UTC), after the main observed upstream update window.
+    # Daily at 16:37 Beijing time (08:37 UTC).
     - cron: '37 8 * * *'
   push:
     branches:
