@@ -320,12 +320,6 @@ class BlackList(object):
     def __download(self, fileName, url):
         try:
             '''
-            ################################
-            # for test
-            if os.path.exists(fileName):
-                return
-            ################################
-            '''
 
             fileNameDownload = fileName + ".download"
             if os.path.exists(fileNameDownload):
@@ -753,13 +747,6 @@ class BlackList(object):
 
             # 域名解析
             '''
-            #################################################################
-            # for test
-            import itertools
-            first_1000 = dict(itertools.islice(domainDict.items(), 1000))
-            domainDict = self.__testDomain(first_1000, ["192.168.3.1"], 5053)
-            #################################################################
-            '''
             domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过5个独立上游分别验证，国内2个、国际3个；全部一致才确认NXDOMAIN
 
             # 国内域名识别
@@ -814,15 +801,7 @@ class BlackList(object):
 
 if __name__ == "__main__":
     path = os.getcwd()
-    '''
-    ############################################
-    # for test
-    logFile = os.path.join(path, "adblock.log")
-    if os.path.exists(logFile):
-        os.remove(logFile)
-    logger.add(logFile)
-    ############################################
-    '''
+    # 更新 tld    '''
 
     # 更新 tld
     update_tld_names()
