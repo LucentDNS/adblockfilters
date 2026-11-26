@@ -6,9 +6,9 @@
 
 ## 项目状态与使用提示
 
-本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和多客户端产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。项目没有预先批量添加通用放行域名；误报主要依赖用户提供可复现证据后逐项核实。自动化检查不能替代真实设备与实际使用场景验证。
+本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和多客户端产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。**上游规则源的接入不代表逐条人工预审，也不代表已对每条规则完成独立质量背书；项目没有覆盖所有域名的前置自动误报扫描。** 自动化检查侧重来源可用性、规则处理、DNS 有效性与产物回归，不能证明每条规则都不会影响正常业务，也不能替代真实设备与实际使用场景验证。误报主要依赖用户提供可复现证据后逐项核实。
 
-首次使用或用于重要设备时，建议先观察一段时间，并确认所用客户端支持相应规则格式。遇到网站、应用或系统功能异常，请提交可复现的反馈；项目不承诺零误报或零漏报，也不会仅凭未经验证的单次反馈直接放行域名。
+项目没有预先批量添加通用放行域名。首次使用或用于重要设备时，建议先观察一段时间，并确认所用客户端支持相应规则格式。遇到网站、应用或系统功能异常，请提交可复现的反馈；项目不承诺零误报或零漏报，也不会仅凭未经验证的单次反馈直接放行域名。
 
 ## 订阅
 
@@ -41,7 +41,7 @@
 - **Full**：包含通过上述 DNS 有效性验证、并经规则处理流程保留的完整规则范围。
 - **Lite**：在域名规则基础上，进一步依据国内域名识别数据筛选；识别依据包括国内直连域名规则及中国 IPv4 地址段。它不是简单按数量截短规则，也不是随意删减规则。对于浏览器过滤规则，Lite 按规则关联域名及规则自身的匹配范围筛选，并保留原有匹配语义。
 
-浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。
+浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。**本项目不会对所有上游规则中的网页修饰符进行通用、无差别清洗；DNS 格式产物以现有解析与转换流程实际识别、输出的内容为准。** 如果上游混合语法或客户端不支持的规则进入某个产物，DNS 网关/客户端可能忽略该规则、显示警告，或拒绝加载订阅。请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。
 
 ## 白名单与误报处理
 
@@ -80,4 +80,20 @@
 
 ## 许可与归属
 
-项目代码采用 [GPL-3.0](LICENSE)。本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生；上游规则保留各自原有归属及许可条件。无法确认再分发条件的来源不纳入正式构建。
+项目仓库级代码许可证为 [GPL-3.0](LICENSE)，与本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生的代码基础一致。该许可证声明不应被理解为把所有第三方规则数据统一改许可；上游规则及其原始归属、版权声明和许可条件仍须分别遵守。
+
+当前来源清单中可核对的上游仓库/发布方许可信息如下。这里列出的是上游仓库或发布方公开声明，不代表对每一条规则的版权来源作出独立法律鉴定；如具体文件附有不同声明，应以该文件及其上游说明为准。
+
+| 上游来源 | 公开许可信息 |
+|---|---|
+| AdGuard Base / Chinese（FiltersRegistry） | [LGPL-3.0](https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE) |
+| AdGuard Mobile Ads（AdguardFilters） | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |
+| AdGuard DNS filter | [GPL-3.0](https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE) |
+| CJX's Annoyance List | [LGPL-3.0](https://github.com/cjx82630/cjxlist)（以该仓库当前许可声明为准） |
+| EasyList / EasyPrivacy | [GPL-3.0-or-later 或 CC BY-SA 3.0-or-later](https://easylist.to/pages/licence.html) |
+| EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |
+| AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
+| HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
+| StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |
+
+AdRules 当前不在本项目的 `sources.json` 中，因此不属于当前正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
