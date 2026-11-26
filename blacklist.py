@@ -319,7 +319,7 @@ class BlackList(object):
 
     def __download(self, fileName, url):
         try:
-            '''
+
 
             fileNameDownload = fileName + ".download"
             if os.path.exists(fileNameDownload):
@@ -746,7 +746,7 @@ class BlackList(object):
             IPRanges_CN = self.__getIPDict_CN()
 
             # 域名解析
-            '''
+
             domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过5个独立上游分别验证，国内2个、国际3个；全部一致才确认NXDOMAIN
 
             # 国内域名识别
@@ -801,7 +801,7 @@ class BlackList(object):
 
 if __name__ == "__main__":
     path = os.getcwd()
-    # 更新 tld    '''
+
 
     # 更新 tld
     update_tld_names()
