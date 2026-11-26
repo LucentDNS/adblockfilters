@@ -59,6 +59,6 @@ Lite 为精简版本，规则覆盖范围与 Full 不同。请按客户端支持
 
 欢迎提交可复现的误拦截、漏拦截或构建问题。请先阅读 [反馈与贡献指南](CONTRIBUTING.md)，并使用 GitHub Issues 中对应的反馈模板。规则变更须有可复核证据，不以单纯增加域名数量作为目标。
 
-## 许可
+## 许可与归属
 
 项目代码采用 [GPL-3.0](LICENSE)。本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生；上游规则保留各自原有归属及许可条件。无法确认再分发条件的来源不纳入正式构建。
