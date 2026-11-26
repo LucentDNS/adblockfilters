@@ -469,6 +469,10 @@ jobs:
             gh release delete domain --cleanup-tag --yes
             echo "Removed redundant domain backup release."
           fi
+          if git ls-remote --exit-code --heads origin cleanup/release-hygiene >/dev/null 2>&1; then
+            git push origin --delete cleanup/release-hygiene
+            echo "Removed merged cleanup branch."
+          fi
 
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7
