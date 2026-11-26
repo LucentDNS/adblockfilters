@@ -41,4 +41,4 @@ def test_resolver_tracks_wildcard_and_explicit_dns_block_domains_separately(tmp_
 
     assert "wild.example.com" in resolver.wildcard_block_domains
     assert "exact.example.net" in resolver.explicit_block_domains
-    assert set(block) == {"wild.example.com", "exact.example.net"}
+    assert block == {"example.com": {"wild"}, "example.net": {"exact"}}
