@@ -1,6 +1,6 @@
 # AdBlock DNS
 
-自动聚合、去重并编译广告与跟踪拦截规则，每 8 小时更新一次。
+自动聚合、去重并编译广告与跟踪拦截规则，每日自动更新一次。
 
 本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生，独立维护规则源、DNS 有效性验证及多客户端构建流程。项目不以逐条复刻上游结果为目标；规则差异通过审计追踪。
 
