@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -55,3 +56,16 @@ def test_source_manifest_rejects_plain_http(tmp_path):
 
     with pytest.raises(ValueError, match="must use HTTPS"):
         ReadMe(str(path)).getRules()
+
+
+def test_readme_direct_subscriptions_are_unique_and_complete():
+    root = Path(__file__).parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    subscriptions = re.findall(
+        r"\\[[^\\]]+\\]\\(https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/dist/([^)]+)\\)",
+        readme,
+    )
+
+    assert len(subscriptions) == 35
+    assert len(subscriptions) == len(set(subscriptions))
+    assert "adblockdomainallow.txt" in subscriptions

@@ -345,7 +345,7 @@ jobs:
 
           readme = Path("README.md").read_text(encoding="utf-8")
           subscriptions = re.findall(
-              r"\[原始链接\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
+              r"\[[^\]]+\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
               readme,
           )
           if len(subscriptions) != len(expected) or set(subscriptions) != expected:
