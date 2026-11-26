@@ -142,6 +142,7 @@ jobs:
               5058: ("example.com", "cloudflare.com", "google.com"),
           }
           probe = "adblock-dns-probe-20261125.example.invalid"
+          failures = []
 
           for port, domains in upstreams.items():
               resolver = dns.resolver.Resolver(configure=False)
@@ -160,20 +161,22 @@ jobs:
                       print(f"Upstream {port} probe failed for {domain}: {type(exc).__name__}: {exc}")
 
               if len(success) < 2:
-                  raise SystemExit(f"SmartDNS upstream {port} health check failed: only {success} resolved")
+                  failures.append(f"upstream {port}: fewer than two positive probes resolved ({success})")
 
               for rdtype in ("A", "AAAA"):
                   try:
                       resolver.resolve(probe, rdtype)
                   except NXDOMAIN:
                       print(f"Upstream {port}: {rdtype} NXDOMAIN probe passed")
+                  except Exception as exc:
+                      failures.append(f"upstream {port}: {rdtype} reserved-name probe failed: {type(exc).__name__}: {exc}")
                   else:
-                      raise SystemExit(
-                          f"SmartDNS upstream {port} failed to return {rdtype} NXDOMAIN "
-                          "for the reserved .invalid domain"
-                      )
+                      failures.append(f"upstream {port}: {rdtype} did not return NXDOMAIN for reserved .invalid name")
 
               print(f"Upstream {port} positive probes passed: {', '.join(success)}")
+
+          if failures:
+              raise SystemExit("DNS validation upstream health check failed:\\n- " + "\\n- ".join(failures))
           PY
 
       - name: Download database

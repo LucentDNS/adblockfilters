@@ -6,7 +6,7 @@ def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
 
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
     groups = (
-        "domestic_doh", "domestic_baidu", "domestic_bytedance",
+        "domestic_dnspod", "domestic_baidu", "domestic_bytedance",
         "global_google", "global_quad9", "global_cloudflare",
     )
     server_prefixes = ("server ", "server-tls ", "server-https ")
@@ -20,12 +20,11 @@ def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
         assert "-exclude-default-group" in servers[0]
 
     for provider in (
-        "https://doh.pub/dns-query", "180.76.76.76", "180.184.1.1",
+        "119.29.29.29", "180.76.76.76", "180.184.1.1",
         "8.8.8.8", "9.9.9.10", "1.1.1.1",
     ):
         assert provider in config
 
-    assert "-tls-host-verify doh.pub" in config
     assert config.count("-exclude-default-group") == 6
     assert "force-AAAA-SOA" not in config
     assert "-force-aaaa-soa" not in config
