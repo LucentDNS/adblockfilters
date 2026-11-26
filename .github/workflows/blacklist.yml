@@ -223,7 +223,7 @@ jobs:
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
-      - name: Review legacy upstream-only domains with both DNS groups
+      - name: Review legacy upstream-only domains with all six DNS upstreams
         run: |
           set -euo pipefail
           mkdir -p .cache/baseline-review

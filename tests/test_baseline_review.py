@@ -36,8 +36,8 @@ def test_mixed_a_and_aaaa_nxdomain_responses_are_inconclusive():
 def test_candidate_parser_normalizes_deduplicates_and_rejects_patterns(tmp_path: Path):
     path = tmp_path / "baseline-only.txt"
     path.write_text(
-        "! generated report\\nExample.COM\\nexample.com\\n*.example.net\\n"
-        "invalid-domain\\nmail.example.org.\\n",
+        "! generated report\nExample.COM\nexample.com\n*.example.net\n"
+        "invalid-domain\nmail.example.org.\n",
         encoding="utf-8",
     )
     domains, invalid, candidate_count = read_candidates(path)
