@@ -80,11 +80,11 @@ def test_release_asset_filename_is_github_safe_and_stable():
 def test_legacy_source_table_parser_skips_other_markdown_tables(tmp_path):
     readme_path = tmp_path / "README.md"
     readme_path.write_text(
-        "| Version | URL |\\n"
-        "|---|---|\\n"
-        "| DNS | https://example.com/list.txt |\\n"
-        "| Source | Type | Link | Updated |\\n"
-        "| Example | dns | [upstream](https://example.org/source.txt) | today |\\n",
+        "| Version | URL |\n"
+        "|---|---|\n"
+        "| DNS | https://example.com/list.txt |\n"
+        "| Source | Type | Link | Updated |\n"
+        "| Example | dns | [upstream](https://example.org/source.txt) | today |\n",
         encoding="utf-8",
     )
 
