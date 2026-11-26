@@ -44,6 +44,15 @@ DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 # Bump when the evidence required to classify a domain as NXDOMAIN changes.
 DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057)
 DNS_BLOCK_POLICY_VERSION = "4"
+DNS_VALIDATION_MAX_CONCURRENCY = 50
+DNS_VALIDATION_START_INTERVAL_SECONDS = 0.01
+DNS_UNKNOWN_FAILURE_MIN_SAMPLES = 20
+DNS_UNKNOWN_FAILURE_MAX_RATIO = 0.20
+
+
+def _dns_validation_infrastructure_unhealthy(total: int, unknown: int) -> bool:
+    return total >= DNS_UNKNOWN_FAILURE_MIN_SAMPLES and unknown / total > DNS_UNKNOWN_FAILURE_MAX_RATIO
+
 
 
 def _needs_dns_validation(ip_list, last_checked, now, is_new=False) -> bool:
@@ -310,7 +319,7 @@ class BlackList(object):
         self.__IPlistFile = os.path.join(path, "rules/ipv4_china.txt")
         self.__IPlistUrl = "https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/ipv4_china.txt"
         # Cap concurrent DNS checks to reduce upstream resolver rate limiting.
-        self.__maxTask = 200
+        self.__maxTask = DNS_VALIDATION_MAX_CONCURRENCY
 
         self.__db = DomainDatabase(self.__databaseFile)
 
@@ -571,6 +580,11 @@ class BlackList(object):
                 if not domain.getIPList():
                     domain.setCheckedAtNow()
 
+            stats = getattr(self, "_BlackList__dns_validation_stats", None)
+            if stats is not None and not domain.ip:
+                stats["checked"] += 1
+                stats[status] += 1
+
             return domain
 
     def __generateBlackList(self, blackList):
@@ -616,13 +630,26 @@ class BlackList(object):
                 dnsresolver.lifetime = 5.0
                 dnsresolvers.append(dnsresolver)
             semaphore = asyncio.Semaphore(self.__maxTask)
+            self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
+            rate_lock = asyncio.Lock()
+            next_start = 0.0
+            loop = asyncio.get_running_loop()
+
+            async def rate_limited_ping(domain):
+                nonlocal next_start
+                async with rate_lock:
+                    delay = next_start - loop.time()
+                    if delay > 0:
+                        await asyncio.sleep(delay)
+                    next_start = loop.time() + DNS_VALIDATION_START_INTERVAL_SECONDS
+                return await self.__pingx(dnsresolvers, domain, semaphore)
 
             tasks = []
             now = int(time.time())
             for _,v in domainDict.items():
                 ipList = v.getIPList()
                 if _needs_dns_validation(ipList, v.getTimeStamp(), now, v.getUpdate()):
-                    tasks.append(self.__pingx(dnsresolvers, v, semaphore))
+                    tasks.append(rate_limited_ping(v))
             total = len(tasks)
             for completed, task in enumerate(asyncio.as_completed(tasks), 1):
                 domain = await task
@@ -633,10 +660,19 @@ class BlackList(object):
             resolved = sum(1 for item in domainDict.values() if item.getIPList())
             nxdomain = sum(1 for item in domainDict.values() if item.getBlock())
             unresolved = len(domainDict) - resolved - nxdomain
+            stats = self.__dns_validation_stats
+            logger.info("DNS validation query summary: " + ", ".join(f"{key}={value}" for key, value in stats.items()))
             logger.info(
                 f"DNS validation summary: total={len(domainDict)} resolved={resolved} "
                 f"NXDOMAIN={nxdomain} no-address-or-inconclusive={unresolved}"
             )
+            if _dns_validation_infrastructure_unhealthy(stats["checked"], stats["unknown"]):
+                ratio = stats["unknown"] / stats["checked"]
+                raise RuntimeError(
+                    "DNS validation infrastructure appears degraded: "
+                    f"{stats['unknown']}/{stats['checked']} checked domains were inconclusive ({ratio:.1%}); "
+                    "refusing to publish DNS state"
+                )
             return domainDict
 
         return asyncio.run(_resolve_all())

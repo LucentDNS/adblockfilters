@@ -32,6 +32,11 @@ def domains_from_block_dict(block_dict):
     return domains
 
 
+def exclude_wildcard_only_domains(domains, wildcard_domains, explicit_domains):
+    """Do not DNS-check an apex inferred only from a wildcard block rule."""
+    return set(domains) - (set(wildcard_domains) - set(explicit_domains))
+
+
 def main():
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     DOMAIN_DIR.mkdir(parents=True, exist_ok=True)
@@ -58,6 +63,8 @@ def main():
         else:
             block_dict, _, _ = resolver.resolveFilter(rule)
         domains = domains_from_block_dict(block_dict)
+        if rule.type == "host":
+            resolver.explicit_block_domains.update(domains)
         if not domains:
             raise SystemExit(
                 f"DNS/Hosts source {rule.name} produced no valid block domains; refusing a partial validation input"
@@ -70,6 +77,18 @@ def main():
     custom_domains = domains_from_block_dict(custom_blocks)
     source_counts["myblock"] = len(custom_domains)
     all_domains.update(custom_domains)
+
+    # Resolver normalizes a wildcard suffix such as ||*.example.com^ to
+    # example.com for rule compilation. Do not query that apex merely because
+    # the wildcard exists: the apex may be NXDOMAIN while subdomains are live.
+    # Keep the candidate if any source also contains an explicit exact-domain
+    # block for the same name.
+    wildcard_only = resolver.wildcard_block_domains - resolver.explicit_block_domains
+    if wildcard_only:
+        all_domains = exclude_wildcard_only_domains(
+            all_domains, resolver.wildcard_block_domains, resolver.explicit_block_domains
+        )
+        print(f"Skipped wildcard-only DNS validation candidates: {len(wildcard_only)}")
 
     if not all_domains:
         raise SystemExit("Selected DNS/Hosts sources produced no valid block domains")
