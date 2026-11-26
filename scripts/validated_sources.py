@@ -25,7 +25,6 @@ VALIDATION_LOGIC_FILES = (
     "updater.py",
     "scripts/generate_domain_input.py",
     "scripts/validated_sources.py",
-    "scripts/verify_critical_domains.py",
     "rules/myblock.txt",
 )
 
