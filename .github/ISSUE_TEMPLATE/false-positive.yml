@@ -5,12 +5,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        请先确认最新订阅仍可复现问题。不要提交密码、Cookie、令牌或私人日志。
+        请先更新到最新订阅、清理 DNS 缓存并复测。请勿提交密码、Cookie、令牌、完整私人日志或其他敏感信息。
   - type: input
     id: domain
     attributes:
       label: 受影响的完整域名
-      description: 请填写实际被拦截的主机名。
+      description: 请填写实际被拦截的主机名（FQDN），不要只填写网站首页。
       placeholder: api.example.com
     validations:
       required: true
@@ -32,20 +32,27 @@ body:
     id: symptom
     attributes:
       label: 故障表现与复现步骤
-      description: 请说明关闭本项目规则后是否恢复，以及复现时间和时区。
+      description: 请写明发生时间和时区、复现频率、清理缓存后的结果，以及临时停用本项目规则后是否恢复、重新启用后是否再次出现。
     validations:
       required: true
   - type: textarea
     id: evidence
     attributes:
       label: 证明该域名属于正常业务的证据
-      description: 官方文档、域名所有者说明或可公开核验的资料链接。
+      description: 官方文档、域名所有者说明或其他可公开核验的资料链接。
     validations:
       required: true
+  - type: textarea
+    id: dns_evidence
+    attributes:
+      label: DNS 查询或拦截日志（建议提供）
+      description: 请尽量提供查询域名、记录类型（A/AAAA）、响应码（NXDOMAIN/NOERROR/SERVFAIL 等）、答案及客户端拦截日志摘要。请先脱敏，不要公开内网地址、个人标识或完整私人日志。
+    validations:
+      required: false
   - type: textarea
     id: extra
     attributes:
       label: 其他信息
-      description: 可选。请勿粘贴含个人信息的完整网络日志。
+      description: 可选补充。若无法提供 DNS 日志，请说明原因。
     validations:
       required: false
