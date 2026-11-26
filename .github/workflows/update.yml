@@ -21,6 +21,7 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
+      - "readme.py"
       - ".github/workflows/update.yml"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
@@ -382,17 +383,6 @@ jobs:
           print("Audit report assets are present, non-empty, and valid.")
           PY
 
-      - name: Upload build and comparison artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: adblock-dns-build
-          path: |
-            .cache/out/*
-            .cache/report/*
-            .cache/audit/*
-          retention-days: 14
-          if-no-files-found: error
-
       - name: Refuse to publish if main advanced during the build
         run: |
           set -euo pipefail
@@ -406,43 +396,31 @@ jobs:
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: rule
+          name: AdBlock DNS
+          body: Automated Full and Lite advertising and tracking filters. Subscription formats and direct links are documented in README.
+          make_latest: true
           files: .cache/out/*
           overwrite_files: true
           fail_on_unmatched_files: true
-
-      - name: Remove internal V2Ray text assets from rule release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for asset in adblockv2ray.txt adblockv2raylite.txt; do
-            if gh release view rule --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
-              gh release delete-asset rule "$asset" --yes
-            fi
-          done
 
       - name: Upload sources to release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: source
+          name: Upstream Source Snapshots
+          body: Build-time snapshots of the configured upstream rule sources, retained for provenance and audit. These files are not client subscriptions.
+          make_latest: false
           files: .cache/source/*
           overwrite_files: true
           fail_on_unmatched_files: true
-
-      - name: Remove obsolete source release assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # These files belonged to removed source configurations or audit-only candidates.
-          for asset in AWAvenue_Ads_Rule.txt DNS-Blocklists_PRO_mini.txt OISD_Basic.txt Pollock_hosts.txt Pollock_hosts_.candidate_only.txt; do
-            if gh release view source --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
-              gh release delete-asset source "$asset" --yes
-            fi
-          done
 
       - name: Publish source audit and baseline comparison reports
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
           tag_name: audit
+          name: Quality and Source Audit
+          body: Automated source, whitelist, Lite-scope, and upstream-baseline reports for maintenance and regression review. This release is audit evidence, not a subscription.
+          make_latest: false
           files: |
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
@@ -484,23 +462,15 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
 
-      - name: Remove obsolete audit report assets
+      - name: Remove redundant domain backup release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for asset in baseline-only-browser-explained.txt baseline-only-not-browser-explained.txt baseline-only-not-current-dns-source.txt; do
-            if gh release view audit --json assets --jq '.assets[].name' | grep -Fxq "$asset"; then
-              gh release delete-asset audit "$asset" --yes
-            fi
-          done
-
-      - name: Upload domain backup
-        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
-        with:
-          tag_name: domain
-          files: .cache/domain/domain.txt
-          overwrite_files: true
-          fail_on_unmatched_files: true
+          set -euo pipefail
+          if gh release view domain >/dev/null 2>&1; then
+            gh release delete domain --cleanup-tag --yes
+            echo "Removed redundant domain backup release."
+          fi
 
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7

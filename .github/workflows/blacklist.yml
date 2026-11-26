@@ -4,7 +4,6 @@ name: Generate DNS State
 permissions:
   contents: write
   actions: write
-  pull-requests: read
 
 concurrency:
   # Latest-run-wins for DNS validation; production builds use a separate concurrency group.
@@ -24,9 +23,7 @@ on:
       - smartdns.conf
       - resolver.py
       - updater.py
-      - README.md
       - sources.json
-      - readme.py
       - requirements.txt
       - scripts/generate_domain_input.py
       - scripts/validated_sources.py
@@ -241,15 +238,6 @@ jobs:
             --concurrency 100
           cat .cache/baseline-review/summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload legacy baseline review
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: legacy-baseline-review
-          path: .cache/baseline-review/
-          if-no-files-found: warn
-          retention-days: 30
-
       - name: Publish legacy baseline DNS review to audit release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
@@ -317,16 +305,6 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
 
-      - name: Remove obsolete DNS validation marker asset
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for obsolete in dns-validation-bootstrap-complete.txt; do
-            if gh release view dns-validation-state --json assets --jq '.assets[].name' | grep -Fxq "$obsolete"; then
-              gh release delete-asset dns-validation-state "$obsolete" --yes
-            fi
-          done
-
       - name: Verify dns-validation-state release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -339,71 +317,6 @@ jobs:
               exit 1
             fi
           done
-
-      - name: Remove obsolete development DNS releases
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          for legacy in dev-domain-noble dev-domain; do
-            if gh release view "$legacy" >/dev/null 2>&1; then
-              gh release delete "$legacy" --cleanup-tag --yes
-              echo "Removed obsolete release and tag: $legacy"
-            fi
-          done
-
-          if git ls-remote --exit-code --heads origin lucentdns-dev >/dev/null 2>&1; then
-            if git push origin --delete lucentdns-dev; then
-              echo "Removed obsolete branch lucentdns-dev (no unique commits; fully superseded by main)."
-            else
-              echo "::warning::Could not delete obsolete branch lucentdns-dev; DNS validation and production build will continue."
-            fi
-          fi
-
-          # The QA branch's only unique regression test has been copied into main.
-          if git ls-remote --exit-code --heads origin qa/independent-dns-group-regression >/dev/null 2>&1; then
-            if git push origin --delete qa/independent-dns-group-regression; then
-              echo "Removed merged QA branch qa/independent-dns-group-regression."
-            else
-              echo "::warning::Could not delete merged QA branch; DNS validation and production build will continue."
-            fi
-          fi
-
-      - name: Remove merged fix branches
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          branches="$(gh api --paginate "repos/${REPOSITORY}/branches?per_page=100" --jq '.[].name')"
-          open_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].head.ref')"
-          merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" | jq -r --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
-
-          deleted=0
-          while IFS= read -r branch; do
-            [[ "${branch}" == fix/* ]] || continue
-
-            if grep -Fxq "${branch}" <<< "${open_refs}"; then
-              echo "Keeping ${branch}: an open PR still uses this branch."
-              continue
-            fi
-
-            if ! grep -Fxq "${branch}" <<< "${merged_refs}"; then
-              echo "Keeping ${branch}: no merged PR found for this branch."
-              continue
-            fi
-
-            if git push origin --delete "${branch}"; then
-              echo "Deleted merged fix branch: ${branch}"
-              deleted=$((deleted + 1))
-            else
-              echo "::warning::Could not delete merged fix branch ${branch}; continuing."
-            fi
-          done <<< "${branches}"
-
-          echo "Deleted ${deleted} merged fix branches."
-          echo "Deleted ${deleted} merged fix branches." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Trigger production rule build after dns-validation-state publication
         env:
