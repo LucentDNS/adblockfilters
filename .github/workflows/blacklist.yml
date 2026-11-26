@@ -107,33 +107,43 @@ jobs:
               cat "$SMARTDNS_LOG"
               exit 1
             fi
-            if ss -H -lun | grep -Eq '127\.0\.0\.1:5053([[:space:]]|$)' \
-              && ss -H -lun | grep -Eq '127\.0\.0\.1:5054([[:space:]]|$)'; then
+            listeners_ready=1
+            for port in 5053 5054 5055 5056 5057 5058; do
+              if ! ss -H -lun | grep -Eq "127\\.0\\.0\\.1:$port([[:space:]]|$)"; then
+                listeners_ready=0
+                break
+              fi
+            done
+            if [ "$listeners_ready" = "1" ]; then
               ready=1
               break
             fi
             sleep 1
           done
           if [ "$ready" = "0" ]; then
-            echo "::error::SmartDNS did not bind both local DNS listeners within 30s"
+            echo "::error::SmartDNS did not bind all six local DNS listeners within 30s"
             cat "$SMARTDNS_LOG"
             exit 1
           fi
 
-      - name: Verify domestic and global SmartDNS groups independently
+      - name: Verify all six SmartDNS upstreams independently
         run: |
           set -euo pipefail
           python - <<'PY'
           import dns.resolver
           from dns.resolver import NXDOMAIN
 
-          groups = {
+          upstreams = {
               5053: ("baidu.com", "qq.com", "example.com"),
-              5054: ("example.com", "cloudflare.com", "google.com"),
+              5054: ("baidu.com", "qq.com", "example.com"),
+              5055: ("baidu.com", "qq.com", "example.com"),
+              5056: ("example.com", "cloudflare.com", "google.com"),
+              5057: ("example.com", "cloudflare.com", "google.com"),
+              5058: ("example.com", "cloudflare.com", "google.com"),
           }
           probe = "adblock-dns-probe-20261125.example.invalid"
 
-          for port, domains in groups.items():
+          for port, domains in upstreams.items():
               resolver = dns.resolver.Resolver(configure=False)
               resolver.nameservers = ["127.0.0.1"]
               resolver.port = port
@@ -147,23 +157,23 @@ jobs:
                       if len(answer) > 0:
                           success.append(domain)
                   except Exception as exc:
-                      print(f"Group {port} probe failed for {domain}: {type(exc).__name__}: {exc}")
+                      print(f"Upstream {port} probe failed for {domain}: {type(exc).__name__}: {exc}")
 
               if len(success) < 2:
-                  raise SystemExit(f"SmartDNS group {port} health check failed: only {success} resolved")
+                  raise SystemExit(f"SmartDNS upstream {port} health check failed: only {success} resolved")
 
               for rdtype in ("A", "AAAA"):
                   try:
                       resolver.resolve(probe, rdtype)
                   except NXDOMAIN:
-                      print(f"Group {port}: {rdtype} NXDOMAIN probe passed")
+                      print(f"Upstream {port}: {rdtype} NXDOMAIN probe passed")
                   else:
                       raise SystemExit(
-                          f"SmartDNS group {port} failed to return {rdtype} NXDOMAIN "
+                          f"SmartDNS upstream {port} failed to return {rdtype} NXDOMAIN "
                           "for the reserved .invalid domain"
                       )
 
-              print(f"Group {port} positive probes passed: {', '.join(success)}")
+              print(f"Upstream {port} positive probes passed: {', '.join(success)}")
           PY
 
       - name: Download database

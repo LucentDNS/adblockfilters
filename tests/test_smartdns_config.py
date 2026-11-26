@@ -159,6 +159,7 @@ def test_legacy_baseline_only_domains_are_reviewed_with_all_six_upstreams():
         "- name: Review legacy upstream-only domains with all six DNS upstreams", 1
     )[1].split("- name: Upload legacy baseline review", 1)[0]
     assert "all six independent upstreams" in review_script
+    assert "all six independent upstreams" in review_script
     assert all(not line.endswith("\\\\") for line in review_step.splitlines())
 
 

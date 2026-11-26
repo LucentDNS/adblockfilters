@@ -23,7 +23,7 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
         "[原始链接](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt)"
     ) == 1
     assert "每 8 小时自动构建" in generated
-    assert "A、AAAA 查询在两组中均返回 NXDOMAIN" in generated
+    assert "6 个上游对 A、AAAA 查询全部返回 NXDOMAIN" in generated
     assert "## 本地开发与验证" in generated
     assert "python -m ruff check --no-cache --select E4,E7,E9,F scripts tests readme.py" in generated
     assert "python -m pytest -q tests" in generated
