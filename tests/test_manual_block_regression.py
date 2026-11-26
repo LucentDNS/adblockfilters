@@ -13,7 +13,7 @@ def test_high_confidence_manual_block_domains_remain_blocked():
         if line.strip() and not line.lstrip().startswith("#")
     }
     rules = (ROOT / "rules" / "myblock.txt").read_text(encoding="utf-8")
-    blocked = set(re.findall(r"^\\|\\|([a-z0-9.-]+)\\^$", rules, re.MULTILINE))
+    blocked = set(re.findall(r"^\|\|([a-z0-9.-]+)\^$", rules, re.MULTILINE))
 
     assert required, "Manual block regression fixture must not be empty"
     assert len(required) == sum(
