@@ -21,4 +21,6 @@ def test_high_confidence_manual_block_domains_remain_blocked():
         if line.strip() and not line.lstrip().startswith("#")
     ), "Manual block regression fixture contains duplicate domains"
     missing = sorted(required - blocked)
-    assert not missing, "High-confidence manual block domains were removed: " + ", ".join(missing)
+    untracked = sorted(blocked - required)
+    assert not missing, "Manual block domains missing from myblock.txt: " + ", ".join(missing)
+    assert not untracked, "Manual block domains missing from regression fixture: " + ", ".join(untracked)
