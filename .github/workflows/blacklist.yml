@@ -267,13 +267,26 @@ jobs:
             fi
           done
 
-      - name: Upload log on failure
-        if: failure()
+      - name: Upload DNS validation audit artifact
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: dns-validation-state-log
-          path: blacklist.log
+          name: dns-validation-audit-${{ github.run_id }}
+          path: |
+            blacklist.log
+            domain.txt
+            domain-input-provenance.json
+            black.txt
+            china.txt
+            .cache/baseline-review/summary.md
+            .cache/baseline-review/results.json
+            .cache/baseline-review/resolved.txt
+            .cache/baseline-review/nxdomain-all-five-upstreams.txt
+            .cache/baseline-review/no-address-both-groups.txt
+            .cache/baseline-review/inconclusive.txt
+            .cache/baseline-review/invalid-lines.txt
           if-no-files-found: warn
+          retention-days: 30
 
       - name: Write summary
         if: always()
