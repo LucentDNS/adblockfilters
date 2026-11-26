@@ -64,7 +64,7 @@ def test_review_reports_use_nonempty_placeholders_for_empty_categories(tmp_path:
     results = [{"domain": "example.com", "status": "resolved"}]
     write_reports(results, [], tmp_path, candidate_count=1)
 
-    assert (tmp_path / "resolved.txt").read_text(encoding="utf-8") == "example.com\\n"
+    assert (tmp_path / "resolved.txt").read_text(encoding="utf-8") == "example.com\n"
     assert (tmp_path / "nxdomain-all-five-upstreams.txt").read_text(encoding="utf-8").startswith("!")
     assert (tmp_path / "no-address-both-groups.txt").read_text(encoding="utf-8").startswith("!")
     assert (tmp_path / "inconclusive.txt").read_text(encoding="utf-8").startswith("!")
