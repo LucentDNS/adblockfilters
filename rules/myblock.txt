@@ -116,6 +116,11 @@
 ||rutor-15.com^
 ||rutor-20.com^
 ||rutor21.net^
+! Gridinsoft: phishing classification with independent provider warnings; 1/100 trust score.
+! https://gridinsoft.com/online-virus-scanner/url/rutor24at-com
+! https://gridinsoft.com/online-virus-scanner/url/rutor24-org
+||rutor24at.com^
+||rutor24.org^
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 放行规则
