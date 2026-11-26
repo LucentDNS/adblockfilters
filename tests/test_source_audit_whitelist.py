@@ -39,16 +39,7 @@ def test_source_audit_gate_rejects_unparsed_or_lost_source_rules():
     assert "blocked-allow.example" in failures[4]
 
 
-def test_source_audit_gate_rejects_unexplained_upstream_baseline_blocks():
-    failures = audit_sources.source_audit_gate_failures(
-        0,
-        0,
-        set(),
-        set(),
-        set(),
-        {"missing-baseline.example"},
-    )
-
-    assert len(failures) == 1
-    assert "upstream baseline DNS block rules" in failures[0]
-    assert "missing-baseline.example" in failures[0]
+def test_upstream_baseline_delta_is_reviewed_without_requiring_output_identity():
+    # Baseline-only differences remain in the audit report; they are not
+    # automatically imported or allowlisted and must not force a source clone.
+    assert audit_sources.source_audit_gate_failures(0, 0, set(), set(), set()) == []

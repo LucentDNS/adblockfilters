@@ -32,9 +32,8 @@ def source_audit_gate_failures(
     source_presence_unexplained: set[str],
     current_source_parent_inactive_unexplained: set[str],
     baseline_allow_missing_still_blocked: set[str],
-    baseline_unexplained_after_manual: set[str] | None = None,
 ) -> list[str]:
-    """Return hard failures where source intent is lost or upstream allows regress."""
+    """Return hard failures where selected source intent is lost or upstream allows regress."""
     failures = []
     if compiled_unparsed:
         failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
@@ -57,12 +56,6 @@ def source_audit_gate_failures(
         failures.append(
             "upstream baseline allow exceptions are missing while domains remain blocked: "
             + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
-        )
-    if baseline_unexplained_after_manual:
-        failures.append(
-            "upstream baseline DNS block rules are not preserved by current sources, "
-            "validated exclusions, project whitelist, source allows, or manual rules: "
-            + ", ".join(sorted(baseline_unexplained_after_manual)[:20])
         )
     return failures
 
@@ -612,7 +605,12 @@ def main():
             "- 本次未执行：独立来源审计工作流没有运行完整规则构建，因此没有 baseline-only.txt。\n"
             "- 缺少基线数据不代表原作者独有规则为 0 条；请以完整构建工作流生成的差异报告为准。\n"
         )
-        (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
+        report += "\n## 上游基线差异的处理原则\n\n"
+    report += "- 上游基线独有域名与本项目当前所选来源不一致时，差异保留在审计清单中，供持续人工复核；不自动加入白名单，也不盲目全量导入。\n"
+    report += "- 这类差异本身不作为硬失败，因为本项目不是逐条复制上游输出；硬门槛仍要求当前启用来源中的有效规则不丢失、编译结果可解析，并且上游明确的 allow 例外不被误拦。\n"
+    report += "- 只有有独立证据支持的广告、跟踪或钓鱼域名才补入维护规则；只有有充分证据确认正常且必要的业务域名才可排除；证据不足的项目继续保留待审。\n"
+
+    (OUT_DIR / "source-audit.md").write_text(report, encoding="utf-8")
         print(report)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
         if summary:
@@ -1400,7 +1398,6 @@ def main():
         source_presence_unexplained,
         current_source_parent_inactive_unexplained,
         baseline_allow_missing_still_blocked,
-        source_unexplained_after_manual,
     )
     if gate_failures:
         raise SystemExit("Source/output consistency gate failed:\n- " + "\n- ".join(gate_failures))
