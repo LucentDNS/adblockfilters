@@ -80,4 +80,20 @@
 
 ## 许可与归属
 
-项目仓库级代码许可证为 [GPL-3.0](LICENSE)，与本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生的代码基础一致。该许可证声明不应被理解为把所有第三方规则数据统一改许可；上游规则及其原始归属、版权声明和许可条件仍须分别遵守。\n\n当前来源清单中可核对的上游仓库/发布方许可信息如下。这里列出的是上游仓库或发布方公开声明，不代表对每一条规则的版权来源作出独立法律鉴定；如具体文件附有不同声明，应以该文件及其上游说明为准。\n\n| 上游来源 | 公开许可信息 |\n|---|---|\n| AdGuard Base / Chinese（FiltersRegistry） | [LGPL-3.0](https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE) |\n| AdGuard Mobile Ads（AdguardFilters） | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |\n| AdGuard DNS filter | [GPL-3.0](https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE) |\n| CJX's Annoyance List | [LGPL-3.0](https://github.com/cjx82630/cjxlist)（以该仓库当前许可声明为准） |\n| EasyList / EasyPrivacy | [GPL-3.0-or-later 或 CC BY-SA 3.0-or-later](https://easylist.to/pages/licence.html) |\n| EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |\n| AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |\n| HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |\n| StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |\n\nAdRules 当前不在本项目的 `sources.json` 中，因此不属于当前正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
+项目仓库级代码许可证为 [GPL-3.0](LICENSE)，与本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生的代码基础一致。该许可证声明不应被理解为把所有第三方规则数据统一改许可；上游规则及其原始归属、版权声明和许可条件仍须分别遵守。
+
+当前来源清单中可核对的上游仓库/发布方许可信息如下。这里列出的是上游仓库或发布方公开声明，不代表对每一条规则的版权来源作出独立法律鉴定；如具体文件附有不同声明，应以该文件及其上游说明为准。
+
+| 上游来源 | 公开许可信息 |
+|---|---|
+| AdGuard Base / Chinese（FiltersRegistry） | [LGPL-3.0](https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE) |
+| AdGuard Mobile Ads（AdguardFilters） | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |
+| AdGuard DNS filter | [GPL-3.0](https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE) |
+| CJX's Annoyance List | [LGPL-3.0](https://github.com/cjx82630/cjxlist)（以该仓库当前许可声明为准） |
+| EasyList / EasyPrivacy | [GPL-3.0-or-later 或 CC BY-SA 3.0-or-later](https://easylist.to/pages/licence.html) |
+| EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |
+| AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
+| HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
+| StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |
+
+AdRules 当前不在本项目的 `sources.json` 中，因此不属于当前正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
