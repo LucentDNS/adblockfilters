@@ -178,13 +178,13 @@ def write_reports(
             result["domain"] for result in results if result["status"] == status
         )
         (output_dir / filename).write_text(
-            "\n".join(lines) + ("\n" if lines else ""),
+            "\n".join(lines) + "\n" if lines else "! No domains matched this status.\n",
             encoding="utf-8",
             newline="\n",
         )
 
     (output_dir / "invalid-lines.txt").write_text(
-        "\n".join(invalid) + ("\n" if invalid else ""),
+        "\n".join(invalid) + "\n" if invalid else "! No invalid lines.\n",
         encoding="utf-8",
         newline="\n",
     )

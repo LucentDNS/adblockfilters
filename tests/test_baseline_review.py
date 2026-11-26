@@ -6,6 +6,7 @@ from scripts.review_baseline_only import (
     classify_rrtype_results,
     read_candidates,
     valid_domain,
+    write_reports,
 )
 
 
@@ -57,3 +58,14 @@ def test_domain_validator_rejects_empty_and_non_domain_inputs():
 
 def test_review_uses_five_distinct_independent_resolver_ports():
     assert DEFAULT_UPSTREAM_PORTS == (5053, 5054, 5055, 5056, 5057)
+
+
+def test_review_reports_use_nonempty_placeholders_for_empty_categories(tmp_path: Path):
+    results = [{"domain": "example.com", "status": "resolved"}]
+    write_reports(results, [], tmp_path, candidate_count=1)
+
+    assert (tmp_path / "resolved.txt").read_text(encoding="utf-8") == "example.com\\n"
+    assert (tmp_path / "nxdomain-all-five-upstreams.txt").read_text(encoding="utf-8").startswith("!")
+    assert (tmp_path / "no-address-both-groups.txt").read_text(encoding="utf-8").startswith("!")
+    assert (tmp_path / "inconclusive.txt").read_text(encoding="utf-8").startswith("!")
+    assert (tmp_path / "invalid-lines.txt").read_text(encoding="utf-8").startswith("!")
