@@ -9,21 +9,21 @@ from scripts.review_baseline_only import (
 )
 
 
-def test_only_all_six_upstreams_nxdomain_is_classified_as_dead():
-    assert classify_groups(["not_found"] * 6) == "nxdomain"
-    assert classify_groups(["not_found"] * 5 + ["no_address"]) == "inconclusive"
-    assert classify_groups(["not_found"] * 5 + ["unknown"]) == "inconclusive"
-    assert classify_groups(["not_found"] * 5) == "inconclusive"
+def test_only_all_five_upstreams_nxdomain_is_classified_as_dead():
+    assert classify_groups(["not_found"] * 4) == "nxdomain"
+    assert classify_groups(["not_found"] * 4 + ["no_address"]) == "inconclusive"
+    assert classify_groups(["not_found"] * 4 + ["unknown"]) == "inconclusive"
+    assert classify_groups(["not_found"] * 4) == "inconclusive"
 
 
 def test_any_successful_upstream_keeps_domain_active():
-    assert classify_groups(["resolved"] + ["not_found"] * 5) == "resolved"
-    assert classify_groups(["unknown", "resolved"] + ["not_found"] * 4) == "resolved"
+    assert classify_groups(["resolved"] + ["not_found"] * 4) == "resolved"
+    assert classify_groups(["unknown", "resolved"] + ["not_found"] * 3) == "resolved"
 
 
-def test_no_address_requires_all_six_upstreams():
-    assert classify_groups(["no_address"] * 6) == "no_address"
-    assert classify_groups(["no_address"] * 5 + ["unknown"]) == "inconclusive"
+def test_no_address_requires_all_five_upstreams():
+    assert classify_groups(["no_address"] * 5) == "no_address"
+    assert classify_groups(["no_address"] * 4 + ["unknown"]) == "inconclusive"
 
 
 def test_mixed_a_and_aaaa_nxdomain_responses_are_inconclusive():
@@ -55,5 +55,5 @@ def test_domain_validator_rejects_empty_and_non_domain_inputs():
     assert not valid_domain("example/path")
 
 
-def test_review_uses_six_distinct_independent_resolver_ports():
-    assert DEFAULT_UPSTREAM_PORTS == (5053, 5054, 5055, 5056, 5057, 5058)
+def test_review_uses_five_distinct_independent_resolver_ports():
+    assert DEFAULT_UPSTREAM_PORTS == (5053, 5054, 5055, 5056, 5057)

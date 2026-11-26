@@ -108,7 +108,7 @@ jobs:
               exit 1
             fi
             listeners_ready=1
-            for port in 5053 5054 5055 5056 5057 5058; do
+            for port in 5053 5054 5055 5056 5057; do
               if ! ss -H -lun | grep -Eq "127\\.0\\.0\\.1:$port([[:space:]]|$)"; then
                 listeners_ready=0
                 break
@@ -121,12 +121,12 @@ jobs:
             sleep 1
           done
           if [ "$ready" = "0" ]; then
-            echo "::error::SmartDNS did not bind all six local DNS listeners within 30s"
+            echo "::error::SmartDNS did not bind all five local DNS listeners within 30s"
             cat "$SMARTDNS_LOG"
             exit 1
           fi
 
-      - name: Verify all six SmartDNS upstreams independently
+      - name: Verify all five SmartDNS upstreams independently
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -136,10 +136,9 @@ jobs:
           upstreams = {
               5053: ("baidu.com", "qq.com", "example.com"),
               5054: ("baidu.com", "qq.com", "example.com"),
-              5055: ("baidu.com", "qq.com", "example.com"),
+              5055: ("example.com", "cloudflare.com", "google.com"),
               5056: ("example.com", "cloudflare.com", "google.com"),
               5057: ("example.com", "cloudflare.com", "google.com"),
-              5058: ("example.com", "cloudflare.com", "google.com"),
           }
           probe = "adblock-dns-probe-20261125.example.invalid"
           failures = []
@@ -226,7 +225,7 @@ jobs:
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
-      - name: Review legacy upstream-only domains with all six DNS upstreams
+      - name: Review legacy upstream-only domains with all five DNS upstreams
         run: |
           set -euo pipefail
           mkdir -p .cache/baseline-review
