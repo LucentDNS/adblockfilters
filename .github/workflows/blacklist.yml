@@ -322,7 +322,7 @@ jobs:
           current_main_sha="$(git rev-parse FETCH_HEAD)"
           if [[ "$current_main_sha" != "$GITHUB_SHA" ]]; then
             changed_paths="$(git diff --name-only HEAD "$current_main_sha")"
-            if printf '%s\n' "$changed_paths" | grep -Eq '^(blacklist\.py|smartdns\.conf|resolver\.py|updater\.py|sources\.json|requirements\.txt|scripts/(generate_domain_input|validated_sources|verify_critical_domains|review_baseline_only)\.py|rules/(myblock|direct|ipv4_china)\.txt|\.github/workflows/blacklist\.yml)'; then
+            if printf '%s\n' "$changed_paths" | grep -Eq '^(blacklist\.py|smartdns\.conf|resolver\.py|sources\.json|requirements\.txt|scripts/(generate_domain_input|validated_sources|verify_critical_domains|review_baseline_only)\.py|rules/(myblock|direct|ipv4_china)\.txt|\.github/workflows/blacklist\.yml)'; then
               echo "::notice::Skipping production build because DNS inputs or validation logic changed during this run; the newer validation run will publish matching state."
               exit 0
             fi
