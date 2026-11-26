@@ -134,7 +134,7 @@ class Updater(object):
         return ""
 
     async def __GetDownloadResponse(self, client, url: str):
-        """仅对 raw.githubusercontent.com 的临时网络错误、429 和 5xx 做有限重试。"""
+        """仅对 raw.githubusercontent.com 的临时网络错误、408、429 和指定 5xx 做有限重试。"""
         is_raw_github = (urlsplit(url).hostname or "").lower() == "raw.githubusercontent.com"
         attempts = RAW_DOWNLOAD_MAX_ATTEMPTS if is_raw_github else 1
 
