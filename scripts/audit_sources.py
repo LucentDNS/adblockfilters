@@ -32,6 +32,7 @@ def source_audit_gate_failures(
     source_presence_unexplained: set[str],
     current_source_parent_inactive_unexplained: set[str],
     baseline_allow_missing_still_blocked: set[str],
+    source_absent_unexplained: set[str],
 ) -> list[str]:
     """Return hard failures where selected source intent is lost or upstream allows regress."""
     failures = []
@@ -56,6 +57,12 @@ def source_audit_gate_failures(
         failures.append(
             "upstream baseline allow exceptions are missing while domains remain blocked: "
             + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
+        )
+    if source_absent_unexplained:
+        failures.append(
+            "upstream baseline block domains are absent from current DNS sources and "
+            "have no validated blacklist, whitelist, source-allow, or manual-block explanation: "
+            + ", ".join(sorted(source_absent_unexplained)[:20])
         )
     return failures
 
@@ -1398,6 +1405,7 @@ def main():
         source_presence_unexplained,
         current_source_parent_inactive_unexplained,
         baseline_allow_missing_still_blocked,
+        source_absent_unexplained,
     )
     if gate_failures:
         raise SystemExit("Source/output consistency gate failed:\n- " + "\n- ".join(gate_failures))
