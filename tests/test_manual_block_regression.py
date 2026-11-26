@@ -24,3 +24,23 @@ def test_high_confidence_manual_block_domains_remain_blocked():
     untracked = sorted(blocked - required)
     assert not missing, "Manual block domains missing from myblock.txt: " + ", ".join(missing)
     assert not untracked, "Manual block domains missing from regression fixture: " + ", ".join(untracked)
+
+
+def test_curated_manual_blocks_override_dns_nxdomain_blacklist():
+    from filter import _remove_manual_blocks_from_blacklist
+
+    blacklist = {
+        "dead-upstream.example",
+        "phishing.example",
+        "sub.phishing.example",
+        "unrelated.example",
+    }
+    manual_blocks = {
+        "example": {"phishing"},
+        "tracker.example": {""},
+    }
+
+    assert _remove_manual_blocks_from_blacklist(blacklist, manual_blocks) == {
+        "dead-upstream.example",
+        "unrelated.example",
+    }
