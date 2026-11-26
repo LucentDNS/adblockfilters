@@ -25,6 +25,24 @@ def _is_ip_literal(value: str) -> bool:
         return False
 
 
+def _remove_manual_blocks_from_blacklist(blacklist, manual_block_dict):
+    """Keep explicitly curated manual blocks even when DNS currently says NXDOMAIN.
+
+    These entries are maintained from threat/ad/tracker evidence, not inferred
+    from DNS existence. Retaining them also protects against later reactivation
+    or re-registration of a known malicious hostname.
+    """
+    manual_domains = set()
+    for suffix, subdomains in manual_block_dict.items():
+        if not suffix:
+            continue
+        for subdomain in subdomains:
+            domain = (f"{subdomain}.{suffix}" if subdomain else suffix).strip().lower()
+            if domain and not _is_ip_literal(domain):
+                manual_domains.add(domain)
+    return {str(domain).strip().lower() for domain in blacklist} - manual_domains
+
+
 def _build_exact_block_list(block_domains, allow_domains, blacklist, include_domains=None):
     """Build exact-host entries before Full suffix compression, with hierarchical allow rules."""
     allow_domains = {str(domain).strip().lower() for domain in allow_domains if str(domain).strip()}
@@ -343,6 +361,12 @@ class Filter(object):
 
         # 提取黑名单、白名单、China domain
         blackSet = self.__getBlackList(self.path + "/black.txt")  # 经测试已无法解析的域名
+        # Explicitly curated myblock entries are threat/ad/tracker decisions, not
+        # DNS-existence guesses. Do not let NXDOMAIN validation silently erase them.
+        manualBlockDict, _, _ = Resolver(self.sourcePath).resolveDNS(
+            Rule("myblock", "dns", "", "")
+        )
+        blackSet = _remove_manual_blocks_from_blacklist(blackSet, manualBlockDict)
         whiteSet = self.__getWhiteList(self.path + "/white.txt")  # 收集的误杀规则
         whiteDict = self.__getWhiteDict(whiteSet)
         ChinaSet = self.__getChinaList(self.path + "/china.txt")  # 国内域名
