@@ -137,7 +137,6 @@ class ADBlock(object):
 
         readme = ReadMe(self.pwd + '/README.md')
         ruleList = readme.getRules()
-        '''
         # 更新上游规则（下载到 .cache/source）
         update, ruleList = update_sources_preserving_validated_dns(
             ruleList, self.sourceDir, self.domainDir
@@ -157,12 +156,6 @@ class ADBlock(object):
 
 if __name__ == '__main__':
     configure_logging()
-    # 更新 tld
-    logFile = os.getcwd() + "/adblock.log"
-    if os.path.exists(logFile):
-        os.remove(logFile)
-    logger.add(logFile)
-    '''
     # 更新 tld
     update_tld_names()
 
