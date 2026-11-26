@@ -31,7 +31,6 @@ on:
       - scripts/validated_sources.py
       - scripts/verify_critical_domains.py
       - scripts/review_baseline_only.py
-      - scripts/audit_sources.py
       - rules/myblock.txt
       - rules/direct.txt
       - rules/ipv4_china.txt
