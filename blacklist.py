@@ -319,8 +319,6 @@ class BlackList(object):
 
     def __download(self, fileName, url):
         try:
-
-
             fileNameDownload = fileName + ".download"
             if os.path.exists(fileNameDownload):
                 os.remove(fileNameDownload)
@@ -801,7 +799,6 @@ class BlackList(object):
 
 if __name__ == "__main__":
     path = os.getcwd()
-
 
     # 更新 tld
     update_tld_names()
