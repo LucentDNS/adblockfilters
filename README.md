@@ -6,7 +6,7 @@
 
 ## 项目状态与使用提示
 
-本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和多客户端产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。**上游规则源的接入不代表逐条人工预审，也不代表已对每条规则完成独立质量背书。** 自动化检查不能替代真实设备与实际使用场景验证；误报主要依赖用户提供可复现证据后逐项核实。
+本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和多客户端产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。**上游规则源的接入不代表逐条人工预审，也不代表已对每条规则完成独立质量背书；项目没有覆盖所有域名的前置自动误报扫描。** 自动化检查侧重来源可用性、规则处理、DNS 有效性与产物回归，不能证明每条规则都不会影响正常业务，也不能替代真实设备与实际使用场景验证。误报主要依赖用户提供可复现证据后逐项核实。
 
 项目没有预先批量添加通用放行域名。首次使用或用于重要设备时，建议先观察一段时间，并确认所用客户端支持相应规则格式。遇到网站、应用或系统功能异常，请提交可复现的反馈；项目不承诺零误报或零漏报，也不会仅凭未经验证的单次反馈直接放行域名。
 
@@ -80,4 +80,4 @@
 
 ## 许可与归属
 
-项目代码采用 [GPL-3.0](LICENSE)。本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生；上游规则保留各自原有归属及许可条件。无法确认再分发条件的来源不纳入正式构建。
+项目仓库级代码许可证为 [GPL-3.0](LICENSE)，与本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生的代码基础一致。该许可证声明不应被理解为把所有第三方规则数据统一改许可；上游规则及其原始归属、版权声明和许可条件仍须分别遵守。\n\n当前来源清单中可核对的上游仓库/发布方许可信息如下。这里列出的是上游仓库或发布方公开声明，不代表对每一条规则的版权来源作出独立法律鉴定；如具体文件附有不同声明，应以该文件及其上游说明为准。\n\n| 上游来源 | 公开许可信息 |\n|---|---|\n| AdGuard Base / Chinese（FiltersRegistry） | [LGPL-3.0](https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE) |\n| AdGuard Mobile Ads（AdguardFilters） | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |\n| AdGuard DNS filter | [GPL-3.0](https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE) |\n| CJX's Annoyance List | [LGPL-3.0](https://github.com/cjx82630/cjxlist)（以该仓库当前许可声明为准） |\n| EasyList / EasyPrivacy | [GPL-3.0-or-later 或 CC BY-SA 3.0-or-later](https://easylist.to/pages/licence.html) |\n| EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |\n| AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |\n| HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |\n| StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |\n\nAdRules 当前不在本项目的 `sources.json` 中，因此不属于当前正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
