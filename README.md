@@ -56,7 +56,7 @@
 - [正式规则 Release](https://github.com/LucentDNS/adblockfilters/releases/tag/rule)
 - [审计报告 Release](https://github.com/LucentDNS/adblockfilters/releases/tag/audit)
 - [dist 订阅目录](https://github.com/LucentDNS/adblockfilters/tree/dist)
-- [上游来源清单](sources.json)
+- [上游来源清单](sources.json)（单个来源可通过设置 `"enabled": false` 临时停用；省略该字段时默认启用，恢复时删除该字段或设为 `true`）
 
 ## 集成的上游规则源
 
