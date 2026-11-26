@@ -98,6 +98,19 @@
 ! Exact-host scope only; the parent qq.com namespace is never blocked.
 ||oth.str.mdt.qq.com^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Verified advertising endpoints; exact-host scope based on maintained blocklists and DNS infrastructure evidence.
+! https://github.com/AdguardTeam/AdGuardHome/blob/master/internal/filtering/tests/dns.txt
+! https://github.com/blokadaorg/landing-github-pages/blob/master/blocklists/ddgtrackerradar/standard/hosts.txt
+||adssend.net^
+||adserver.ibjmedia.com^
+! https://github.com/vokins/ad/blob/main/ad.lsr
+! https://gist.github.com/toimc/1667a33da4bf6b45094d680843031fed
+||cdn-new-ad.wtzw.com^
+! DNS intelligence maps this host to Kwai/MythAd and Adaether ad-serving infrastructure.
+! https://dnsrepo.noc.org/?ip=103.167.27.38
+||kix-ad.sg.fortunedancer.com^
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Confirmed phishing domains; independent security-provider and PhishTank signals reviewed 2026-11-26.
 ! Block exact registered domains only; do not widen to unrelated parent namespaces.
 ! https://domainspoof.com/live?after=1795188504~xuyanglvshi.com&show=reported_domain&snap=20261120T155659Z
