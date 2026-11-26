@@ -141,3 +141,19 @@ def test_valid_text_response_atomically_replaces_cache(tmp_path, monkeypatch):
     assert instance._BlackList__download(str(target), "https://example.invalid/direct.txt") is True
     assert target.read_text(encoding="utf-8") == "domain:new.example\n"
     assert not (tmp_path / "direct.txt.download").exists()
+
+
+def test_dns_validation_infrastructure_guard_tolerates_a_few_inconclusive_domains():
+    from blacklist import _dns_validation_infrastructure_unhealthy
+
+    assert _dns_validation_infrastructure_unhealthy(20, 4) is False
+    assert _dns_validation_infrastructure_unhealthy(20, 5) is False
+    assert _dns_validation_infrastructure_unhealthy(20, 6) is True
+    assert _dns_validation_infrastructure_unhealthy(19, 19) is False
+
+
+def test_mass_dns_validation_inconclusive_results_block_publication():
+    from blacklist import _dns_validation_infrastructure_unhealthy
+
+    assert _dns_validation_infrastructure_unhealthy(1000, 900) is True
+    assert _dns_validation_infrastructure_unhealthy(1000, 100) is False
