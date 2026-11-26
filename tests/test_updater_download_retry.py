@@ -46,6 +46,17 @@ def test_raw_github_retries_temporary_http_status(monkeypatch):
     assert client.calls == 2
 
 
+def test_raw_github_retries_rate_limit_response(monkeypatch):
+    no_wait(monkeypatch)
+    url = "https://raw.githubusercontent.com/example/rules/main/list.txt"
+    client = SequenceClient([response(429, url), response(200, url)])
+
+    result = asyncio.run(Updater([])._Updater__GetDownloadResponse(client, url))
+
+    assert result.status_code == 200
+    assert client.calls == 2
+
+
 def test_raw_github_retries_transient_network_error(monkeypatch):
     no_wait(monkeypatch)
     url = "https://raw.githubusercontent.com/example/rules/main/list.txt"
