@@ -15,7 +15,7 @@ def test_regenerated_readme_lists_only_validated_release_outputs(tmp_path):
     assert "myblock.txt（补充拦截及浏览器例外）仅保留有可复现证据的项目自维护拦截" in generated
     assert "white.txt（误拦截放行例外）" in generated
     assert "raw.githubusercontent.com/LucentDNS/adblockfilters/dist/" in generated
-    assert generated.splitlines()[0] == "# AdBlock DNS Filters"
+    assert generated.splitlines()[0] == "# AdBlock DNS"
     # The raw subscription URL is also embedded inside each of the three
     # mirror URLs. Assert the Markdown's original-link target, not substring
     # occurrences across the complete document.

@@ -104,7 +104,7 @@ class ReadMe(object):
             ("V2Ray / Xray", "adblockv2raylite.dat", "DAT Lite"),
         ]
         with open(self.filename, "w", encoding="utf-8", newline="\n") as f:
-            f.write("# AdBlock DNS Filters\n")
+            f.write("# AdBlock DNS\n")
             f.write("去广告合并规则，每 8 小时更新一次。\n")
             f.write("本项目聚合多个公开维护的广告、跟踪及浏览器过滤规则源，自动更新、去重并生成适配多种客户端的 Full/Lite 规则。\n\n")
             f.write("本仓库基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 持续维护，保留原作者的规则组织和 Full/Lite 设计，并加强来源校验、双组 DNS 交叉验证与构建回归检查。\n\n")

@@ -384,13 +384,13 @@ def main():
     candidate_rules = [
         Rule("Pollock hosts (candidate only)", "host",
              "https://someonewhocares.org/hosts/hosts", "2026/11/22"),
-        # The upstream README labels this asset OISD Basic, but the downloaded payload
+        # The upstream release asset is named OISD_Basic.txt, but the downloaded payload
         # metadata identifies itself as "oisd small". In the latest audit it
         # shares 62,805 of 62,806 parsed block domains with the production OISD
         # Small snapshot (one snapshot-specific domain differs on each side).
         # Keep it audit-only; do not infer a distinct Basic-vs-Small advantage
         # from the README label.
-        Rule("OISD upstream release snapshot (README says Basic; payload title says Small)", "dns",
+        Rule("OISD legacy source snapshot (asset named Basic; payload title says Small)", "dns",
              "https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt",
              "upstream release snapshot")
     ]
@@ -621,7 +621,7 @@ def main():
         required_names = production_names | browser_names
         failed_required = [row["name"] for row in results
                            if row["name"] in required_names and not row["download_ok"]]
-        critical_candidates = {"OISD upstream release snapshot (README says Basic; payload title says Small)"}
+        critical_candidates = {"OISD legacy source snapshot (asset named Basic; payload title says Small)"}
         failed_candidates = [name for name in critical_candidates
                              if not downloads.get(name, {}).get("ok")]
         if failed_required or failed_candidates:
@@ -1385,7 +1385,7 @@ def main():
     required_names = production_names | browser_names
     failed_required = [row["name"] for row in results
                        if row["name"] in required_names and not row["download_ok"]]
-    critical_candidates = {"OISD upstream release snapshot (README says Basic; payload title says Small)"}
+    critical_candidates = {"OISD legacy source snapshot (asset named Basic; payload title says Small)"}
     failed_candidates = [name for name in critical_candidates
                          if not downloads.get(name, {}).get("ok")]
     if failed_required or failed_candidates:
