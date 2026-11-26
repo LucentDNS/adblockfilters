@@ -94,6 +94,8 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "scripts/generate_domain_input.py",
         "requirements.txt",
         "rules/myblock.txt",
+        "readme.py",
+        "updater.py",
     } <= set(dns_paths)
 
     assert {
@@ -103,8 +105,6 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "rules/filter-exclude.txt",
         "rules/white.txt",
         "scripts/compare_baseline.py",
-        "updater.py",
-        "readme.py",
         "scripts/audit_sources.py",
         "scripts/verify_critical_domains.py",
         ".github/workflows/update.yml",
@@ -112,8 +112,9 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert "rules/white.txt" not in dns_paths
     assert ".github/workflows/update.yml" not in dns_paths
     assert "scripts/review_baseline_only.py" in dns_paths
-    assert "updater.py" not in dns_paths
-    assert "readme.py" not in dns_paths
+    assert "updater.py" not in update_paths
+    assert "readme.py" not in update_paths
+    assert "scripts/verify_critical_domains.py" in update_paths
     assert "scripts/audit_sources.py" not in dns_paths
     assert "scripts/verify_critical_domains.py" not in dns_paths
     assert "scripts/**" in audit_paths
@@ -141,7 +142,6 @@ def test_dns_state_dispatch_guard_tracks_only_dns_validation_inputs():
 
     assert "sources\\.json" in guard
     assert "requirements\\.txt" in guard
-    assert "README" not in guard
-    assert "readme\\.py" not in guard
-    assert "updater\\.py" not in guard
+    assert "readme\\.py" in guard
+    assert "updater\\.py" in guard
     assert "verify_critical_domains" not in guard
