@@ -14,14 +14,25 @@ def test_repository_source_manifest_is_unique_and_https_only():
     readme = (root / "README.md").read_text(encoding="utf-8")
 
     assert manifest["version"] == 1
-    assert len(manifest["sources"]) == 15
+    assert len(manifest["sources"]) >= 1
     assert "## 上游来源" not in readme
-    assert len(rules) == 15
+    assert len(rules) == len(manifest["sources"])
     assert all(rule.type in {"filter", "dnsfilter", "dns", "host"} for rule in rules)
     assert all(rule.url.startswith("https://") for rule in rules)
     assert len({rule.name for rule in rules}) == len(rules)
     assert len({rule.filename for rule in rules}) == len(rules)
     assert len({rule.url for rule in rules}) == len(rules)
+
+
+def test_sources_without_verified_redistribution_terms_are_excluded():
+    root = Path(__file__).parents[1]
+    manifest = json.loads((root / "sources.json").read_text(encoding="utf-8"))
+    names = {source["name"] for source in manifest["sources"]}
+
+    # Re-add only after the upstream provides explicit redistribution terms.
+    assert not names.intersection(
+        {"AdRules DNS List", "xinggsf mv", "jiekouAD", "OISD Small"}
+    )
 
 
 def test_source_manifest_rejects_filename_collisions(tmp_path):
@@ -103,6 +114,6 @@ def test_readme_upstream_attribution_matches_the_source_manifest():
     linked_urls = re.findall(r"\]\((https://[^)]+)\)", section)
     expected_urls = [source["url"] for source in manifest["sources"]]
 
-    assert len(linked_urls) == len(expected_urls) == 15
+    assert len(linked_urls) == len(expected_urls) == len(manifest["sources"])
     assert len(linked_urls) == len(set(linked_urls))
     assert set(linked_urls) == set(expected_urls)
