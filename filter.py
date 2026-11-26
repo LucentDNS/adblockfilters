@@ -29,8 +29,10 @@ def _remove_manual_blocks_from_blacklist(blacklist, manual_block_dict):
     """Keep explicitly curated manual blocks even when DNS currently says NXDOMAIN.
 
     These entries are maintained from threat/ad/tracker evidence, not inferred
-    from DNS existence. Retaining them also protects against later reactivation
-    or re-registration of a known malicious hostname.
+    from DNS existence. The manual-block policy therefore overrides only the
+    exact-host DNS negative list; normal whitelist handling remains in force.
+    This also protects against later reactivation or re-registration of a
+    known malicious hostname.
     """
     manual_domains = set()
     for suffix, subdomains in manual_block_dict.items():
