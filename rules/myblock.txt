@@ -125,6 +125,15 @@
 ! https://github.com/matomo-org/referrer-spam-list/blob/master/spammers.txt
 ||xtrafficplus.xyz^
 
+! SBI Securities impersonation domains confirmed by PhishTank and multiple independent security providers.
+! https://gridinsoft.com/online-virus-scanner/url/sbi_sens-cfd
+! https://gridinsoft.com/online-virus-scanner/url/sbi_srees-cfd
+! https://phishing.jp/phishing/%E9%87%8D%E8%A6%81%E6%9C%9F%E9%99%90%E5%BB%B6%E9%95%B7%E9%9B%BB%E8%A9%B1%E8%AA%8D%E8%A8%BC%E3%81%B8%E3%81%AE%E5%88%87%E3%82%8A%E6%9B%BF%E3%81%88%E3%81%AE%E3%81%8A%E9%A1%98%E3%81%8411%E6%9C%8822%E6%97%A5%E3%81%BE%E3%81%A7sbi%E8%A8%BC%E5%88%B8-5e01d1be99b3/
+! https://domainspoof.com/live?after=1794778424~oplink.cloud&show=all&snap=20261115T220337Z
+||sbi-sens.cfd^
+||sbi-sesh.cfd^
+||sbi-srees.cfd^
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Confirmed phishing domains; independent security-provider and PhishTank signals reviewed 2026-11-26.
 ! Block exact registered domains only; do not widen to unrelated parent namespaces.
