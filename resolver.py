@@ -22,6 +22,10 @@ from readme import Rule
 class Resolver(object):
     def __init__(self, path:str):
         self.path = path
+        # Metadata used by the DNS-state generator: wildcard suffixes must not
+        # be queried as if the apex itself represented the wildcard pattern.
+        self.wildcard_block_domains = set()
+        self.explicit_block_domains = set()
 
     def __ip_or_domain(self, address:str) -> Tuple[str]: # ip, fld, subdomain
         ip, fld, subdomain = None, None, None
@@ -301,10 +305,12 @@ class Resolver(object):
                     if domain.find('*') >= 0:
                         if domain.startswith('*.') and domain[2:].find('*')<0:
                             domain = domain[2:]
+                            self.wildcard_block_domains.add(domain.lower().strip("."))
                             block = self.__analysis(domain)
                             break
                         filter = line
                         break
+                    self.explicit_block_domains.add(domain.lower().strip("."))
                     block = self.__analysis(domain)
                     break
                 # @@||example.org^
@@ -395,11 +401,13 @@ class Resolver(object):
                     if domain.find('*') >= 0:
                         if domain.startswith('*.') and domain[2:].find('*')<0:
                             domain = domain[2:]
+                            self.wildcard_block_domains.add(domain.lower().strip("."))
                             block = self.__analysis(domain)
                             break
                         else:
                             filter = line
                             break
+                    self.explicit_block_domains.add(domain.lower().strip("."))
                     block = self.__analysis(domain)
                     break
                 # @@||example.org^: unblock access to the example.org domain and all its subdomains.
@@ -425,6 +433,7 @@ class Resolver(object):
                 # 判断是否为单纯的域名
                 if line.find('.')>0 and not line.startswith('*.') and not line.startswith('-') and line.find('=')<0 and line.find(':')<0 and line.find('*')<0 and line.find('_')<0 and line.find('?')<0 and line.find(';')<0 and line.find('|')<0 and line.find('$')<0 and line.find('#')<0 and line.find('/')<0 and line.find('%')<0 and line.find('^') < 0:
                     domain = line
+                    self.explicit_block_domains.add(domain.lower().strip("."))
                     block = self.__analysis(domain)
                     break
                 # other
