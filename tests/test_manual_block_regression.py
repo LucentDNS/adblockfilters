@@ -42,5 +42,6 @@ def test_curated_manual_blocks_override_dns_nxdomain_blacklist():
 
     assert _remove_manual_blocks_from_blacklist(blacklist, manual_blocks) == {
         "dead-upstream.example",
+        "sub.phishing.example",
         "unrelated.example",
     }
