@@ -23,7 +23,7 @@ on:
       - "scripts/compare_baseline.py"
       - ".github/workflows/update.yml"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
-  # Tests run in audit-sources.yml; test-only changes must not launch release builds.
+  # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
   workflow_dispatch:
   schedule:
     - cron: '0 */8 * * *'

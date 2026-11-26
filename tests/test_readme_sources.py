@@ -62,7 +62,7 @@ def test_readme_direct_subscriptions_are_unique_and_complete():
     root = Path(__file__).parents[1]
     readme = (root / "README.md").read_text(encoding="utf-8")
     subscriptions = re.findall(
-        r"\\[[^\\]]+\\]\\(https://raw\\.githubusercontent\\.com/[^/]+/[^/]+/dist/([^)]+)\\)",
+        r"\[[^\]]+\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
         readme,
     )
 
