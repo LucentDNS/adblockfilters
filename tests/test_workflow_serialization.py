@@ -103,15 +103,33 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
         "rules/filter-exclude.txt",
         "rules/white.txt",
         "scripts/compare_baseline.py",
+        "updater.py",
+        "readme.py",
+        "scripts/audit_sources.py",
+        "scripts/verify_critical_domains.py",
         ".github/workflows/update.yml",
     } <= set(update_paths)
     assert "rules/white.txt" not in dns_paths
     assert ".github/workflows/update.yml" not in dns_paths
     assert "scripts/review_baseline_only.py" in dns_paths
-    assert "scripts/audit_sources.py" not in update_paths
+    assert "updater.py" not in dns_paths
+    assert "readme.py" not in dns_paths
+    assert "scripts/audit_sources.py" not in dns_paths
+    assert "scripts/verify_critical_domains.py" not in dns_paths
     assert "scripts/**" in audit_paths
 
     ci_only_paths = {".editorconfig", ".gitattributes", "pyproject.toml", "requirements-dev.txt"}
     assert ci_only_paths.isdisjoint(update_paths)
     assert ci_only_paths.isdisjoint(dns_paths)
     assert ci_only_paths <= set(audit_paths)
+
+
+def test_daily_dns_validation_is_the_only_scheduled_production_build():
+    dns = (WORKFLOWS / "blacklist.yml").read_text(encoding="utf-8")
+    update = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "cron: '17 3 * * *'" in dns
+    assert "schedule:" not in update
+    assert "gh workflow run update.yml --ref main" in dns
+    assert "每日自动更新一次" in readme
