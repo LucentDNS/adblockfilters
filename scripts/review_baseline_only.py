@@ -1,3 +1,5 @@
+"""Report-only DNS review of legacy baseline deltas; never mutates production rules."""
+
 from __future__ import annotations
 
 import argparse
