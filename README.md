@@ -60,20 +60,20 @@
 
 | 来源 | 类型 | 上游地址 | 更新信息 |
 |---|---|---|---|
-| AdGuard Base filter | filter | [upstream](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt) | 2026/11/25 |
-| AdGuard Chinese filter | filter | [upstream](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt) | 2026/11/25 |
+| AdGuard Base filter | filter | [upstream](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt) | 2026/11/26 |
+| AdGuard Chinese filter | filter | [upstream](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt) | 2026/11/26 |
 | AdGuard Mobile Ads filter | filter | [upstream](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt) | 2026/11/11 |
-| AdGuard DNS filter | dnsfilter | [upstream](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt) | 2026/11/25 |
-| AdRules DNS List | dnsfilter | [upstream](https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt) | 2026/11/25 |
+| AdGuard DNS filter | dnsfilter | [upstream](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt) | 2026/11/26 |
+| AdRules DNS List | dnsfilter | [upstream](https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt) | 2026/11/26 |
 | CJX's Annoyance List | filter | [upstream](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt) | 2026/10/01 |
-| EasyList | filter | [upstream](https://easylist-downloads.adblockplus.org/easylist.txt) | 2026/11/25 |
-| EasyList China | filter | [upstream](https://easylist-downloads.adblockplus.org/easylistchina.txt) | 2026/11/25 |
-| EasyPrivacy | filter | [upstream](https://easylist-downloads.adblockplus.org/easyprivacy.txt) | 2026/11/25 |
+| EasyList | filter | [upstream](https://easylist-downloads.adblockplus.org/easylist.txt) | 2026/11/26 |
+| EasyList China | filter | [upstream](https://easylist-downloads.adblockplus.org/easylistchina.txt) | 2026/11/26 |
+| EasyPrivacy | filter | [upstream](https://easylist-downloads.adblockplus.org/easyprivacy.txt) | 2026/11/26 |
 | xinggsf mv | filter | [upstream](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt) | 2025/12/24 |
 | jiekouAD | filter | [upstream](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt) | 2026/11/22 |
 | AWAvenue Ads Rule (Only.Ads) | dns | [upstream](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt) | 2026/11/23 |
-| DNS-Blocklists PRO mini | dns | [upstream](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt) | 2026/11/25 |
-| OISD Small | dns | [upstream](https://small.oisd.nl/) | 2026/11/25 |
+| DNS-Blocklists PRO mini | dns | [upstream](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt) | 2026/11/26 |
+| OISD Small | dns | [upstream](https://small.oisd.nl/) | 2026/11/26 |
 | StevenBlack hosts | host | [upstream](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) | 2026/11/24 |
 
 ## 维护与反馈
