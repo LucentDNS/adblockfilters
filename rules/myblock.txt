@@ -106,4 +106,22 @@
 @@||r.*.awstrack.me^
 ! https://github.com/217heidai/adblockfilters/issues/131
 @@||clients2.googleusercontent.com/crx/blobs/Ad_*^
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Confirmed phishing domains; independent security-provider and PhishTank signals reviewed 2026-11-26.
+! Block exact registered domains only; do not widen to unrelated parent namespaces.
+! https://domainspoof.com/live?after=1795188504~xuyanglvshi.com&show=reported_domain&snap=20261120T155659Z
+||brizview.cfd^
+! Gridinsoft: phishing classification with four external provider warnings; ScamComplaints also reports social-engineering signals.
+! https://gridinsoft.com/online-virus-scanner/url/gerenciarsuporte-cfd
+! https://scamcomplaints.org/scam-websites/gerenciarsuporte.cfd
+||gerenciarsuporte.cfd^
+! Gridinsoft: phishing classification; four external security-provider warnings including malware/phishing verdicts.
+! https://gridinsoft.com/online-virus-scanner/url/microinvest-pro
+||microinvest.pro^
+! Gridinsoft: phishing/spam classification with independent provider warnings.
+! https://gridinsoft.com/online-virus-scanner/url/rutor_15-com
+! https://gridinsoft.com/online-virus-scanner/url/rutor_20-com
+! https://gridinsoft.com/online-virus-scanner/url/rutor21-net
+||rutor-15.com^
+||rutor-20.com^
+||rutor21.net^
