@@ -147,7 +147,7 @@ def test_dns_validation_infrastructure_guard_tolerates_a_few_inconclusive_domain
     from blacklist import _dns_validation_infrastructure_unhealthy
 
     assert _dns_validation_infrastructure_unhealthy(20, 4) is False
-    assert _dns_validation_infrastructure_unhealthy(20, 5) is False
+    assert _dns_validation_infrastructure_unhealthy(20, 5) is True
     assert _dns_validation_infrastructure_unhealthy(20, 6) is True
     assert _dns_validation_infrastructure_unhealthy(19, 19) is False
 
