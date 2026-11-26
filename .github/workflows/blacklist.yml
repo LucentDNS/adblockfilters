@@ -1,6 +1,6 @@
 name: Generate DNS State
 
-# README.md contains the upstream source manifest; source-table changes must trigger fresh DNS validation.
+# The versioned sources.json manifest defines upstream inputs; changes require fresh DNS validation.
 permissions:
   contents: write
   actions: write
@@ -25,6 +25,7 @@ on:
       - resolver.py
       - updater.py
       - README.md
+      - sources.json
       - readme.py
       - requirements.txt
       - scripts/generate_domain_input.py

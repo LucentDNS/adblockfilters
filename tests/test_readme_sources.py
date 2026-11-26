@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,12 @@ from readme import ReadMe
 def test_repository_source_manifest_is_unique_and_https_only():
     root = Path(__file__).parents[1]
     rules = ReadMe(str(root / "README.md")).getRules()
+    manifest = json.loads((root / "sources.json").read_text(encoding="utf-8"))
+    readme = (root / "README.md").read_text(encoding="utf-8")
 
+    assert manifest["version"] == 1
+    assert len(manifest["sources"]) == 15
+    assert "## 上游来源" not in readme
     assert len(rules) == 15
     assert all(rule.type in {"filter", "dnsfilter", "dns", "host"} for rule in rules)
     assert all(rule.url.startswith("https://") for rule in rules)

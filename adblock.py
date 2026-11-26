@@ -163,9 +163,8 @@ class ADBlock(object):
         filter = Filter(ruleList, self.domainDir, self.outDir, self.sourceDir)
         filter.generate(readme.getRulesNames())
 
-        # 生成 readme.md
-        readme.setRules(ruleList)
-        readme.regenerate()
+        # README is maintained documentation, not a generated build artifact.
+        # The upstream source manifest is maintained separately in sources.json.
 
 if __name__ == '__main__':
     configure_logging()

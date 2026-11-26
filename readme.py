@@ -1,4 +1,6 @@
+import json
 import re
+from pathlib import Path
 from typing import List
 
 from loguru import logger
@@ -21,20 +23,49 @@ class ReadMe(object):
         self.ruleList:List[Rule] = []
 
     def getRules(self) -> List[Rule]:
-        logger.info("resolve readme...")
+        """Load the maintained source manifest, with README parsing for legacy callers."""
+        logger.info("resolve upstream source manifest...")
         self.ruleList = []
-        with open(self.filename, "r", encoding="utf-8-sig") as f:
-            for line in f:
-                line = line.replace('\r', '').replace('\n', '')
-                if line.find('|')==0 and line.rfind('|')==len(line)-1:
-                    rule = list(map(lambda x: x.strip(), line[1:-1].split('|')))
-                    if len(rule) < 4:
-                        continue
-                    if rule[2].find('(') > 0 and rule[2].find(')') > 0 and rule[1].find('(') < 0:
-                        url = rule[2][rule[2].find('(')+1:rule[2].find(')')]
-                        matchObj1 = re.match(r'(http|https)://[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?', url)
-                        if matchObj1:
-                            self.ruleList.append(Rule(rule[0], rule[1], url, rule[-1]))
+        manifest_path = Path(self.filename).resolve().parent / "sources.json"
+
+        if manifest_path.is_file():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(f"Cannot read upstream source manifest: {manifest_path}") from exc
+            if not isinstance(manifest, dict) or manifest.get("version") != 1:
+                raise ValueError("Unsupported or invalid sources.json manifest version")
+            entries = manifest.get("sources")
+            if not isinstance(entries, list) or not entries:
+                raise ValueError("sources.json must contain a non-empty 'sources' array")
+            for index, entry in enumerate(entries):
+                if not isinstance(entry, dict):
+                    raise ValueError(f"sources.json entry {index} must be an object")
+                if set(entry) != {"name", "type", "url", "latest"}:
+                    raise ValueError(
+                        f"sources.json entry {index} must contain exactly name, type, url, latest"
+                    )
+                if not all(isinstance(entry[key], str) and entry[key].strip()
+                           for key in ("name", "type", "url", "latest")):
+                    raise ValueError(f"sources.json entry {index} has an empty or non-string field")
+                self.ruleList.append(
+                    Rule(entry["name"], entry["type"], entry["url"], entry["latest"])
+                )
+        else:
+            # Compatibility path for isolated legacy callers and parser tests.
+            # Production builds always use the versioned sources.json manifest.
+            with open(self.filename, "r", encoding="utf-8-sig") as stream:
+                for line in stream:
+                    line = line.replace("\r", "").replace("\n", "")
+                    if line.startswith("|") and line.endswith("|"):
+                        columns = [item.strip() for item in line[1:-1].split("|")]
+                        if len(columns) < 4:
+                            continue
+                        match = re.search(r"\[upstream\]\((https?://[^)]+)\)", columns[2])
+                        if match:
+                            self.ruleList.append(
+                                Rule(columns[0], columns[1], match.group(1), columns[-1])
+                            )
 
         allowed_types = {"filter", "dnsfilter", "dns", "host"}
         seen_names = set()

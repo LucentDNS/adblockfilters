@@ -66,6 +66,7 @@ def test_github_workflows_follow_editorconfig():
 def test_maintained_text_files_follow_editorconfig():
     paths = [
         ROOT / "README.md",
+        ROOT / "sources.json",
         ROOT / "smartdns.conf",
         ROOT / ".editorconfig",
         ROOT / ".gitignore",
