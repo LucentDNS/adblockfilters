@@ -13,7 +13,7 @@ import dns.exception
 import dns.resolver
 
 DOMAIN_LABEL = re.compile(r"^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$")
-DEFAULT_UPSTREAM_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
+DEFAULT_UPSTREAM_PORTS = (5053, 5054, 5055, 5056, 5057)
 
 
 def valid_domain(domain: str) -> bool:
@@ -153,7 +153,7 @@ def write_reports(
         "valid_unique_domains": len(results),
         "invalid_lines": len(invalid),
         "resolved": counts["resolved"],
-        "nxdomain_all_six_upstreams": counts["nxdomain"],
+        "nxdomain_all_five_upstreams": counts["nxdomain"],
         "no_address_both_groups": counts["no_address"],
         "inconclusive": counts["inconclusive"],
     }
@@ -167,7 +167,7 @@ def write_reports(
 
     report_files = (
         ("resolved", "resolved.txt"),
-        ("nxdomain", "nxdomain-all-six-upstreams.txt"),
+        ("nxdomain", "nxdomain-all-five-upstreams.txt"),
         ("no_address", "no-address-both-groups.txt"),
         ("inconclusive", "inconclusive.txt"),
     )
@@ -190,7 +190,7 @@ def write_reports(
         "# Legacy upstream-only DNS candidate review",
         "",
         "Report only: this review does not add or remove production rules.",
-        "NXDOMAIN requires all six independent upstreams to return NXDOMAIN for both A and AAAA.",
+        "NXDOMAIN requires all five independent upstreams to return NXDOMAIN for both A and AAAA.",
         "",
         *[f"- {key}: {value}" for key, value in summary.items()],
         "",
@@ -212,8 +212,8 @@ def main() -> int:
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
-        "--ports", type=int, nargs=6, default=DEFAULT_UPSTREAM_PORTS,
-        help="six local SmartDNS ports, one per independent upstream",
+        "--ports", type=int, nargs=5, default=DEFAULT_UPSTREAM_PORTS,
+        help="five local SmartDNS ports, one per independent upstream",
     )
     parser.add_argument("--timeout", type=float, default=2.0)
     parser.add_argument("--lifetime", type=float, default=5.0)
@@ -227,7 +227,7 @@ def main() -> int:
     if len(set(args.ports)) != len(DEFAULT_UPSTREAM_PORTS) or any(
         port < 1 or port > 65535 for port in args.ports
     ):
-        parser.error("--ports must contain six distinct valid TCP/UDP ports")
+        parser.error("--ports must contain five distinct valid TCP/UDP ports")
 
     domains, invalid, candidate_count = read_candidates(args.input)
     results = asyncio.run(

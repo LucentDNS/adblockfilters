@@ -42,8 +42,8 @@ def _blacklist_abnormal(black_count:int, total:int) -> bool:
 DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 # Bump when the evidence required to classify a domain as NXDOMAIN changes.
-DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
-DNS_BLOCK_POLICY_VERSION = "3"
+DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057)
+DNS_BLOCK_POLICY_VERSION = "4"
 
 
 def _needs_dns_validation(ip_list, last_checked, now, is_new=False) -> bool:
@@ -459,11 +459,11 @@ class BlackList(object):
             raise
 
     async def __resolve(self, dnsresolvers, domain) -> Tuple[List[str], str]:
-        """Require six independent upstreams to agree before classifying NXDOMAIN.
+        """Require five independent upstreams to agree before classifying NXDOMAIN.
 
         Each local SmartDNS port maps to exactly one upstream provider. Any
         positive address from any provider keeps the domain active. A domain is
-        marked nonexistent only when all six providers return NXDOMAIN for
+        marked nonexistent only when all five providers return NXDOMAIN for
         both A and AAAA. NODATA, timeout, SERVFAIL, missing providers, or any
         disagreement remain inconclusive and must never create a blacklist entry.
         """
