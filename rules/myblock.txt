@@ -121,6 +121,9 @@
 ! https://gist.github.com/jezifm/5ee6ae920dfb17e160bcc6e90b41a6cd
 ! https://liveclix.net.clearwebstats.com/
 ||liveclix.net^
+! Matomo-maintained referrer-spam domain list; exact candidate domain is listed as spam.
+! https://github.com/matomo-org/referrer-spam-list/blob/master/spammers.txt
+||xtrafficplus.xyz^
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Confirmed phishing domains; independent security-provider and PhishTank signals reviewed 2026-11-26.
