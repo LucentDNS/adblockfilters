@@ -38,6 +38,7 @@ class ReadMe(object):
             entries = manifest.get("sources")
             if not isinstance(entries, list) or not entries:
                 raise ValueError("sources.json must contain a non-empty 'sources' array")
+            manifest_rules = []
             for index, entry in enumerate(entries):
                 if not isinstance(entry, dict):
                     raise ValueError(f"sources.json entry {index} must be an object")
@@ -55,7 +56,7 @@ class ReadMe(object):
                 if not isinstance(enabled, bool):
                     raise ValueError(f"sources.json entry {index} field enabled must be a boolean")
                 rule = Rule(entry["name"], entry["type"], entry["url"], entry["latest"])
-                rule.enabled = enabled
+                manifest_rules.append(rule)
                 if enabled:
                     self.ruleList.append(rule)
         else:
@@ -78,7 +79,8 @@ class ReadMe(object):
         seen_names = set()
         seen_filenames = set()
         seen_urls = set()
-        for rule in self.ruleList:
+        rules_to_validate = manifest_rules if manifest_path.is_file() else self.ruleList
+        for rule in rules_to_validate:
             if rule.type not in allowed_types:
                 raise ValueError(f"Unsupported upstream source type: {rule.type!r} ({rule.name})")
             if not rule.url.startswith("https://"):
@@ -92,6 +94,8 @@ class ReadMe(object):
             seen_names.add(rule.name)
             seen_filenames.add(rule.filename)
             seen_urls.add(rule.url)
+        if manifest_path.is_file() and not self.ruleList:
+            raise ValueError("sources.json must contain at least one enabled source")
         return self.ruleList
 
     def getRulesNames(self) -> str:
