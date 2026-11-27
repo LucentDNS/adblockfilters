@@ -34,7 +34,7 @@ def source_audit_gate_failures(
     baseline_allow_missing_still_blocked: set[str],
     source_allow_missing_still_blocked: set[str] | None = None,
 ) -> list[str]:
-    """Fail on active source loss and upstream allow regressions, not historical baseline-only deltas."""
+    """Fail on unparsed output or unexplained active-source loss; allows are audit evidence only."""
     failures = []
     if compiled_unparsed:
         failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
@@ -52,11 +52,8 @@ def source_audit_gate_failures(
             "baseline rules have inactive current-source parents without a valid exclusion: "
             + ", ".join(sorted(current_source_parent_inactive_unexplained)[:20])
         )
-    if baseline_allow_missing_still_blocked:
-        failures.append(
-            "upstream baseline allow exceptions are missing while domains remain blocked: "
-            + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
-        )
+    # Historical aggregate-list allows are comparison evidence only. They
+    # must not become global vetoes over independently selected source blocks.
     if source_allow_missing_still_blocked:
         failures.append(
             "active production-source allow exceptions are missing while matching block rules remain: "
