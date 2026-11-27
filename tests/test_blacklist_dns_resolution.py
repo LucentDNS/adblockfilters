@@ -303,6 +303,9 @@ def test_dns_validation_uses_bounded_batches_and_persists_each_completed_batch(m
             self.blocked = value
             self.updated = True
 
+        def getBlock(self):
+            return self.blocked
+
         def setCheckedAtNow(self):
             self.updated = True
 
