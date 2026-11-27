@@ -31,6 +31,7 @@ on:
       - scripts/generate_domain_input.py
       - scripts/validated_sources.py
       - rules/myblock.txt
+      - tests/**
 
 env:
   TZ: Asia/Shanghai
