@@ -151,3 +151,21 @@ def test_service_whitelist_entries_are_scoped_to_confirmed_hosts():
         "r.browser.miui.com",
         "security.browser.miui.com",
     } <= entries
+
+
+def test_original_upstream_pics_allow_exception_is_preserved_under_parent_block():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    entries = {
+        line.strip()
+        for line in (root / "rules" / "white.txt").read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith(("#", "!"))
+    }
+    assert "pics.porn300.com" in entries
+
+    instance = Filter.__new__(Filter)
+    white_dict = parse_whitelist(entries)
+    assert instance._Filter__getWhiteExceptions(white_dict, ["porn300.com"]) == [
+        "pics.porn300.com"
+    ]
