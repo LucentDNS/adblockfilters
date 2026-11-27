@@ -66,6 +66,7 @@
 
 - AdGuard DNS filter — [来源](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)
 - AWAvenue Ads Rule (Only.Ads) — [来源](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)
+- anti-AD (AdGuard DNS rules) — [来源](https://anti-ad.net/adguard.txt)
 - HaGeZi DNS-Blocklists (Pro Mini) — [来源](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)
 - StevenBlack hosts — [来源](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)
 
@@ -81,7 +82,7 @@
 
 ### 官方列表基准审计（仅候选，不参与正式构建）
 
-项目会对 AdGuard [HostlistsRegistry](https://github.com/AdguardTeam/HostlistsRegistry) 中已收录的 Anti-AD、AdRules DNS、OISD Small/Big、1Hosts Lite、HaGeZi Pro/Normal 等列表进行候选源贡献审计。它们目前仅用于比较解析覆盖、与现有来源的重合及潜在增量，不会自动并入正式规则；是否集成还需单独审查误报风险、DNS 验证证据、语法兼容性和许可条件。
+项目会对 AdGuard [HostlistsRegistry](https://github.com/AdguardTeam/HostlistsRegistry) 中已收录的 AdRules DNS、OISD Small/Big、1Hosts Lite、HaGeZi Pro/Normal 等列表进行候选源贡献审计。它们目前仅用于比较解析覆盖、与现有来源的重合及潜在增量，不会自动并入正式规则；是否集成还需单独审查误报风险、DNS 验证证据、语法兼容性和许可条件。
 
 ## 反馈与贡献
 
@@ -102,6 +103,7 @@
 | EasyList / EasyPrivacy | [GPL-3.0-or-later 或 CC BY-SA 3.0-or-later](https://easylist.to/pages/licence.html) |
 | EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |
 | AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
+| anti-AD | [MIT](https://github.com/privacy-protection-tools/anti-AD/blob/master/LICENSE) |
 | HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
 | StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |
 
