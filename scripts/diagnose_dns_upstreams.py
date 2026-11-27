@@ -146,6 +146,8 @@ def main() -> int:
     candidates = {
         "ByteDance 180.184.1.1": "180.184.1.1",
         "114DNS 114.114.114.114": "114.114.114.114",
+        "CNNIC SDNS 1.2.4.8": "1.2.4.8",
+        "CNNIC SDNS 210.2.4.8": "210.2.4.8",
     }
     probe_domains = ("baidu.com", "qq.com", "example.com", "cloudflare.com", "google.com")
     print("\\nCandidate resolver positive probes:")
