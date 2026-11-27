@@ -66,7 +66,7 @@
 
 - AdGuard DNS filter — [来源](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)
 - AWAvenue Ads Rule (Only.Ads) — [来源](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)
-- anti-AD (AdGuard DNS rules) — [来源](https://anti-ad.net/adguard.txt)
+- anti-AD (AdGuard DNS rules) — [来源](https://anti-ad.net/easylist.txt)
 - HaGeZi DNS-Blocklists (Pro Mini) — [来源](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)
 - StevenBlack hosts — [来源](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)
 
