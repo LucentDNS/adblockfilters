@@ -423,8 +423,8 @@ def dns_pattern_matches_domain(rule, domain):
     body = rule[len(prefix):]
     if not body.endswith("^") or "*" not in body:
         return False
-    pattern = re.escape(body[:-1]).replace(r"\\*", ".*")
-    return re.fullmatch(rf"(?:.*\\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
+    pattern = re.escape(body[:-1]).replace(r"\*", ".*")
+    return re.fullmatch(rf"(?:.*\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
 
 
 def domains_overlap(left, right):
