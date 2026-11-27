@@ -59,6 +59,41 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
+      - name: Probe CNNIC alternate public resolver from runner network
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import dns.resolver
+          from dns.resolver import NXDOMAIN
+
+          resolver = dns.resolver.Resolver(configure=False)
+          resolver.nameservers = ["210.2.4.8"]
+          resolver.port = 53
+          resolver.timeout = 3
+          resolver.lifetime = 5
+          positive = []
+          for domain in ("baidu.com", "qq.com", "example.com"):
+              try:
+                  answer = resolver.resolve(domain, "A")
+                  if answer:
+                      positive.append(domain)
+              except Exception as exc:
+                  print(f"CNNIC 210.2.4.8 positive probe failed for {domain}: {type(exc).__name__}: {exc}")
+          negative = []
+          for rdtype in ("A", "AAAA"):
+              try:
+                  resolver.resolve("adblock-dns-probe-20261125.example.invalid", rdtype)
+              except NXDOMAIN:
+                  negative.append(rdtype)
+              except Exception as exc:
+                  print(f"CNNIC 210.2.4.8 {rdtype} negative probe inconclusive: {type(exc).__name__}: {exc}")
+          print(f"CNNIC 210.2.4.8 positive probes passed: {positive}")
+          print(f"CNNIC 210.2.4.8 reserved-name NXDOMAIN probes passed: {negative}")
+          if len(positive) >= 2 and len(negative) == 2:
+              print("CNNIC_SECONDARY_CANDIDATE=PASS")
+          else:
+              print("CNNIC_SECONDARY_CANDIDATE=FAIL; do not promote this endpoint")
+          PY
       - name: Static analysis
         run: |
           python -m ruff check --no-cache .
