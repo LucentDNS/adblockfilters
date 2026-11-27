@@ -232,10 +232,8 @@ def audit_one(rule, resolver, download):
                     action, base_domain = pattern
                     if action == "allow":
                         dns_pattern_allows.add(filt[0])
-                        # Preserve the effective base domain for cross-source
-                        # explicit-allow conflict analysis.
-                        allows.add(base_domain)
-                        result["dns_pattern_allow_entries"] += 1
+                        # Pattern allows are tracked separately; their base
+                        # domain is not a blanket explicit allow for the apex.
                     else:
                         dns_pattern_blocks.add(filt[0])
                         result["dns_pattern_block_entries"] += 1
@@ -468,6 +466,18 @@ def domains_overlap(left, right):
     return left == right or left.endswith("." + right) or right.endswith("." + left)
 
 
+def source_local_effective_blocks(block_domains, allow_domains):
+    """Apply explicit allows to the originating source's blocks only."""
+    allowed = {domain.lower().strip(".") for domain in allow_domains if domain}
+    effective = set()
+    for domain in block_domains:
+        candidate = domain.lower().strip(".")
+        labels = candidate.split(".")
+        if any(".".join(labels[index:]) in allowed for index in range(len(labels))):
+            continue
+        effective.add(candidate)
+    return effective
+
 
 def audit_source_allow_output(source_allow_domains, compiled_block_domains, compiled_allow_domains):
     """Report cross-source allow/block disagreements without making allows global vetoes.
@@ -583,6 +593,12 @@ def main():
             row["role"] = "浏览器补充（不进入 DNS）"
         else:
             row["role"] = "候选源（不集成）"
+        if rule.type in {"dns", "dnsfilter"}:
+            effective_domains = source_local_effective_blocks(domains, allows)
+            row["source_local_allow_removed_blocks"] = len(domains - effective_domains)
+            domains = effective_domains
+        else:
+            row["source_local_allow_removed_blocks"] = 0
         results.append(row)
         domain_sets[rule.name] = domains
         allow_sets[rule.name] = allows
@@ -984,9 +1000,9 @@ def main():
     ) if production_names else set()
 
     def covered_by_source_allow(domain):
-        labels = domain.split(".")
-        return any(".".join(labels[index:]) in current_source_allow_domains
-                   for index in range(len(labels)))
+        # Upstream allows are never global compatibility exceptions. Per-source
+        # blocks have already been reduced by that same source's explicit allows.
+        return False
 
     current_source_exact_blacklisted = current_source_exact & blacklist_domains
     current_source_exact_whitelisted = {
