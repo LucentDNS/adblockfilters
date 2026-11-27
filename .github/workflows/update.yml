@@ -21,7 +21,7 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
-      - "scripts/check_source_anomalies.py"
+      - "scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py"
       - "scripts/verify_critical_domains.py"
       - "scripts/audit_sources.py"
       - ".github/workflows/update.yml"
