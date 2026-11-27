@@ -53,3 +53,14 @@ def test_parent_allow_conflicts_cover_strict_subdomains():
     )
     assert strict_only == []
     assert conflicts == ["child.allowed.example"]
+
+
+def test_parent_block_and_child_allow_are_reported_as_conflict():
+    strict_only, conflicts = classify_strict_source_candidates(
+        strict_blocks={"example.com"},
+        comparison_blocks=set(),
+        comparison_allows={"app.example.com"},
+        whitelist=set(),
+    )
+    assert strict_only == []
+    assert conflicts == ["example.com"]
