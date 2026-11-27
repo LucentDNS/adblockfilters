@@ -46,6 +46,8 @@ DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
 # Version 6: recheck cached NXDOMAIN and inconclusive rows after replacing AliDNS with CNNIC SDNS.
 DNS_BLOCK_POLICY_VERSION = "6"
 DNS_VALIDATION_MAX_CONCURRENCY = 100
+# Each of the six upstreams has its own cap; avoid multiplying 100 domains by 12 DNS queries.
+DNS_VALIDATION_PER_UPSTREAM_CONCURRENCY = 12
 # Keep the event loop bounded: never create one asyncio task per input domain.
 DNS_VALIDATION_BATCH_SIZE = 500
 DNS_UNKNOWN_FAILURE_MIN_SAMPLES = 20
@@ -488,6 +490,11 @@ class BlackList(object):
         if not hasattr(self, "_BlackList__dns_validation_error_samples"):
             self.__dns_validation_error_samples = {}
 
+        upstream_semaphores = {
+            str(resolver.port): asyncio.Semaphore(DNS_VALIDATION_PER_UPSTREAM_CONCURRENCY)
+            for resolver in dnsresolvers
+        }
+
         async def resolve_one_upstream(dnsresolver):
             resolver_port = str(getattr(dnsresolver, "port", "unknown"))
             async def query_type(rdtype):
@@ -512,7 +519,10 @@ class BlackList(object):
                     self.__dns_validation_error_samples.setdefault(key, sample)
                     return "unknown", ()
 
-            results = await asyncio.gather(query_type("A"), query_type("AAAA"))
+            # Bound each provider independently. The outer domain semaphore alone
+            # allowed 100 domains x 2 RR types to hit every provider simultaneously.
+            async with upstream_semaphores[resolver_port]:
+                results = await asyncio.gather(query_type("A"), query_type("AAAA"))
             ip_list = []
             no_answer_count = 0
             nxdomain_count = 0
@@ -669,8 +679,10 @@ class BlackList(object):
                 dnsresolver = DNSResolver()
                 dnsresolver.nameservers = nameservers
                 dnsresolver.port = resolver_port
-                dnsresolver.timeout = 1.5
-                dnsresolver.lifetime = 3.0
+                # SmartDNS/TLS upstreams need headroom for handshake and transient
+                # latency; the per-provider semaphore below controls offered load.
+                dnsresolver.timeout = 2.5
+                dnsresolver.lifetime = 6.0
                 dnsresolvers.append(dnsresolver)
             semaphore = asyncio.Semaphore(self.__maxTask)
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
