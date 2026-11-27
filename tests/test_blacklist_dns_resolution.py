@@ -234,10 +234,16 @@ def test_one_resolver_returning_an_address_prevents_blacklisting():
     assert resolve_upstreams(*([dead] * 5 + [alive])) == (["192.0.2.10"], "resolved")
 
 
-def test_one_resolver_nodata_prevents_nxdomain_classification():
+def test_one_resolver_nodata_prevents_nxdomain_classification_without_infra_failure():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
-    assert resolve_upstreams(*([dead] * 5 + [nodata])) == ([], "unknown")
+    # Valid NXDOMAIN/NODATA disagreement is inconclusive, not an infra error.
+    assert resolve_upstreams(*([dead] * 5 + [nodata])) == ([], "no_address")
+
+
+def test_mixed_nxdomain_and_nodata_record_types_are_not_infra_failures():
+    mixed = {"A": NXDOMAIN(), "AAAA": NoAnswer()}
+    assert resolve_upstreams(*([mixed] * 6)) == ([], "no_address")
 
 
 def test_one_resolver_timeout_prevents_nxdomain_classification():
