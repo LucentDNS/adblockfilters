@@ -483,7 +483,11 @@ class BlackList(object):
         if len(dnsresolvers) != len(DNS_VALIDATION_PORTS):
             return [], "unknown"
 
+        if not hasattr(self, "_BlackList__dns_validation_error_counts"):
+            self.__dns_validation_error_counts = {}
+
         async def resolve_one_upstream(dnsresolver):
+            resolver_port = str(getattr(dnsresolver, "port", "unknown"))
             async def query_type(rdtype):
                 try:
                     return "answer", await dnsresolver.resolve(qname=domain, rdtype=rdtype)
@@ -491,7 +495,14 @@ class BlackList(object):
                     return "nxdomain", ()
                 except NoAnswer:
                     return "no_answer", ()
-                except Exception:
+                except Exception as exc:
+                    # Keep bounded aggregate diagnostics: never log one line per
+                    # failed query, but retain the exact upstream, RR type and
+                    # exception class needed to distinguish resolver outages.
+                    key = (resolver_port, rdtype, type(exc).__name__)
+                    self.__dns_validation_error_counts[key] = (
+                        self.__dns_validation_error_counts.get(key, 0) + 1
+                    )
                     return "unknown", ()
 
             results = await asyncio.gather(query_type("A"), query_type("AAAA"))
@@ -656,6 +667,7 @@ class BlackList(object):
                 dnsresolvers.append(dnsresolver)
             semaphore = asyncio.Semaphore(self.__maxTask)
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
+            self.__dns_validation_error_counts = {}
             now = int(time.time())
             pending_domains = [
                 domain for domain in domainDict.values()
@@ -696,6 +708,17 @@ class BlackList(object):
             unresolved = len(domainDict) - resolved - nxdomain
             stats = self.__dns_validation_stats
             logger.info("DNS validation query summary: " + ", ".join(f"{key}={value}" for key, value in stats.items()))
+            error_counts = getattr(self, "_BlackList__dns_validation_error_counts", {})
+            if error_counts:
+                logger.warning(
+                    "DNS validation resolver exception summary (attempt counts; retries included): "
+                    + ", ".join(
+                        f"port={port} rrtype={rdtype} exception={exception} count={count}"
+                        for (port, rdtype, exception), count in sorted(error_counts.items())
+                    )
+                )
+            else:
+                logger.info("DNS validation resolver exception summary: none")
             logger.info(
                 f"DNS validation summary: total={len(domainDict)} resolved={resolved} "
                 f"NXDOMAIN={nxdomain} no-address-or-inconclusive={unresolved}"

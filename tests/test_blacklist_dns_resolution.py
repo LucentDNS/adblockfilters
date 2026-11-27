@@ -12,8 +12,9 @@ from blacklist import (
 
 
 class FakeResolver:
-    def __init__(self, answers):
+    def __init__(self, answers, port=None):
         self.answers = answers
+        self.port = port
 
     async def resolve(self, qname, rdtype):
         value = self.answers.get(rdtype)
@@ -263,6 +264,23 @@ def test_no_address_requires_all_six_upstreams_to_agree():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     # Six valid negative DNS responses that disagree are inconclusive, not an infrastructure failure.
     assert resolve_upstreams(*([nodata] * 5 + [dead])) == ([], "no_address")
+
+
+def test_dns_failures_are_aggregated_by_upstream_rrtype_and_exception():
+    instance = BlackList.__new__(BlackList)
+    timeout = {"A": TimeoutError("A timeout"), "AAAA": NoAnswer()}
+    resolvers = [
+        FakeResolver(timeout, port=port)
+        for port in DNS_VALIDATION_PORTS
+    ]
+
+    assert asyncio.run(instance._BlackList__resolve(resolvers, "example.test")) == (
+        [], "unknown"
+    )
+    assert instance._BlackList__dns_validation_error_counts == {
+        (str(port), "A", "TimeoutError"): 1
+        for port in DNS_VALIDATION_PORTS
+    }
 
 
 def test_missing_upstream_is_inconclusive_not_dead():
