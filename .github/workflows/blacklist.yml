@@ -205,8 +205,25 @@ jobs:
           cp .cache/domain/validated-dns-sources.tar.gz validated-dns-sources.tar.gz
           test -s validated-dns-sources.tar.gz || { echo "Validated DNS source archive was not packaged"; exit 1; }
 
+      - name: Fingerprint DNS validation inputs
+        id: checkpoint_fingerprint
+        run: |
+          set -euo pipefail
+          fingerprint="$(sha256sum domain.txt sources.json blacklist.py smartdns.conf scripts/generate_domain_input.py scripts/validated_sources.py | sha256sum | cut -d' ' -f1)"
+          echo "value=$fingerprint" >> "$GITHUB_OUTPUT"
+          echo "DNS validation checkpoint fingerprint: $fingerprint"
+
+      - name: Restore latest compatible DNS validation checkpoint
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: domain.db
+          key: dns-validation-checkpoint-${{ steps.checkpoint_fingerprint.outputs.value }}-${{ github.run_id }}
+          restore-keys: |
+            dns-validation-checkpoint-${{ steps.checkpoint_fingerprint.outputs.value }}-
+
       - name: Run DNS validation and generate independent blacklist
         id: generate
+        timeout-minutes: 160
         run: |
           set -euo pipefail
           python -m py_compile blacklist.py
@@ -221,6 +238,23 @@ jobs:
           python scripts/validated_sources.py seal
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
+
+      - name: Check DNS validation checkpoint database
+        if: always()
+        id: checkpoint_database
+        run: |
+          if [ -s domain.db ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save DNS validation checkpoint for interrupted runs
+        if: always() && steps.checkpoint_database.outputs.available == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: domain.db
+          key: dns-validation-checkpoint-${{ steps.checkpoint_fingerprint.outputs.value }}-${{ github.run_id }}
 
       - name: Upload DNS validation audit artifact
         if: always()

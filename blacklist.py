@@ -81,7 +81,8 @@ class DomainDatabase(object):
     def __init__(self, dbFile: str):
         self.__table_domain = "T_DOMAIN"
         self.__conn = sqlite3.connect(dbFile)
-        self.__execute('PRAGMA synchronous = OFF')
+        # Batch checkpoints must survive runner interruption; avoid disabling SQLite sync.
+        self.__execute('PRAGMA synchronous = NORMAL')
         self.__init_db()
 
     def close(self):
