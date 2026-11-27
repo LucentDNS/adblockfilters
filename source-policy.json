@@ -81,11 +81,11 @@
     }
   ],
   "conflict_resolution": {
-    "active_production_source_allow": "global_compatibility_veto",
-    "candidate_only_source_allow": "audit_only_no_effect_on_production",
-    "rationale": "An explicit allow published by any enabled production DNS/Hosts source is treated as a compatibility exception across the merged Full and Lite outputs. It overrides overlapping block rules from other enabled production sources. This intentionally favors reducing false positives over maximum blocking coverage.",
-    "audit_requirement": "Every active production-source allow that overlaps a compiled DNS block must remain effective in the compiled Full output; missing effective allows are a hard build failure.",
-    "project_whitelist": "The project-maintained whitelist is an additional global compatibility exception.",
+    "active_production_source_allow": "source_local_only",
+    "candidate_only_source_allow": "source_local_only_for_candidate_analysis",
+    "rationale": "An upstream allow is interpreted only within the same source: it may remove that source's own matching block, but it never vetoes another source's independent block. Cross-source allow/block disagreements are recorded for review, not resolved by global allow precedence. Only the project-maintained, evidence-based whitelist is a global compatibility exception.",
+    "audit_requirement": "Verify that each source's allow affects only that source's blocks, that another source's block survives an unrelated allow, and that upstream allows are not emitted as global allow rules.",
+    "project_whitelist": "The project-maintained whitelist is the only global compatibility exception and requires evidence-based review.",
     "non_claim": "Absence from a source is not an allow decision, and source overlap is not independent confirmation."
   }
 }
