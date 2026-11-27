@@ -52,17 +52,17 @@
     },
     {
       "name": "1Hosts (Lite)",
-      "style": "stability_reference",
+      "style": "other_reference",
       "family": "1hosts",
       "role": "production",
-      "rationale": "Conservative/lightweight comparison reference."
+      "rationale": "Additional lightweight reference; not assigned to the stability-reference class without an explicit policy basis."
     },
     {
       "name": "StevenBlack hosts",
-      "style": "stability_reference",
+      "style": "other_reference",
       "family": "stevenblack",
       "role": "production",
-      "rationale": "Hosts-based comparison reference."
+      "rationale": "Additional hosts-based reference; not assigned to the stability-reference class without an explicit policy basis."
     },
     {
       "name": "anti-AD (AdGuard DNS rules)",
