@@ -147,3 +147,29 @@ def test_pattern_allow_only_covers_compatible_modifier_scope():
     assert not _pattern_allow_covers_block(
         "@@||ads*.example.com^", "||ads.example.com^"
     )
+
+
+def test_get_filters_keeps_other_sources_block_after_source_local_allow(tmp_path):
+    source_dir = tmp_path / "sources"
+    source_dir.mkdir()
+    source_a = Rule("Source A", "dns", "https://example.test/a.txt", "live")
+    source_b = Rule("Source B", "dns", "https://example.test/b.txt", "live")
+
+    (source_dir / source_a.filename).write_text(
+        "||ads.example.com^\\n@@||example.com^\\n", encoding="utf-8"
+    )
+    (source_dir / source_b.filename).write_text(
+        "||ads.example.com^\\n", encoding="utf-8"
+    )
+    (source_dir / "myblock.txt").write_text("", encoding="utf-8")
+
+    parser = Filter(
+        [source_a, source_b],
+        path=str(tmp_path),
+        outPath=str(tmp_path),
+        sourcePath=str(source_dir),
+    )
+    block, allow, _, _, _ = parser._Filter__getFilters()
+
+    assert block == {"example.com": {"ads"}}
+    assert allow == {}
