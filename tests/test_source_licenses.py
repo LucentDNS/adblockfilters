@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from scripts.build_licenses import ROOT, load_and_validate
+from scripts.build_licenses import ROOT, load_and_validate, package
 
 
 def test_source_license_manifest_covers_all_enabled_sources_and_candidates():
@@ -33,3 +33,18 @@ def test_every_redistributed_source_has_a_preserved_license_text():
         if item["redistribute_audit_data"]:
             assert item["license_file"]
             assert (ROOT / item["license_file"]).is_file()
+
+
+def test_license_bundle_is_packaged_for_distribution(tmp_path):
+    manifest = load_and_validate()
+    package(tmp_path, manifest)
+    expected = {
+        "LICENSE-GPL-3.0.txt",
+        "LICENSE-LGPL-3.0.txt",
+        "LICENSE-MIT-anti-AD.txt",
+        "LICENSE-MIT-StevenBlack.txt",
+        "LICENSE-MPL-2.0-1Hosts.txt",
+        "THIRD-PARTY-NOTICES.md",
+        "source-licenses.json",
+    }
+    assert expected == {path.name for path in tmp_path.iterdir() if path.is_file()}
