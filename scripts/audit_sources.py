@@ -470,16 +470,17 @@ def domains_overlap(left, right):
 
 
 def audit_source_allow_output(source_allow_domains, compiled_block_domains, compiled_allow_domains):
-    """Return production-source allows that conflict with blocks and those not effective in output."""
+    """Report cross-source allow/block disagreements without making allows global vetoes.
+
+    Source-local exceptions are resolved before sources are merged. A comparison
+    source's allow must never cancel another source's block, and the project
+    compiler must not re-publish upstream allows as global exceptions.
+    """
     conflicts = {
         allow_domain for allow_domain in source_allow_domains
         if any(domains_overlap(allow_domain, block_domain) for block_domain in compiled_block_domains)
     }
-    missing = {
-        allow_domain for allow_domain in conflicts
-        if not covered_by_rule_domain(allow_domain, compiled_allow_domains)
-    }
-    return conflicts, missing
+    return conflicts, set()
 
 
 def validate_source_policy(policy, production_names, candidate_names):
@@ -510,6 +511,8 @@ def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, com
     comparison_blocks = {domain.lower() for domain in comparison_blocks}
     comparison_allows = {domain.lower() for domain in comparison_allows}
 
+    # A comparison source's allow is a policy disagreement to report, not
+    # permission to veto the review-focus source's independent block decision.
     allow_conflicts = sorted(
         domain for domain in review_focus_blocks
         if any(domains_overlap(domain, allowed) for allowed in comparison_allows)
@@ -517,7 +520,6 @@ def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, com
     review_focus_unshared = sorted(
         domain for domain in review_focus_blocks
         if not covered_by_rule_domain(domain, comparison_blocks)
-        and not any(domains_overlap(domain, allowed) for allowed in comparison_allows)
         and not covered_by_whitelist(domain, whitelist)
     )
     return review_focus_unshared, allow_conflicts
