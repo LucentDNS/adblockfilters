@@ -43,8 +43,6 @@ def test_refresh_builds_once_to_collect_domains_then_again_with_domestic_lite_sc
         path.write_text("service.example.cn\n", encoding="utf-8")
         return {
             "china_classified_domain_count": 1,
-            "direct_classified_domain_count": 1,
-            "retained_previous_dns_classified_domain_count": 0,
         }
 
     monkeypatch.setattr(adblock, "ReadMe", FakeReadMe)
