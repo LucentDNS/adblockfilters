@@ -47,11 +47,12 @@ def test_production_build_does_not_wait_for_or_require_dns_validation_state():
     assert "validated_sources.py check-current" not in workflow
     assert "validated-dns-sources.tar.gz" not in workflow
     prepare = workflow.split(
-        "- name: Prepare optional DNS classification inputs", 1
+        "- name: Prepare deterministic domestic Lite inputs", 1
     )[1].split("- name:", 1)[0]
     assert ': > .cache/domain/black.txt' in prepare
-    assert "china.txt" in prepare
-    assert "Lite" in prepare
+    assert ": > .cache/domain/china.txt" in prepare
+    assert "domestic direct-domain rules" in prepare
+    assert "dns-validation-state" not in prepare
 
 
 def test_production_build_rechecks_main_before_publishing():
@@ -86,6 +87,7 @@ def test_source_and_build_changes_trigger_production_refresh():
         "README.md", "sources.json", "rules/myblock.txt", "updater.py",
         "adblock.py", "filter.py", "app/**", "rules/white.txt",
         "scripts/compare_baseline.py", "scripts/audit_sources.py",
+        "scripts/generate_china_list.py",
         "scripts/verify_critical_domains.py", ".github/workflows/update.yml",
     } <= set(update_paths)
     assert "scripts/**" in audit_paths
@@ -117,5 +119,5 @@ def test_obsolete_branch_cleanup_runs_before_build_setup():
     assert "pulls?state=closed" in cleanup
     assert '[[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]]' in cleanup
     assert workflow.index("Remove merged and superseded work branches") < workflow.index(
-        "- name: Prepare optional DNS classification inputs"
+        "- name: Prepare deterministic domestic Lite inputs"
     )
