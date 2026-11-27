@@ -15,22 +15,7 @@ on:
   workflow_dispatch:
   schedule:
     # Daily at 16:43 Beijing time (08:43 UTC); stagger away from common scheduler peak times.
-    - cron: '43 8 * * *'
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/blacklist.yml
-      - blacklist.py
-      - smartdns.conf
-      - resolver.py
-      - readme.py
-      - updater.py
-      - sources.json
-      - requirements.txt
-      - scripts/generate_domain_input.py
-      - scripts/validated_sources.py
-      - rules/myblock.txt
+    - cron: '43 8 * * 0' # Weekly auxiliary DNS diagnostics; never gates production builds.
 
 env:
   TZ: Asia/Shanghai
@@ -362,18 +347,4 @@ jobs:
             fi
           done
 
-      - name: Trigger production rule build after dns-validation-state publication
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git fetch origin main --quiet
-          current_main_sha="$(git rev-parse FETCH_HEAD)"
-          if [[ "$current_main_sha" != "$GITHUB_SHA" ]]; then
-            changed_paths="$(git diff --name-only HEAD "$current_main_sha")"
-            if printf '%s\n' "$changed_paths" | grep -Eq '^(blacklist\.py|smartdns\.conf|resolver\.py|readme\.py|updater\.py|sources\.json|requirements\.txt|scripts/(generate_domain_input|validated_sources)\.py|rules/(myblock|direct|ipv4_china)\.txt|\.github/workflows/blacklist\.yml)'; then
-              echo "::notice::Skipping production build because DNS inputs or validation logic changed during this run; the newer validation run will publish matching state."
-              exit 0
-            fi
-          fi
-          gh workflow run update.yml --ref main
-          echo "Triggered production rule build."
+
