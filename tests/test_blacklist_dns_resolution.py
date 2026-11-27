@@ -261,7 +261,8 @@ def test_no_address_requires_all_six_upstreams_to_agree():
     nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
     assert resolve_upstreams(*([nodata] * 6)) == ([], "no_address")
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
-    assert resolve_upstreams(*([nodata] * 5 + [dead])) == ([], "unknown")
+    # Six valid negative DNS responses that disagree are inconclusive, not an infrastructure failure.
+    assert resolve_upstreams(*([nodata] * 5 + [dead])) == ([], "no_address")
 
 
 def test_missing_upstream_is_inconclusive_not_dead():
