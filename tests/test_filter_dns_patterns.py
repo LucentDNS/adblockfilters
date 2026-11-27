@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from filter import Filter, _get_wildcard_white_exceptions
 from readme import Rule
 
