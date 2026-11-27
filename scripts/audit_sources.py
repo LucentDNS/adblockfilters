@@ -412,6 +412,21 @@ def covered_by_rule_domain(domain, ruleset):
     return any(".".join(labels[index:]) in ruleset for index in range(len(labels)))
 
 
+def dns_pattern_matches_domain(rule, domain):
+    """Match a validated wildcard DNS hostname rule against one concrete domain."""
+    if "$" in rule:
+        # dnstype-scoped rules do not imply coverage for every DNS query type.
+        return False
+    prefix = "@@||" if rule.startswith("@@||") else "||" if rule.startswith("||") else None
+    if not prefix:
+        return False
+    body = rule[len(prefix):]
+    if not body.endswith("^") or "*" not in body:
+        return False
+    pattern = re.escape(body[:-1]).replace(r"\\*", ".*")
+    return re.fullmatch(rf"(?:.*\\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
+
+
 def domains_overlap(left, right):
     """Whether two suffix-scoped DNS domain rules can affect overlapping names."""
     left = left.lower()
@@ -978,6 +993,9 @@ def main():
     compiled_allow_domains = set()
     compiled_unparsed = 0
     compiled_non_domain_filters = 0
+    compiled_dns_pattern_rules = 0
+    compiled_dns_pattern_block_rules = []
+    compiled_dns_pattern_allow_rules = []
     if compiled_dns_path.exists():
         for raw in compiled_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = raw.strip()
@@ -1007,13 +1025,44 @@ def main():
                     else:
                         compiled_block_domains.add(filter_domain)
                 else:
-                    compiled_non_domain_filters += 1
+                    pattern = resolver.resolveDNSPattern(rule_text)
+                    if pattern:
+                        compiled_dns_pattern_rules += 1
+                        action, _base_domain = pattern
+                        # Only unscoped wildcard patterns can establish generic
+                        # hostname coverage. dnstype patterns are valid rules but
+                        # cannot prove all record types are blocked or allowed.
+                        if "$" not in rule_text:
+                            if action == "allow":
+                                compiled_dns_pattern_allow_rules.append(rule_text)
+                            else:
+                                compiled_dns_pattern_block_rules.append(rule_text)
+                    else:
+                        compiled_non_domain_filters += 1
+
+    def covered_by_compiled_block(domain):
+        return (
+            covered_by_rule_domain(domain, compiled_block_domains)
+            or any(
+                dns_pattern_matches_domain(rule, domain)
+                for rule in compiled_dns_pattern_block_rules
+            )
+        )
+
+    def covered_by_compiled_allow(domain):
+        return (
+            covered_by_rule_domain(domain, compiled_allow_domains)
+            or any(
+                dns_pattern_matches_domain(rule, domain)
+                for rule in compiled_dns_pattern_allow_rules
+            )
+        )
 
     def covered_by_compiled_output(domain):
         return (
             compiled_dns_path.exists()
-            and covered_by_rule_domain(domain, compiled_block_domains)
-            and not covered_by_rule_domain(domain, compiled_allow_domains)
+            and covered_by_compiled_block(domain)
+            and not covered_by_compiled_allow(domain)
         )
 
     source_presence_parent_output_covered = {
@@ -1168,8 +1217,8 @@ def main():
     if compiled_dns_path.exists():
         manual_block_covered = {
             domain for domain in manual_block_domains
-            if covered_by_rule_domain(domain, compiled_block_domains)
-            and not covered_by_rule_domain(domain, compiled_allow_domains)
+            if covered_by_compiled_block(domain)
+            and not covered_by_compiled_allow(domain)
         }
         manual_block_missing = manual_block_domains - manual_block_covered
         manual_block_audit.update({
@@ -1431,12 +1480,12 @@ def main():
 
     baseline_allow_current_covered = {
         domain for domain in baseline_allow_domains
-        if covered_by_rule_domain(domain, compiled_allow_domains)
+        if covered_by_compiled_allow(domain)
     }
     baseline_allow_missing = baseline_allow_domains - baseline_allow_current_covered
     baseline_allow_missing_still_blocked = {
         domain for domain in baseline_allow_missing
-        if covered_by_rule_domain(domain, compiled_block_domains)
+        if covered_by_compiled_block(domain)
     }
     baseline_allow_missing_not_needed = baseline_allow_missing - baseline_allow_missing_still_blocked
 
@@ -1466,8 +1515,12 @@ def main():
     if baseline_allow_missing_still_blocked:
         report += "\n| 原作者 allow 域名 | 当前覆盖它的 block 规则 |\n|---|---|\n"
         for domain in sorted(baseline_allow_missing_still_blocked):
-            matches = sorted(rule for rule in compiled_block_domains
-                             if domain == rule or domain.endswith("." + rule))
+            matches = sorted(
+                [rule for rule in compiled_block_domains
+                 if domain == rule or domain.endswith("." + rule)]
+                + [rule for rule in compiled_dns_pattern_block_rules
+                   if dns_pattern_matches_domain(rule, domain)]
+            )
             report += f"| {domain} | {', '.join(matches)} |\n"
     report += f"\n- 当前编译 DNS 输出无法归一化的规则行：{compiled_unparsed} 条；这些行另需结合原始语法审查。\n"
 
