@@ -53,25 +53,16 @@ def test_source_audit_gate_does_not_reject_supported_non_domain_filter_rules():
 
 
 
-def test_source_audit_gate_rejects_missing_active_production_source_allow():
-    failures = audit_sources.source_audit_gate_failures(
+def test_source_audit_does_not_require_global_upstream_allows():
+    # Cross-source allow/block disagreements are audit events, not hard
+    # failures: source A's allow must not cancel source B's block.
+    assert audit_sources.source_audit_gate_failures(
         0, 0, set(), set(), set(),
         {"ads.microsoft.com", "360.cn"},
-    )
-
-    assert len(failures) == 1
-    assert "active production-source allow exceptions" in failures[0]
-    assert "ads.microsoft.com" in failures[0]
-
-
-def test_source_audit_gate_accepts_preserved_active_production_source_allow():
-    assert audit_sources.source_audit_gate_failures(
-        0, 0, set(), set(), set(), set()
     ) == []
 
 
-
-def test_source_allow_output_audit_checks_parent_and_child_conflicts():
+def test_source_allow_output_audit_reports_disagreements_without_global_veto():
     conflicts, missing = audit_sources.audit_source_allow_output(
         {"360.cn", "ads.microsoft.com", "safe.example.org"},
         {"ad.dev.360.cn", "microsoft.com", "sub.safe.example.org"},
@@ -79,4 +70,4 @@ def test_source_allow_output_audit_checks_parent_and_child_conflicts():
     )
 
     assert conflicts == {"360.cn", "ads.microsoft.com", "safe.example.org"}
-    assert missing == {"safe.example.org"}
+    assert missing == set()
