@@ -60,6 +60,11 @@ def test_only_scoped_patterns_from_dns_sources_enter_adguard_dns_patterns(tmp_pa
     assert "/^.+stat\\.kugou\\.com/" not in dns_pattern_blocks
     assert "||browser*.example.com^" not in dns_pattern_blocks
     assert "||browser*.example.com^" in filter_rules
+    # DNS-only source rules that the DNS parser cannot safely represent must not
+    # be copied into the browser subscription as a fallback.
+    assert "||important.example.com^$important" not in filter_rules
+    assert "||client.example.com^$client=phone" not in filter_rules
+    assert "/^.+stat\\.kugou\\.com/" not in filter_rules
 
 
 
