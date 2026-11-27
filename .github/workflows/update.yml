@@ -509,3 +509,77 @@ jobs:
         with:
           commit_message: ${{ steps.update.outputs.message }}
 
+      - name: Publish to dist branch
+        # 必须放在 Commit Changes 之后：孤儿分支切换会清空工作区（含刚生成的 README），
+        # 若放前面，README 更新会丢失。dist 为孤儿分支，每轮 force-push 单提交，不产生历史。
+        run: |
+          set -euo pipefail
+          build_main_sha="$(git rev-parse HEAD)"
+          echo "BUILD_MAIN_SHA=$build_main_sha" >> "$GITHUB_ENV"
+          mkdir -p /tmp/dist-out
+          for name in adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt; do
+            cp ".cache/out/$name" "/tmp/dist-out/$name"
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan dist
+          git fetch origin main
+          if [ "$build_main_sha" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced before dist publication; refusing to publish stale output."
+            exit 1
+          fi
+          git rm -rf . || true
+          # git rm 只删已跟踪文件，.gitignore 也被删了，未跟踪的 .cache/ 会留下来并被 git add -A 收入；
+          # clean 掉所有未跟踪文件（runner 用完即弃，此步已是任务最后一步），只留刚拷入的产物
+          git clean -fdx
+          cp /tmp/dist-out/* .
+          git add -A
+          expected_files="$(printf '%s\\n' adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt | sort)"
+          actual_files="$(git ls-files | sort)"
+          if [ "$actual_files" != "$expected_files" ]; then
+            echo "::error::dist must contain exactly the four AdGuard subscription files."
+            printf 'Expected:\\n%s\\nActual:\\n%s\\n' "$expected_files" "$actual_files"
+            exit 1
+          fi
+          git commit -m "Publish rules $(date -u +%Y%m%d%H%M)"
+          git push -f origin dist
+
+      - name: Verify main is still the build commit before final rule release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$BUILD_MAIN_SHA" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced after dist publication; refusing to publish stale rule release assets."
+            exit 1
+          fi
+
+
+
+      - name: Upload rules to release
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
+        with:
+          tag_name: rule
+          name: AdBlock DNS
+          body: Automated Full and Lite advertising and tracking filters. Subscription formats and direct links are documented in README.
+          make_latest: true
+          files: .cache/out/*
+          overwrite_files: true
+          fail_on_unmatched_files: true
+
+      - name: Verify published rule release manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          release_id="$(gh api "repos/${REPOSITORY}/releases/tags/rule" --jq '.id')"
+          actual="$(gh api --paginate "repos/${REPOSITORY}/releases/${release_id}/assets?per_page=100" --jq '.[].name' | sort)"
+          expected="$(printf '%s\\n' adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt LICENSE-GPL-3.0.txt LICENSE-LGPL-3.0.txt LICENSE-MIT-anti-AD.txt LICENSE-MIT-StevenBlack.txt LICENSE-MPL-2.0-1Hosts.txt THIRD-PARTY-NOTICES.md source-licenses.json | sort)"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::The rule release does not contain exactly the four subscriptions and approved license notices."
+            printf 'Expected:\\n%s\\nActual:\\n%s\\n' "$expected" "$actual"
+            exit 1
+          fi
+          echo "Verified the exact AdGuard rule release asset manifest."
