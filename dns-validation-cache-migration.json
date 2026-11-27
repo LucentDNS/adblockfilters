@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "purpose": "One-time DNS checkpoint migration when replacing unstable AliDNS with CNNIC SDNS",
+  "from_fingerprint": "607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad",
+  "replacement_resolver": "CNNIC SDNS standard recursive DNS at 1.2.4.8",
+  "cache_policy": "Retain cached positive DNS answers; reset cached NXDOMAIN and empty/inconclusive rows for revalidation before publication",
+  "expiry": "The workflow deletes this marker only after a complete DNS state is successfully published and verified"
+}
