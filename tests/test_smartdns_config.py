@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
+def test_dns_validation_uses_six_isolated_recursive_upstreams():
     from blacklist import DNS_VALIDATION_PORTS
 
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
@@ -18,6 +18,8 @@ def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
         ]
         assert len(servers) == 1, f"{group} must map to exactly one upstream"
         assert "-exclude-default-group" in servers[0]
+        if group == "domestic_cnnic":
+            assert "-subnet" not in servers[0]
 
     for provider in (
         "119.29.29.29", "180.76.76.76", "1.2.4.8",
