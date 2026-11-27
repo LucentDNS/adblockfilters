@@ -59,6 +59,23 @@ jobs:
           # Always use the current main tip, not the stale event SHA.
           ref: main
 
+      - name: Restore rule subscriptions to last verified dist before rebuilding
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/rollback
+          for name in adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt; do
+            curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
+              --connect-timeout 15 --max-time 180 \
+              -o ".cache/rollback/$name" \
+              "https://raw.githubusercontent.com/${REPOSITORY}/dist/$name"
+          done
+          # dist is the last fully published subscription set. If today's build
+          # fails any quality gate, the release remains on that verified set.
+          gh release upload rule .cache/rollback/*.txt --clobber
+
       - name: Remove unsupported legacy client assets from rule release
         env:
           GH_TOKEN: ${{ github.token }}
