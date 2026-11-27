@@ -433,13 +433,13 @@ def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, com
         domain for domain in review_focus_blocks
         if any(domains_overlap(domain, allowed) for allowed in comparison_allows)
     )
-    strict_only = sorted(
+    review_focus_unshared = sorted(
         domain for domain in review_focus_blocks
         if not covered_by_rule_domain(domain, comparison_blocks)
         and not any(domains_overlap(domain, allowed) for allowed in comparison_allows)
         and not covered_by_whitelist(domain, whitelist)
     )
-    return strict_only, allow_conflicts
+    return review_focus_unshared, allow_conflicts
 
 
 def main():
