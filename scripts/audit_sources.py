@@ -411,6 +411,50 @@ def covered_by_rule_domain(domain, ruleset):
     return any(".".join(labels[index:]) in ruleset for index in range(len(labels)))
 
 
+def dns_pattern_matches_domain(rule, domain):
+    """Match an unscoped, validated AdGuard DNS wildcard rule to a hostname."""
+    if "$" in rule:
+        return False
+    prefix = "@@||" if rule.startswith("@@||") else "||" if rule.startswith("||") else None
+    if not prefix:
+        return False
+    body = rule[len(prefix):]
+    if not body.endswith("^") or "*" not in body:
+        return False
+    pattern = re.escape(body[:-1]).replace(r"\*", ".*")
+    return re.fullmatch(rf"(?:.*\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
+
+
+def parse_lite_dns_rules(lines, resolver):
+    """Separate exact/suffix host rules from validated wildcard/dnstype rules."""
+    exact_blocks, suffix_blocks, allows = set(), set(), set()
+    pattern_blocks, pattern_allows = {}, {}
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith(("!", "#")):
+            continue
+        parsed = resolver.resolveDNSPattern(line)
+        if parsed:
+            action, base_domain = parsed
+            if action == "allow":
+                pattern_allows[line] = base_domain
+            else:
+                pattern_blocks[line] = base_domain
+        elif line.startswith("@@||") and line.endswith("^"):
+            allows.add(line[4:-1].lower())
+        elif line.startswith("||") and line.endswith("^"):
+            suffix_blocks.add(line[2:-1].lower())
+        elif "." in line and not any(char in line for char in " /\t^$*"):
+            exact_blocks.add(line.lower())
+    return {
+        "exact_blocks": exact_blocks,
+        "suffix_blocks": suffix_blocks,
+        "allows": allows,
+        "pattern_blocks": pattern_blocks,
+        "pattern_allows": pattern_allows,
+    }
+
+
 def domains_overlap(left, right):
     """Whether two suffix-scoped DNS domain rules can affect overlapping names."""
     left = left.lower()
