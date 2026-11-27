@@ -51,7 +51,7 @@
 
 ## 规则与审计
 
-重点复核来源与稳定取向来源之间的差异不会通过简单并集或多数表决自动解决。当前将 HaGeZi Pro Mini 单独列为重点复核来源审查对象；其余已启用 DNS/Hosts 来源仅作为比较组，不假定它们拥有完全相同的作者理念。构建审计会分别输出重点复核来源独有候选，以及重点复核来源拦截但其他来源明确放行的冲突。**来源未收录不等于明确放行，来源之间重合也不证明上游独立或谱系关系。** 这些报告仅供逐项复核，不会自动把重点复核来源独有候选加入正式规则。上游集成谱系尚未逐一核实，因此不会将重合率当作独立证据数量。
+不同作者规则集的差异不会通过简单并集或多数表决自动解决。当前将 HaGeZi Pro Mini 单独列为重点复核对象，但不把它擅自标成作者定义的“严格型”：HaGeZi 官方将 Pro 档描述为 Balanced、低至中等破坏风险；Pro Mini 是该档的精简变体。其 [来源目录](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/sources.md) 明确列出 AdGuard DNS、AWAvenue、1Hosts Lite、OISD Big、EasyList、EasyPrivacy 等构建输入。1Hosts 的 [输入/贡献目录](https://raw.githubusercontent.com/badmojr/1Hosts/master/-data/lists/assets.txt) 又列有 HaGeZi Pro、AWAvenue、StevenBlack、OISD Big；anti-AD 的 [README 致谢](https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/README.md) 提及 AWAvenue、AdGuard、EasyList 等项目，但致谢不等于当前实际集成。由此可见，来源之间存在交叉谱系，不能把来源数量或重合数量当成独立证据票数。构建审计输出重点复核来源未共享候选及其与其他来源明确放行规则的冲突。**来源未收录不等于明确放行；来源重合也不等于独立确认。** 报告只用于人工复核，不会自动把候选加入正式规则；公开资料未能证明的上游关系会明确标注为未核实。
 
 规则源由 `sources.json` 统一维护。构建流程执行来源检查、去重、DNS 验证、关键域名与白名单回归，并编译客户端格式。验证结果不确定时，不会仅凭一次解析失败删除规则。
 
