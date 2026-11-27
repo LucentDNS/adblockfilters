@@ -18,6 +18,9 @@ CANDIDATES = {
     "China Unicom 123.125.81.6": "123.125.81.6",
     "Huawei DNS 122.112.208.1": "122.112.208.1",
     "Huawei DNS 139.9.23.90": "139.9.23.90",
+    "AliDNS secondary 223.6.6.6": "223.6.6.6",
+    "China Unicom Beijing 123.123.123.123": "123.123.123.123",
+    "Tsinghua TUNA 101.6.6.6": "101.6.6.6",
 }
 POSITIVE_PROBES = ("baidu.com", "qq.com", "example.com", "cloudflare.com", "google.com")
 
