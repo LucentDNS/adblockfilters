@@ -59,45 +59,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
-      - name: Probe alternate domestic public resolvers from runner network
-        continue-on-error: true
-        run: |
-          python - <<'PY'
-          import dns.resolver
-          from dns.resolver import NXDOMAIN
-
-          candidates = {
-                            "114DNS-114.114.114.114": "114.114.114.114",
-              "114DNS-114.114.115.115": "114.114.115.115",
-              "AliDNS-223.5.5.5": "223.5.5.5",
-              "AliDNS-223.6.6.6": "223.6.6.6",
-              "ByteDance-180.184.1.1": "180.184.1.1",
-          }
-          for name, address in candidates.items():
-              resolver = dns.resolver.Resolver(configure=False)
-              resolver.nameservers = [address]
-              resolver.port = 53
-              resolver.timeout = 2
-              resolver.lifetime = 4
-              positive = []
-              for domain in ("baidu.com", "qq.com", "example.com"):
-                  try:
-                      if resolver.resolve(domain, "A"):
-                          positive.append(domain)
-                  except Exception as exc:
-                      print(f"{name} positive {domain}: {type(exc).__name__}: {exc}")
-              negative = []
-              for rdtype in ("A", "AAAA"):
-                  try:
-                      resolver.resolve("adblock-dns-probe-20261125.example.invalid", rdtype)
-                  except NXDOMAIN:
-                      negative.append(rdtype)
-                  except Exception as exc:
-                      print(f"{name} negative {rdtype}: {type(exc).__name__}: {exc}")
-              passed = len(positive) >= 2 and len(negative) == 2
-              print(f"RESOLVER_PROBE {name} {address} positive={positive} negative={negative} result={'PASS' if passed else 'FAIL'}")
-          PY
-      - name: Compare candidate resolvers against unresolved domains with detailed errors
+      - name: Compare domestic DNS candidates against unresolved domains
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -122,9 +84,14 @@ jobs:
               raise SystemExit(f"Insufficient unresolved DNS validation sample: {len(domains)}")
 
           candidates = {
-              "AliDNS-primary-223.5.5.5": "223.5.5.5",
-              "AliDNS-secondary-223.6.6.6": "223.6.6.6",
-              "114DNS-114.114.114.114": "114.114.114.114",
+              "Gansu-Telecom-202.100.64.68": "202.100.64.68",
+              "Gansu-Telecom-61.178.0.93": "61.178.0.93",
+              "China-Unicom-123.125.81.6": "123.125.81.6",
+              "China-Unicom-123.123.123.123": "123.123.123.123",
+              "Huawei-122.112.208.1": "122.112.208.1",
+              "Huawei-139.9.23.90": "139.9.23.90",
+              "Tsinghua-TUNA-101.6.6.6": "101.6.6.6",
+              "Yamu-1.1.8.8": "1.1.8.8",
           }
 
           def inspect(address, domain):
