@@ -4,6 +4,8 @@ import json
 import re
 from pathlib import Path
 
+from resolver import Resolver
+
 BASELINE_DIR = Path(".cache/baseline")
 CURRENT_DIR = Path(".cache/out")
 REPORT_DIR = Path(".cache/report")
@@ -13,7 +15,8 @@ EXPECTED_TITLES = {
     "full": "! Title: AdBlock DNS",
     "lite": "! Title: AdBlock DNS Lite",
 }
-DOMAIN_LABEL = re.compile(r"^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$")
+DOMAIN_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+DNS_PATTERN_RESOLVER = Resolver(".")
 
 
 def _is_domain_rule(rule: str) -> bool:
@@ -23,6 +26,9 @@ def _is_domain_rule(rule: str) -> bool:
         domain = rule[2:]
     else:
         return False
+    # Use the production parser for supported wildcard and dnstype patterns.
+    if "*" in domain or "$" in domain:
+        return DNS_PATTERN_RESOLVER.resolveDNSPattern(rule) is not None
     if not domain.endswith("^"):
         return False
     domain = domain[:-1]

@@ -106,10 +106,27 @@ def test_parse_filter_accepts_domain_and_exception_rules(tmp_path):
         path,
         "! Title: AdBlock DNS",
         "v1",
-        ["||ads.example^", "@@||safe.example^", "||_service.example^"],
+        ["||ads.example^", "@@||safe.example^", "||*-analytics*.huami.com^"],
     )
 
     parsed = parse_filter(path, "! Title: AdBlock DNS", 1)
 
     assert parsed["version"] == "v1"
+    assert len(parsed["rules"]) == 3
+
+
+def test_parse_filter_rejects_dns_service_record_labels_as_hostnames(tmp_path):
+    path = tmp_path / "service-record.txt"
+    _write_filter(path, "! Title: AdBlock DNS", "v1", ["||_domainkey.example.com^"])
+    with pytest.raises(SystemExit, match="non-domain rules"):
+        parse_filter(path, "! Title: AdBlock DNS", 1)
+
+
+def test_parse_filter_accepts_supported_dns_wildcard_patterns(tmp_path):
+    path = tmp_path / "wildcards.txt"
+    _write_filter(
+        path, "! Title: AdBlock DNS", "v1",
+        ["||*-analytics*.huami.com^", "||*-sdk.rum.aliyuncs.com^", "@@||safe*.example.com^"],
+    )
+    parsed = parse_filter(path, "! Title: AdBlock DNS", 1)
     assert len(parsed["rules"]) == 3
