@@ -68,3 +68,15 @@ def test_source_audit_gate_accepts_preserved_active_production_source_allow():
     assert audit_sources.source_audit_gate_failures(
         0, 0, set(), set(), set(), set()
     ) == []
+
+
+
+def test_source_allow_output_audit_checks_parent_and_child_conflicts():
+    conflicts, missing = audit_sources.audit_source_allow_output(
+        {"360.cn", "ads.microsoft.com", "safe.example.org"},
+        {"ad.dev.360.cn", "microsoft.com", "other.example.org"},
+        {"360.cn", "ads.microsoft.com"},
+    )
+
+    assert conflicts == {"360.cn", "ads.microsoft.com", "safe.example.org"}
+    assert missing == {"safe.example.org"}
