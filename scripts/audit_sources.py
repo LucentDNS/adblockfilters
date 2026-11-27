@@ -646,7 +646,7 @@ def main():
             "source_independence_claimed": False,
             "policy_note": policy.get("policy_note", ""),
             "decision": "audit_only_no_automatic_production_inclusion"
-        }, ensure_ascii=False, indent=2) + "\\n",
+        }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8"
     )
     unique_dir = OUT_DIR / "effective-unique"
@@ -730,6 +730,13 @@ def main():
         results, production_names, browser_names, candidate_names,
         overlap, unique_total, pairwise, candidate_overlaps, candidate_pairwise_overlaps
     )
+    report += "\\n## 严格来源策略冲突审计（仅供人工复核）\\n\\n"
+    report += f"- 严格审查来源：{', '.join(sorted(strict_names))}。\\n"
+    report += f"- 对照来源：{', '.join(sorted(comparison_names))}。\\n"
+    report += f"- 严格来源独有候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(strict_only_candidates)} 条，详见 strict-only-candidates.txt。\\n"
+    report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\\n"
+    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把严格来源候选并入正式规则。\\n"
+    report += "- 上游谱系仍未完成核实，本报告不对来源独立性作任何断言。\\n"
     report += "\n## 项目白名单当前来源覆盖审计\n\n"
     report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\n"
     report += f"- 被当前 DNS/Hosts 或浏览器补充来源实际覆盖：{len(project_whitelist) - len(whitelist_unused)} 条。\n"
