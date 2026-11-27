@@ -30,7 +30,6 @@ on:
       - requirements.txt
       - scripts/generate_domain_input.py
       - scripts/validated_sources.py
-      - scripts/review_baseline_only.py
       - rules/myblock.txt
 
 env:
