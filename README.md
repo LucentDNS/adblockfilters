@@ -1,12 +1,12 @@
 # AdBlock DNS
 
-自动聚合、清理并编译广告与跟踪拦截规则，提供多客户端订阅，每日自动更新一次。
+自动聚合、清理并编译 AdGuard DNS / AdGuard Home 规则及 AdGuard 浏览器补充规则，每日自动更新一次。
 
 本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生，独立维护规则来源、DNS 验证、审计与构建流程。
 
 ## 项目状态与使用提示
 
-本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和多客户端产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。**上游规则源的接入不代表逐条人工预审，也不代表已对每条规则完成独立质量背书；项目没有覆盖所有域名的前置自动误报扫描。** 自动化检查侧重来源可用性、规则处理、DNS 有效性与产物回归，不能证明每条规则都不会影响正常业务，也不能替代真实设备与实际使用场景验证。误报主要依赖用户提供可复现证据后逐项核实。
+本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和AdGuard DNS 与浏览器扩展产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。**上游规则源的接入不代表逐条人工预审，也不代表已对每条规则完成独立质量背书；项目没有覆盖所有域名的前置自动误报扫描。** 自动化检查侧重来源可用性、规则处理、DNS 有效性与产物回归，不能证明每条规则都不会影响正常业务，也不能替代真实设备与实际使用场景验证。误报主要依赖用户提供可复现证据后逐项核实。
 
 项目没有预先批量添加通用放行域名。首次使用或用于重要设备时，建议先观察一段时间，并确认所用客户端支持相应规则格式。遇到网站、应用或系统功能异常，请提交可复现的反馈；项目不承诺零误报或零漏报，也不会仅凭未经验证的单次反馈直接放行域名。
 
@@ -14,34 +14,17 @@
 
 提供 **Full** 与 **Lite** 两种版本，共 35 个订阅文件。建议使用下表中的 Raw 链接。
 
-| 客户端 / 格式 | Full | Lite |
+| 目标产品 | Full | Lite |
 |---|---|---|
 | AdGuard DNS / AdGuard Home | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdnslite.txt) |
 | AdGuard 浏览器扩展（补充规则） | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockfilters.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockfilterslite.txt) |
-| InviZible Pro DNSCrypt | [拦截](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdomain.txt) · [放行](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdomainallow.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdomainlite.txt) |
-| DNSMasq | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdnsmasq.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdnsmasqlite.txt) |
-| SmartDNS | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksmartdns.conf) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksmartdnslite.conf) |
-| Clash 规则集 | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockclash.list) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockclashlite.list) |
-| Shadowrocket 模块 | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockshadowrocket.sgmodule) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockshadowrocketlite.sgmodule) |
-| Quantumult X | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockqx.conf) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockqxlite.conf) |
-| Mihomo YAML | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmihomo.yaml) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmihomolite.yaml) |
-| Mihomo MRS | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmihomo.mrs) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmihomolite.mrs) |
-| Hosts | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockhosts.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockhostslite.txt) |
-| sing-box JSON | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksingbox.json) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksingboxlite.json) |
-| sing-box SRS | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksingbox.srs) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksingboxlite.srs) |
-| Loon | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockloon.list) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockloonlite.list) |
-| Surge | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksurge.list) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblocksurgelite.list) |
-| MosDNS | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmosdns.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockmosdnslite.txt) |
-| V2Ray / Xray | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockv2ray.dat) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockv2raylite.dat) |
-
-### Full 与 Lite 的区别
 
 本项目不会仅因某一次 DNS 查询失败就删除上游规则中的域名。DNS 验证由国内 3 个、国际 3 个共 6 个独立上游共同完成：只有当 6 个上游对域名的 A、AAAA 查询均返回 NXDOMAIN 时，才将该域名判定为不存在并从有效规则中排除。只要任一上游返回有效地址，域名就保留；NODATA、超时、SERVFAIL 或上游结果不一致均视为证据不足，不据此删除域名。这一步只做 DNS 存活性清理：它只识别有充分 DNS 证据表明已经不存在的域名，**不检测、不判断、也不自动修复误拦截**。个别域名确认死亡时只剔除该域名，其余规则继续处理；若验证结果显示 DNS 基础设施整体退化（例如大量查询持续出现不确定结果），则阻断本轮 DNS 状态发布及后续正式构建，而不是把服务故障当成域名死亡。验证使用国内 3 个、国际 3 个共 6 个独立上游，六组上游并行验证，并发上限为 100；每轮会保存 DNS 查询摘要、输入来源信息和分类结果为 GitHub Actions artifact，保留 30 天，便于追查清理依据。
 
 - **Full**：包含通过上述 DNS 有效性验证、并经规则处理流程保留的完整规则范围。
 - **Lite**：在域名规则基础上，进一步依据国内域名识别数据筛选；识别依据包括国内直连域名规则及中国 IPv4 地址段。它不是简单按数量截短规则，也不是随意删减规则。对于浏览器过滤规则，Lite 按规则关联域名及规则自身的匹配范围筛选，并保留原有匹配语义。
 
-浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。DNS Full/Lite 使用 AdGuard Home 的 Adblock-style 域名语法（例如 `||example.com^`、`@@||example.com^`），每次构建都会使用 AdGuard 官方 [Hostlist Compiler](https://github.com/AdguardTeam/HostlistCompiler) v2.1.1 对两个 DNS 产物执行 `Validate` 与 `Deduplicate` 独立校验；如果编译器删除、改写规则，或发现重复规则，校验就会失败，阻止本轮正式发布。**这项检查验证的是 DNS 列表语法和编译器兼容性，不代表自动判断了域名是否真是广告/跟踪，也不代表已经排除了误拦截。** 请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。规则编写参考 [AdGuard 官方指南](https://adguard.com/kb/general/ad-filtering/create-own-filters/)。DNS 主机名规则只保留作用范围固定在已知注册域名之下的模式；通配注册域/TLD 的宽泛模式、正则规则，以及需要特殊上下文或规则集级处理的修饰符不进入 DNS 输出。对于 AdGuard Home 支持且可原样保留的 `$dnstype`，项目保留原始规则及其记录类型限制，不将其改写成无条件拦截。通配模式不是可直接查询的完整域名，因此不做 A/AAAA 存活性探测，只接受语法校验；Lite 仅保留其固定注册域名命中国内域名集合的模式。通配模式只输出到 AdGuard DNS Full/Lite 订阅；Hosts、DNSMasq 等其他格式继续只输出其可准确表达的精确域名规则。
+浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。DNS Full/Lite 使用 AdGuard Home 的 Adblock-style 域名语法（例如 `||example.com^`、`@@||example.com^`），每次构建都会使用 AdGuard 官方 [Hostlist Compiler](https://github.com/AdguardTeam/HostlistCompiler) v2.1.1 对两个 DNS 产物执行 `Validate` 与 `Deduplicate` 独立校验；如果编译器删除、改写规则，或发现重复规则，校验就会失败，阻止本轮正式发布。**这项检查验证的是 DNS 列表语法和编译器兼容性，不代表自动判断了域名是否真是广告/跟踪，也不代表已经排除了误拦截。** 请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。规则编写参考 [AdGuard 官方指南](https://adguard.com/kb/general/ad-filtering/create-own-filters/)。DNS 主机名规则只保留作用范围固定在已知注册域名之下的模式；通配注册域/TLD 的宽泛模式、正则规则，以及需要特殊上下文或规则集级处理的修饰符不进入 DNS 输出。对于 AdGuard Home 支持且可原样保留的 `$dnstype`，项目保留原始规则及其记录类型限制，不将其改写成无条件拦截。通配模式不是可直接查询的完整域名，因此不做 A/AAAA 存活性探测，只接受语法校验；Lite 仅保留其固定注册域名命中国内域名集合的模式。通配模式只输出到 AdGuard DNS Full/Lite 订阅；浏览器补充规则则保留其自身支持的过滤语法。
 
 ## 白名单与误报处理
 

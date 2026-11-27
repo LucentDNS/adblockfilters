@@ -38,8 +38,6 @@ on:
 
 env:
   TZ: Asia/Shanghai
-  SINGBOX_VERSION: 1.12.12
-  MIHOMO_VERSION: 1.19.16
 
 jobs:
   Update_Filters:
@@ -54,23 +52,10 @@ jobs:
           # Always use the current main tip, not the stale event SHA.
           ref: main
 
-      - name: Checkout domain-list-community
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          repository: v2fly/domain-list-community
-          path: domain-list-community
-          ref: 98c43cad27fa8f02043858763709fe4a95432ffb
-
       - name: Setup Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: '3.14'
-
-      - name: Setup Go
-        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
-        with:
-          go-version-file: domain-list-community/go.mod
-          cache-dependency-path: domain-list-community/go.sum
 
       - name: Cache pip
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -331,75 +316,17 @@ jobs:
             echo "- 白名单: $(grep -vc '^#\|^$' rules/white.txt 2>/dev/null || echo 0) 条"
           } >> $GITHUB_STEP_SUMMARY
 
-      - name: Compile Sing-Box filters
-        run: |
-          wget https://github.com/SagerNet/sing-box/releases/download/v${{env.SINGBOX_VERSION}}/sing-box-${{env.SINGBOX_VERSION}}-linux-amd64.tar.gz
-          echo '7c103cb2f9a7dc54cb82962043596718ed27989a478d6405f0939a9b775f889f  sing-box-${{env.SINGBOX_VERSION}}-linux-amd64.tar.gz' | sha256sum -c -
-          tar -zxvf sing-box-${{env.SINGBOX_VERSION}}-linux-amd64.tar.gz
-          chmod +x sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box
-          ./sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box rule-set compile --output .cache/out/adblocksingbox.srs     .cache/out/adblocksingbox.json
-          ./sing-box-${{env.SINGBOX_VERSION}}-linux-amd64/sing-box rule-set compile --output .cache/out/adblocksingboxlite.srs .cache/out/adblocksingboxlite.json
-          rm -rf sing-box*
-
-      - name: Compile mihomo filters
-        run: |
-          wget https://github.com/MetaCubeX/mihomo/releases/download/v${{env.MIHOMO_VERSION}}/mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz
-          echo 'd06f37a21df275bc36002b98ad35835caf9ac1b1c4cb3fad750fd2b3f94617fe  mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz' | sha256sum -c -
-          gzip -d mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}.gz
-          chmod +x mihomo-linux-amd64-v${{env.MIHOMO_VERSION}}
-          ./mihomo-linux-amd64-v${{env.MIHOMO_VERSION}} convert-ruleset domain yaml .cache/out/adblockmihomo.yaml     .cache/out/adblockmihomo.mrs
-          ./mihomo-linux-amd64-v${{env.MIHOMO_VERSION}} convert-ruleset domain yaml .cache/out/adblockmihomolite.yaml .cache/out/adblockmihomolite.mrs
-          rm -rf mihomo*
-
-      - name: Compile v2ray/xray filters
-        run: |
-          mkdir -p domain-list-community/adblock
-          cp .cache/out/adblockv2ray.txt domain-list-community/adblock/category-ads-all
-          cd domain-list-community
-          go run ./ --datapath=adblock
-          cd ..
-          cp domain-list-community/dlc.dat .cache/out/adblockv2ray.dat
-          mkdir -p domain-list-community/adblocklite
-          cp .cache/out/adblockv2raylite.txt domain-list-community/adblocklite/category-ads-all
-          cd domain-list-community
-          go run ./ --datapath=adblocklite
-          cd ..
-          cp domain-list-community/dlc.dat .cache/out/adblockv2raylite.dat
-          rm -rf domain-list-community
-          # These plain-text files are internal inputs for DAT compilation, not published client formats.
-          test -s .cache/out/adblockv2ray.dat
-          test -s .cache/out/adblockv2raylite.dat
-          rm -f .cache/out/adblockv2ray.txt .cache/out/adblockv2raylite.txt
-
-      - name: Validate complete client output matrix
+      - name: Validate AdGuard product outputs
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json
           import re
 
           output = Path(".cache/out")
           expected = {
               "adblockdns.txt", "adblockdnslite.txt",
               "adblockfilters.txt", "adblockfilterslite.txt",
-              "adblockdomain.txt", "adblockdomainlite.txt", "adblockdomainallow.txt",
-              "adblockdnsmasq.txt", "adblockdnsmasqlite.txt",
-              "adblocksmartdns.conf", "adblocksmartdnslite.conf",
-              "adblockclash.list", "adblockclashlite.list",
-              "adblockshadowrocket.sgmodule", "adblockshadowrocketlite.sgmodule",
-              "adblockqx.conf", "adblockqxlite.conf",
-              "adblockmihomo.yaml", "adblockmihomolite.yaml",
-              "adblockmihomo.mrs", "adblockmihomolite.mrs",
-              "adblockhosts.txt", "adblockhostslite.txt",
-              "adblocksingbox.json", "adblocksingboxlite.json",
-              "adblocksingbox.srs", "adblocksingboxlite.srs",
-              "adblockloon.list", "adblockloonlite.list",
-              "adblocksurge.list", "adblocksurgelite.list",
-              "adblockmosdns.txt", "adblockmosdnslite.txt",
-              "adblockv2ray.dat", "adblockv2raylite.dat",
           }
-          if not output.is_dir():
-              raise SystemExit("Compiled output directory is missing")
           license_artifacts = {
               "LICENSE-GPL-3.0.txt",
               "LICENSE-LGPL-3.0.txt",
@@ -409,17 +336,16 @@ jobs:
               "THIRD-PARTY-NOTICES.md",
               "source-licenses.json",
           }
+          if not output.is_dir():
+              raise SystemExit("Compiled output directory is missing")
           actual = {path.name for path in output.iterdir() if path.is_file()}
           missing = sorted((expected | license_artifacts) - actual)
           unexpected = sorted(actual - expected - license_artifacts)
           empty = sorted(name for name in expected & actual if (output / name).stat().st_size == 0)
           if missing or unexpected or empty:
               raise SystemExit(
-                  f"Client output matrix invalid: missing={missing}, unexpected={unexpected}, empty={empty}"
+                  f"AdGuard output set invalid: missing={missing}, unexpected={unexpected}, empty={empty}"
               )
-          for name in ("adblocksingbox.json", "adblocksingboxlite.json"):
-              json.loads((output / name).read_text(encoding="utf-8"))
-
           readme = Path("README.md").read_text(encoding="utf-8")
           subscriptions = re.findall(
               r"\[[^\]]+\]\(https://raw\.githubusercontent\.com/[^/]+/[^/]+/dist/([^)]+)\)",
@@ -427,11 +353,11 @@ jobs:
           )
           if len(subscriptions) != len(expected) or set(subscriptions) != expected:
               raise SystemExit(
-                  f"README direct subscription manifest mismatch: count={len(subscriptions)}, "
+                  f"README subscription manifest mismatch: count={len(subscriptions)}, "
                   f"missing={sorted(expected - set(subscriptions))}, "
                   f"unexpected={sorted(set(subscriptions) - expected)}"
               )
-          print(f"Validated {len(expected)} client outputs and matching direct README subscriptions.")
+          print("Validated the four AdGuard Full/Lite subscriptions.")
           PY
 
       - name: Validate audit report assets
