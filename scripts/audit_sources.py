@@ -424,8 +424,6 @@ def main():
     # They are never merged into production automatically; contribution and parser coverage
     # are measured first, then false-positive and compatibility evidence is reviewed manually.
     candidate_rules = [
-        Rule("CHN: anti-AD (AdGuard Registry candidate only)", "dns",
-             "https://anti-ad.net/adguard.txt", "live upstream"),
         Rule("CHN: AdRules DNS List (AdGuard Registry candidate only)", "dns",
              "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt", "live upstream"),
         Rule("OISD Blocklist Small (AdGuard Registry candidate only)", "dns",
