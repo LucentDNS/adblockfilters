@@ -473,18 +473,9 @@ class Filter(object):
         liteBlockList = _build_lite_block_list(
             blockSet_block, ChinaSet, allowDomainSet, blackSet
         )
-        hostsFullBlockList = _build_exact_block_list(
-            blockSet_block, allowDomainSet, blackSet
-        )
-        for g in generaterList:
-            g.blockListLite = liteBlockList
-            if isinstance(g, Hosts):
-                # Hosts files only match exact hostnames; never feed them a suffix-compressed list.
-                g.blockListHosts = hostsFullBlockList
-            if isinstance(g, InviZible):
-                # DNSCrypt allowlists are a separate native file, not inline blocklist syntax.
-                g.unblockList = sorted(allowDomainSet)
-            g.generateAll()
+        for generator in generaterList:
+            generator.blockListLite = liteBlockList
+            generator.generateAll()
 
         # 生成用于域名连通性检测的全域名清单
         self.__generateDomainBackup(blockSet_block | unblockSet_unblock | domainSet_filter, self.path + "/domain.txt")
