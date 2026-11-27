@@ -389,7 +389,21 @@ class Filter(object):
         whiteExceptions = self.__getWhiteExceptions(whiteDict, blockList)
         unblockList = sorted(set(unblockList) | set(whiteExceptions))
         unblockSet_unblock |= set(whiteExceptions)
-        logger.info("DNS wildcard patterns: block=%d allow=%d; Lite block=%d allow=%d", len(dnsPatternBlockMap), len(dnsPatternAllowMap), sum(1 for base in dnsPatternBlockMap.values() if base in ChinaSet), sum(1 for base in dnsPatternAllowMap.values() if base in ChinaSet))
+        dnsPatternBlockList = sorted(dnsPatternBlockMap)
+        dnsPatternAllowList = sorted(dnsPatternAllowMap)
+        dnsPatternBlockListLite = sorted(
+            rule for rule, base in dnsPatternBlockMap.items() if base in ChinaSet
+        )
+        dnsPatternAllowListLite = sorted(
+            rule for rule, base in dnsPatternAllowMap.items() if base in ChinaSet
+        )
+        logger.info(
+            "DNS wildcard patterns: block=%d allow=%d; Lite block=%d allow=%d",
+            len(dnsPatternBlockList),
+            len(dnsPatternAllowList),
+            len(dnsPatternBlockListLite),
+            len(dnsPatternAllowListLite),
+        )
         filterList_var, filterList, domainSet_filter = self.__filterSort(
             filterDict, set(blockList), set(unblockList), blackSet, whiteSet, whiteDict
         )
@@ -397,7 +411,20 @@ class Filter(object):
         # 生成合并规则 AdGuard, AdGuardHome, DNSMasq, InviZible, SmartDNS等
         generaterList:List[APPBase] = [
             AdGuard           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockfilters.txt",           sourceRule),
-            AdGuardHome       (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdns.txt",               dnsRuleNames, dnsPatternBlockList=sorted(dnsPatternBlockMap), dnsPatternAllowList=sorted(dnsPatternAllowMap), dnsPatternBlockListLite=sorted(rule for rule, base in dnsPatternBlockMap.items() if base in ChinaSet), dnsPatternAllowListLite=sorted(rule for rule, base in dnsPatternAllowMap.items() if base in ChinaSet)),
+            AdGuardHome(
+                blockList,
+                unblockList,
+                filterDict,
+                filterList,
+                filterList_var,
+                ChinaSet,
+                self.outPath + "/adblockdns.txt",
+                dnsRuleNames,
+                dnsPatternBlockList=dnsPatternBlockList,
+                dnsPatternAllowList=dnsPatternAllowList,
+                dnsPatternBlockListLite=dnsPatternBlockListLite,
+                dnsPatternAllowListLite=dnsPatternAllowListLite,
+            ),
             DNSMasq           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdnsmasq.txt",           dnsRuleNames),
             Hosts             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockhosts.txt",             dnsRuleNames),
             InviZible         (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdomain.txt",            dnsRuleNames),
