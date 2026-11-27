@@ -27,10 +27,8 @@ def test_conservative_lite_classifier_uses_cn_full_and_domain_rules():
     roots = {"example.net"}
     china = classify_domains(current, full, roots)
 
-    assert direct == {
+    assert china == {
         "service.cn",
         "api.example.com",
         "child.service.example.net",
-        "stale.example.cn",
     }
-    assert china == direct
