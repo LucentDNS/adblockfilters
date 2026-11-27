@@ -6,9 +6,8 @@ This tool never changes the DNS-validation database or production rule outputs.
 from __future__ import annotations
 
 import argparse
-import random
 import sqlite3
-from collections import Counter, defaultdict
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
