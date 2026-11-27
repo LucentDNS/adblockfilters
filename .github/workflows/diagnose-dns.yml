@@ -1,0 +1,101 @@
+name: Diagnose DNS upstream disagreements
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-dns.yml"
+      - "scripts/diagnose_dns_upstreams.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dns-upstream-diagnostic-${{ github.repository }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  SMARTDNS_URL: https://github.com/pymumu/smartdns/releases/download/Release48.4/smartdns.1.2026.08.05-0921.x86_64-debian-all.deb
+  SMARTDNS_SHA256: 4cc1b8f9db10110e1212d981cfee7eb89a3c80f5766760e3b5f7541c8da8b546
+  SMARTDNS_PATH: /tmp/smartdns
+
+jobs:
+  Diagnose:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.14"
+
+      - name: Install DNS diagnostic dependency
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install dnspython
+
+      - name: Restore failed-run DNS checkpoint (read only)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: domain.db
+          key: dns-validation-checkpoint-607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad-diagnostic-${{ github.run_id }}
+          restore-keys: |
+            dns-validation-checkpoint-607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad-
+
+      - name: Verify checkpoint exists
+        run: |
+          set -euo pipefail
+          test -s domain.db || { echo "::error::Could not restore the saved DNS checkpoint"; exit 1; }
+          ls -lh domain.db
+
+      - name: Setup six isolated SmartDNS listeners
+        run: |
+          set -euo pipefail
+          mkdir -p "$SMARTDNS_PATH"
+          wget --https-only --timeout=30 --tries=3 --waitretry=2 "$SMARTDNS_URL" -O "$SMARTDNS_PATH/smartdns.deb"
+          echo "$SMARTDNS_SHA256  $SMARTDNS_PATH/smartdns.deb" | sha256sum --check -
+          dpkg-deb --extract "$SMARTDNS_PATH/smartdns.deb" "$SMARTDNS_PATH/root"
+          SMARTDNS_BIN="$(find "$SMARTDNS_PATH/root" -type f -name smartdns -print -quit)"
+          test -n "$SMARTDNS_BIN"
+          chmod +x "$SMARTDNS_BIN"
+          cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
+          cd "$(dirname "$SMARTDNS_BIN")"
+          nohup ./smartdns -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_PATH/smartdns.log" 2>&1 &
+          SMARTDNS_PID=$!
+          ready=0
+          for i in $(seq 1 30); do
+            if ! kill -0 "$SMARTDNS_PID" 2>/dev/null; then
+              cat "$SMARTDNS_PATH/smartdns.log"
+              exit 1
+            fi
+            listeners_ready=1
+            for port in 5053 5054 5055 5056 5057 5058; do
+              if ! ss -H -lun | grep -Eq "127\\.0\\.0\\.1:$port([[:space:]]|$)"; then
+                listeners_ready=0
+                break
+              fi
+            done
+            if [ "$listeners_ready" = "1" ]; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = "1" || { cat "$SMARTDNS_PATH/smartdns.log"; exit 1; }
+
+      - name: Diagnose response types per upstream
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/diagnose_dns_upstreams.py
+          python scripts/diagnose_dns_upstreams.py --sample-size 500 2>&1 | tee dns-upstream-diagnostic.log
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dns-upstream-diagnostic-${{ github.run_id }}
+          path: dns-upstream-diagnostic.log
+          if-no-files-found: warn
+          retention-days: 30
