@@ -28,6 +28,8 @@ def test_dns_validation_uses_six_isolated_recursive_upstreams():
         assert provider in config
 
     assert config.count("-exclude-default-group") == 6
+    assert "1.2.4.8" not in config
+    assert "domestic_cnnic" not in config
     assert "force-AAAA-SOA" not in config
     assert "-force-aaaa-soa" not in config
     assert "9.9.9.11" not in config
