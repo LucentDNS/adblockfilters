@@ -43,3 +43,21 @@ def test_explained_upstream_baseline_delta_does_not_require_output_identity():
     # Differences explicitly explained by current DNS validation, project
     # exceptions, source allow rules, or manual evidence do not force cloning.
     assert audit_sources.source_audit_gate_failures(0, 0, set(), set(), set()) == []
+
+
+def test_dns_pattern_matches_only_matching_hostnames():
+    assert audit_sources.dns_pattern_matches_domain(
+        "||*-analytics*.huami.com^", "device-analytics123.huami.com"
+    )
+    assert not audit_sources.dns_pattern_matches_domain(
+        "||*-analytics*.huami.com^", "huami.com"
+    )
+    assert not audit_sources.dns_pattern_matches_domain(
+        "||*-analytics*.huami.com^", "device-api.huami.com"
+    )
+
+
+def test_dns_pattern_audit_does_not_treat_dnstype_rules_as_all_type_coverage():
+    assert not audit_sources.dns_pattern_matches_domain(
+        "||*.example.com^$dnstype=TXT", "ads.example.com"
+    )
