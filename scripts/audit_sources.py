@@ -1242,32 +1242,43 @@ def main():
         encoding="utf-8",
     )
 
-    lite_scope = {"available": False, "reason": "validated-domain input, china.txt, or Lite output is unavailable"}
+    lite_scope = {"available": False, "reason": "current domain input, domestic classification, or DNS Lite output is unavailable"}
+    domain_input_path = ROOT / ".cache" / "domain" / "domain.txt"
     validation_input_path = ROOT / ".cache" / "domain" / "validated-domain-input.txt"
     china_input_path = ROOT / ".cache" / "domain" / "china.txt"
+    china_provenance_path = ROOT / ".cache" / "domain" / "china-classification.json"
     lite_dns_path = ROOT / ".cache" / "out" / "adblockdnslite.txt"
-    if validation_input_path.exists() and china_input_path.exists() and lite_dns_path.exists():
-        validated_domains = {
+    if domain_input_path.exists() and china_input_path.exists() and lite_dns_path.exists():
+        source_input_domains = {
             line.strip().lower()
-            for line in validation_input_path.read_text(encoding="utf-8", errors="replace").splitlines()
+            for line in domain_input_path.read_text(encoding="utf-8", errors="replace").splitlines()
             if line.strip() and not line.lstrip().startswith(("#", "!"))
         }
+        validated_domains = set()
+        if validation_input_path.exists():
+            validated_domains = {
+                line.strip().lower()
+                for line in validation_input_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                if line.strip() and not line.lstrip().startswith(("#", "!"))
+            }
         china_domains = {
             line.strip().lower()
             for line in china_input_path.read_text(encoding="utf-8", errors="replace").splitlines()
             if line.strip() and not line.lstrip().startswith(("#", "!"))
         }
-        lite_blocks_exact, lite_blocks_suffix, lite_allows = set(), set(), set()
-        for raw in lite_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
-            line = raw.strip()
-            if not line or line.startswith(("!", "#")):
-                continue
-            if line.startswith("@@||") and line.endswith("^"):
-                lite_allows.add(line[4:-1].lower())
-            elif line.startswith("||") and line.endswith("^"):
-                lite_blocks_suffix.add(line[2:-1].lower())
-            elif "." in line and not any(char in line for char in " /\t^$*"):
-                lite_blocks_exact.add(line.lower())
+        china_provenance = {}
+        if china_provenance_path.exists():
+            china_provenance = json.loads(china_provenance_path.read_text(encoding="utf-8"))
+        lite_rules = parse_lite_dns_rules(
+            lite_dns_path.read_text(encoding="utf-8", errors="replace").splitlines(),
+            Resolver(str(SOURCE_DIR)),
+        )
+        lite_blocks_exact = lite_rules["exact_blocks"]
+        lite_blocks_suffix = lite_rules["suffix_blocks"]
+        lite_allows = lite_rules["allows"]
+        lite_pattern_blocks = lite_rules["pattern_blocks"]
+        lite_pattern_allows = lite_rules["pattern_allows"]
+        lite_pattern_base_domains = set(lite_pattern_blocks.values())
 
         source_block_domains = set().union(
             *(domain_sets.get(name, set()) for name in production_names)
@@ -1282,195 +1293,114 @@ def main():
         ) - china_domains
         unvalidated_source_blocks = source_block_domains - validated_domains
 
+        def lite_block_covers(domain):
+            return (
+                domain in lite_blocks_exact
+                or covered_by_rule_domain(domain, lite_blocks_suffix)
+                or domain in lite_pattern_base_domains
+                or any(
+                    dns_pattern_matches_domain(rule, domain)
+                    for rule in lite_pattern_blocks
+                )
+            )
+
+        def lite_allow_covers(domain):
+            return (
+                covered_by_rule_domain(domain, lite_allows)
+                or any(
+                    dns_pattern_matches_domain(rule, domain)
+                    for rule in lite_pattern_allows
+                )
+            )
+
         known_non_china_covered = {
             domain for domain in validated_non_china_source_blocks
-            if (domain in lite_blocks_exact or covered_by_rule_domain(domain, lite_blocks_suffix))
-            and not covered_by_rule_domain(domain, lite_allows)
+            if lite_block_covers(domain) and not lite_allow_covers(domain)
         }
         china_source_missing = {
             domain for domain in china_source_blocks
-            if domain not in lite_blocks_exact
-            and not covered_by_rule_domain(domain, lite_blocks_suffix)
-            and not covered_by_rule_domain(domain, lite_allows)
+            if not lite_block_covers(domain)
+            and not lite_allow_covers(domain)
             and not covered_by_whitelist(domain, project_whitelist)
         }
-        # AdGuard DNS Lite intentionally follows the upstream-compatible syntax:
-        # ||domain^ blocks the selected domain AND its subdomains. Audit the rule
-        # roots against China classification; report suffix side-effects separately
-        # rather than misclassifying every valid suffix rule as out-of-scope.
-        lite_rules_not_classified_china = (lite_blocks_exact | lite_blocks_suffix) - china_domains
+        lite_rules_not_classified_china = (
+            lite_blocks_exact | lite_blocks_suffix | lite_pattern_base_domains
+        ) - china_domains
         lite_suffix_rules_not_classified_china = lite_blocks_suffix - china_domains
-
-        # InviZible/DNSCrypt uses =domain for exact-host matching; a plain domain
-        # is suffix-based, so it must never appear in its Lite output.
-        invizible_lite_path = ROOT / ".cache" / "out" / "adblockdomainlite.txt"
-        invizible_blocks_exact, invizible_blocks_suffix = set(), set()
-        if invizible_lite_path.exists():
-            for raw in invizible_lite_path.read_text(encoding="utf-8", errors="replace").splitlines():
-                line = raw.strip()
-                if not line or line.startswith(("!", "#")):
-                    continue
-                if line.startswith("="):
-                    invizible_blocks_exact.add(line[1:].lower())
-                elif "." in line and not any(char in line for char in " /\t^$*"):
-                    invizible_blocks_suffix.add(line.lower())
-        invizible_non_china_covered = {
-            domain for domain in validated_non_china_source_blocks
-            if (
-                domain in invizible_blocks_exact
-                or covered_by_rule_domain(domain, invizible_blocks_suffix)
-            )
-            and not covered_by_rule_domain(domain, lite_allows)
-        }
-        invizible_china_missing = {
-            domain for domain in china_source_blocks
-            if domain not in invizible_blocks_exact
-            and not covered_by_rule_domain(domain, invizible_blocks_suffix)
-            and not covered_by_rule_domain(domain, lite_allows)
-            and not covered_by_whitelist(domain, project_whitelist)
-        }
-        invizible_rules_not_classified_china = (
-            (invizible_blocks_exact - china_domains) | invizible_blocks_suffix
-        )
 
         lite_scope = {
             "available": True,
+            "source_domain_input_count": len(source_input_domains),
             "validated_domain_input_count": len(validated_domains),
+            "china_classification_mode": china_provenance.get(
+                "generator", "previous successful DNS classification"
+            ),
+            "china_classification_policy": china_provenance.get("classification_policy", []),
             "china_classified_domain_count": len(china_domains),
             "current_source_block_domain_count": len(source_block_domains),
             "china_classified_source_block_domains": len(china_source_blocks),
             "validated_non_china_source_block_domains": len(validated_non_china_source_blocks),
             "unvalidated_current_source_block_domains": len(unvalidated_source_blocks),
-            "lite_block_rules": len(lite_blocks_exact) + len(lite_blocks_suffix),
+            "lite_block_rules": (
+                len(lite_blocks_exact) + len(lite_blocks_suffix) + len(lite_pattern_blocks)
+            ),
             "lite_exact_block_rules": len(lite_blocks_exact),
             "lite_suffix_block_rules": len(lite_blocks_suffix),
-            "lite_allow_rules": len(lite_allows),
+            "lite_pattern_block_rules": len(lite_pattern_blocks),
+            "lite_allow_rules": len(lite_allows) + len(lite_pattern_allows),
+            "lite_pattern_allow_rules": len(lite_pattern_allows),
             "lite_rules_not_classified_china": len(lite_rules_not_classified_china),
             "lite_suffix_rules_not_classified_china": len(lite_suffix_rules_not_classified_china),
             "known_non_china_source_domains_effectively_blocked_by_lite": len(known_non_china_covered),
             "china_classified_source_domains_missing_from_lite": len(china_source_missing),
-            "invizible_lite_block_rules": len(invizible_blocks_exact) + len(invizible_blocks_suffix),
-            "invizible_lite_exact_block_rules": len(invizible_blocks_exact),
-            "invizible_lite_suffix_block_rules": len(invizible_blocks_suffix),
-            "invizible_known_non_china_source_domains_effectively_blocked": len(invizible_non_china_covered),
-            "invizible_china_source_domains_missing": len(invizible_china_missing),
-            "invizible_lite_rules_not_classified_china": len(invizible_rules_not_classified_china),
         }
         write_domain_list(
             OUT_DIR / "lite-scope-known-non-china-covered.txt",
             known_non_china_covered,
-            "No validated non-China source domain is effectively blocked by Lite."
+            "No DNS-validated non-China source domain is effectively blocked by Lite.",
         )
         write_domain_list(
             OUT_DIR / "lite-scope-china-domains-missing.txt",
             china_source_missing,
-            "All validated China-classified source block domains are represented in Lite."
+            "All direct-classified domestic source block domains are represented in Lite.",
         )
         write_domain_list(
             OUT_DIR / "lite-scope-rules-not-classified-china.txt",
             lite_rules_not_classified_china,
-            "Every Lite block rule is present in the China-classified domain set."
+            "Every Lite DNS block rule root is in the domestic classification set.",
         )
         write_domain_list(
             OUT_DIR / "lite-scope-unvalidated-source-domains.txt",
             unvalidated_source_blocks,
-            "All current source block domains have validation state."
+            "All current source domains have a successful DNS validation state.",
         )
         write_domain_list(
-            OUT_DIR / "lite-scope-invizible-known-non-china-covered.txt",
-            invizible_non_china_covered,
-            "No validated non-China source domain is covered by InviZible Lite."
+            OUT_DIR / "lite-scope-pattern-block-rules.txt",
+            set(lite_pattern_blocks),
+            "No wildcard or dnstype DNS block patterns are present in Lite.",
         )
-        write_domain_list(
-            OUT_DIR / "lite-scope-invizible-china-domains-missing.txt",
-            invizible_china_missing,
-            "All validated China-classified source block domains are represented in InviZible Lite."
-        )
-        write_domain_list(
-            OUT_DIR / "lite-scope-invizible-rules-not-classified-china.txt",
-            invizible_rules_not_classified_china,
-            "Every InviZible Lite exact rule is present in the China-classified domain set."
-        )
+
     (OUT_DIR / "lite-scope-audit.json").write_text(
         json.dumps(lite_scope, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    invizible_allow_path = ROOT / ".cache" / "out" / "adblockdomainallow.txt"
-    invizible_allowlist_audit = {
-        "available": False,
-        "allowlist_rules": 0,
-        "expected_source_and_project_allow_domains": 0,
-        "missing_allow_domains": 0,
-    }
-    invizible_allowlist_missing = set()
-    if invizible_allow_path.exists():
-        invizible_allow_domains = {
-            line.strip().lower()
-            for line in invizible_allow_path.read_text(encoding="utf-8", errors="replace").splitlines()
-            if line.strip() and not line.lstrip().startswith(("!", "#"))
-        }
-        current_source_allow_domains = set().union(
-            *(allow_sets.get(name, set()) for name in production_names)
-        ) if production_names else set()
-        expected_invizible_allow_domains = (
-            current_source_allow_domains - blacklist_domains
-        ) | project_whitelist
-        invizible_allowlist_missing = {
-            domain for domain in expected_invizible_allow_domains
-            if not covered_by_rule_domain(domain, invizible_allow_domains)
-        }
-        invizible_allowlist_audit = {
-            "available": True,
-            "allowlist_rules": len(invizible_allow_domains),
-            "expected_source_and_project_allow_domains": len(expected_invizible_allow_domains),
-            "missing_allow_domains": len(invizible_allowlist_missing),
-            "missing_allow_domain_samples": sorted(invizible_allowlist_missing)[:100],
-        }
-    (OUT_DIR / "invizible-allowlist-audit.json").write_text(
-        json.dumps(invizible_allowlist_audit, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    write_domain_list(
-        OUT_DIR / "invizible-allowlist-missing.txt",
-        invizible_allowlist_missing,
-        "All current source allow rules and project whitelist domains are present in the InviZible allowlist."
-    )
-    if invizible_allowlist_audit["available"] and invizible_allowlist_missing:
+    if not lite_scope["available"]:
+        raise SystemExit("Lite domestic scope audit unavailable: " + lite_scope["reason"])
+    if (
+        lite_scope["lite_rules_not_classified_china"]
+        or lite_scope["china_classified_source_domains_missing_from_lite"]
+    ):
         raise SystemExit(
-            "InviZible allowlist quality gate failed: "
-            + json.dumps(invizible_allowlist_audit, ensure_ascii=False, sort_keys=True)
+            "Lite scope quality gate failed: "
+            + json.dumps(lite_scope, ensure_ascii=False, sort_keys=True)
         )
-
-    if invizible_allowlist_audit["available"]:
-        report += "\n## InviZible DNSCrypt allowlist 覆盖审计\n\n"
-        report += f"- allowlist 规则：{invizible_allowlist_audit['allowlist_rules']} 条；应覆盖的上游 allow 与项目白名单：{invizible_allowlist_audit['expected_source_and_project_allow_domains']} 条。\n"
-        report += f"- 未覆盖例外：{invizible_allowlist_audit['missing_allow_domains']} 条。\n"
-    else:
-        report += "\n## InviZible DNSCrypt allowlist 覆盖审计\n\n- 未执行：当前运行没有完整构建产物。\n"
-
-    if lite_scope["available"]:
-        if (
-            lite_scope["lite_rules_not_classified_china"]
-            or lite_scope["china_classified_source_domains_missing_from_lite"]
-            or lite_scope["invizible_lite_rules_not_classified_china"]
-            or lite_scope["invizible_known_non_china_source_domains_effectively_blocked"]
-            or lite_scope["invizible_china_source_domains_missing"]
-            or lite_scope["invizible_lite_suffix_block_rules"]
-        ):
-            raise SystemExit(
-                "Lite scope quality gate failed: "
-                + json.dumps(lite_scope, ensure_ascii=False, sort_keys=True)
-            )
-        report += "\n## Lite 国内域名范围审计\n\n"
-        report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条（精确主机：{lite_scope['lite_exact_block_rules']}；后缀规则：{lite_scope['lite_suffix_block_rules']}）；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
-        report += f"- AdGuard 后缀匹配连带覆盖的非国内分类来源域名：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条（属于 `||domain^` 对子域名的标准匹配范围，单独列示，不计作非国内规则根）。\n"
-        report += f"- 已归类为国内的来源拦截域名，未被 Lite 拦截或放行规则覆盖：{lite_scope['china_classified_source_domains_missing_from_lite']} 条。\n"
-        report += f"- 当前来源中尚未进入验证状态、暂无法判定国内属性：{lite_scope['unvalidated_current_source_block_domains']} 条。\n"
-        report += f"- InviZible Lite 精确规则：{lite_scope['invizible_lite_exact_block_rules']} 条；后缀规则：{lite_scope['invizible_lite_suffix_block_rules']} 条。\n"
-        report += f"- InviZible Lite 已知非国内域名连带拦截：{lite_scope['invizible_known_non_china_source_domains_effectively_blocked']} 条；国内域名漏项：{lite_scope['invizible_china_source_domains_missing']} 条。\n"
-        report += "- 注：AdGuard Home Lite 使用与上游一致的 `||domain^` 后缀语义（主域名及其子域名）；InviZible DNSCrypt Lite 使用 `=domain` 精确匹配；放行例外保留原有匹配范围。\n"
-    else:
-        report += f"\n## Lite 国内域名范围审计\n\n- 未执行：{lite_scope['reason']}。\n"
+    report += "\n## Lite 国内域名范围审计\n\n"
+    report += f"- 国内分类方式：{lite_scope['china_classification_mode']}。\n"
+    report += f"- 当前 DNS/Hosts 来源域名输入：{lite_scope['source_domain_input_count']} 条；成功 DNS 验证输入：{lite_scope['validated_domain_input_count']} 条；国内分类域名：{lite_scope['china_classified_domain_count']} 条。\n"
+    report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条（精确主机：{lite_scope['lite_exact_block_rules']}；后缀规则：{lite_scope['lite_suffix_block_rules']}；通配/类型限定模式：{lite_scope['lite_pattern_block_rules']}）；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
+    report += f"- 已归类为国内的来源拦截域名，未被 Lite 拦截或放行规则覆盖：{lite_scope['china_classified_source_domains_missing_from_lite']} 条。\n"
+    report += f"- 当前来源中尚未进入 DNS 验证状态的域名：{lite_scope['unvalidated_current_source_block_domains']} 条；未验证不等于非国内。\n"
+    report += f"- 已验证为非国内、但被 Lite 规则覆盖的来源域名：{lite_scope['known_non_china_source_domains_effectively_blocked_by_lite']} 条（仅统计有成功 DNS 验证记录的域名）。\n"
 
     baseline_allow_current_covered = {
         domain for domain in baseline_allow_domains
