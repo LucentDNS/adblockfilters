@@ -77,9 +77,15 @@ def test_readme_direct_subscriptions_are_unique_and_complete():
         readme,
     )
 
-    assert len(subscriptions) == 35
+    expected = {
+        "adblockdns.txt",
+        "adblockdnslite.txt",
+        "adblockfilters.txt",
+        "adblockfilterslite.txt",
+    }
+    assert len(subscriptions) == 4
     assert len(subscriptions) == len(set(subscriptions))
-    assert "adblockdomainallow.txt" in subscriptions
+    assert set(subscriptions) == expected
 
 
 def test_release_asset_filename_is_github_safe_and_stable():
