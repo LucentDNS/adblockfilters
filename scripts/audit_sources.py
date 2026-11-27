@@ -32,6 +32,7 @@ def source_audit_gate_failures(
     source_presence_unexplained: set[str],
     current_source_parent_inactive_unexplained: set[str],
     baseline_allow_missing_still_blocked: set[str],
+    source_allow_missing_still_blocked: set[str] | None = None,
 ) -> list[str]:
     """Fail on active source loss and upstream allow regressions, not historical baseline-only deltas."""
     failures = []
@@ -55,6 +56,11 @@ def source_audit_gate_failures(
         failures.append(
             "upstream baseline allow exceptions are missing while domains remain blocked: "
             + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
+        )
+    if source_allow_missing_still_blocked:
+        failures.append(
+            "active production-source allow exceptions are missing while matching block rules remain: "
+            + ", ".join(sorted(source_allow_missing_still_blocked)[:20])
         )
     return failures
 
@@ -724,6 +730,7 @@ def main():
             "policy_note": policy.get("policy_note", ""),
             "lineage_evidence": policy.get("lineage_evidence", []),
             "policy_profiles": policy.get("policy_profiles", []),
+            "conflict_resolution": policy.get("conflict_resolution", {}),
             "decision": "audit_only_no_automatic_production_inclusion"
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8"
@@ -817,6 +824,7 @@ def main():
     report += f"- 重点复核来源未共享候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(review_focus_unshared_candidates)} 条，详见 review-focus-unshared-candidates.txt。\n"
     report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\n"
     report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把重点复核来源候选并入正式规则。\n"
+    report += "- 正式 DNS/Hosts 来源的显式 allow 在合并输出中作为兼容性例外，优先于其他正式来源的冲突 block；候选来源的 allow 只作对照，不改变正式输出。\n"
     report += "- 上游谱系证据按公开文档分级记录；致谢不等于当前实际集成，来源重合不构成独立投票。\n"
     report += "- CHN AdRules 候选源含混合上游许可，本项目只保留汇总统计，不在公开审计产物中分发其提取域名文件。\n"
     for evidence in policy.get("lineage_evidence", []):
@@ -1059,6 +1067,23 @@ def main():
             and not covered_by_rule_domain(domain, compiled_allow_domains)
         )
 
+    # Explicit allows from active production DNS/Hosts sources are compatibility
+    # exceptions across the merged output. Verify that every allow overlapping
+    # a compiled block remains effective after generation.
+    source_allow_conflicts = {
+        allow_domain for allow_domain in current_source_allow_domains
+        if any(domains_overlap(allow_domain, block_domain) for block_domain in compiled_block_domains)
+    }
+    source_allow_missing_still_blocked = {
+        allow_domain for allow_domain in source_allow_conflicts
+        if not covered_by_rule_domain(allow_domain, compiled_allow_domains)
+    }
+    write_domain_list(
+        OUT_DIR / "source-allow-conflicts-still-blocked.txt",
+        source_allow_missing_still_blocked,
+        "Every active production-source allow exception overlapping a compiled block remains effective."
+    )
+
     source_presence_parent_output_covered = {
         domain for domain in current_source_exact_active
         if domain not in compiled_block_domains and covered_by_compiled_output(domain)
@@ -1194,6 +1219,7 @@ def main():
     })
     report += "\n## 原作者基线差异与当前 DNS 来源、黑名单、白名单及来源放行的关系\n\n"
     report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}；来源放行域名：{len(current_source_allow_domains)}。\n"
+    report += f"- 与编译拦截规则冲突的正式来源 allow：{len(source_allow_conflicts)} 条；未在编译输出中保留有效放行：{len(source_allow_missing_still_blocked)} 条。\n"
     report += f"- 基线独有 block 中，精确存在于当前 DNS 来源：{len(current_source_exact)} 条；另有父域名来源覆盖：{len(current_source_parent_present)} 条。\n"
     report += f"- 精确来源规则中，被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条；被上游来源 allow 规则覆盖：{len(current_source_exact_upstream_allowed)} 条。\n"
     report += f"- 基线 block 被当前来源 allow 精确或父域名覆盖：{len(baseline_only_source_allow_covered)} 条。\n"
@@ -1568,6 +1594,7 @@ def main():
         source_presence_unexplained,
         current_source_parent_inactive_unexplained,
         baseline_allow_missing_still_blocked,
+        source_allow_missing_still_blocked,
     )
     if gate_failures:
         raise SystemExit("Source/output consistency gate failed:\n- " + "\n- ".join(gate_failures))
