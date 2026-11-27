@@ -99,7 +99,7 @@ def test_nxdomain_and_timeout_for_different_record_types_are_inconclusive():
     )
 
 
-def test_all_five_upstreams_must_return_nxdomain_for_both_record_types():
+def test_all_six_upstreams_must_return_nxdomain_for_both_record_types():
     assert resolve({"A": NXDOMAIN(), "AAAA": NXDOMAIN()}) == ([], "not_found")
 
 
@@ -223,34 +223,34 @@ def resolve_upstreams(*answers):
     return asyncio.run(instance._BlackList__resolve(resolvers, "example.test"))
 
 
-def test_nxdomain_requires_all_five_independent_upstreams():
+def test_nxdomain_requires_all_six_independent_upstreams():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
-    assert resolve_upstreams(*([dead] * 5)) == ([], "not_found")
+    assert resolve_upstreams(*([dead] * 6)) == ([], "not_found")
 
 
 def test_one_resolver_returning_an_address_prevents_blacklisting():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     alive = {"A": ["192.0.2.10"], "AAAA": NoAnswer()}
-    assert resolve_upstreams(*([dead] * 4 + [alive])) == (["192.0.2.10"], "resolved")
+    assert resolve_upstreams(*([dead] * 5 + [alive])) == (["192.0.2.10"], "resolved")
 
 
 def test_one_resolver_nodata_prevents_nxdomain_classification():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
-    assert resolve_upstreams(*([dead] * 4 + [nodata])) == ([], "unknown")
+    assert resolve_upstreams(*([dead] * 5 + [nodata])) == ([], "unknown")
 
 
 def test_one_resolver_timeout_prevents_nxdomain_classification():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     timeout = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
-    assert resolve_upstreams(*([dead] * 4 + [timeout])) == ([], "unknown")
+    assert resolve_upstreams(*([dead] * 5 + [timeout])) == ([], "unknown")
 
 
-def test_no_address_requires_all_five_upstreams_to_agree():
+def test_no_address_requires_all_six_upstreams_to_agree():
     nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
-    assert resolve_upstreams(*([nodata] * 5)) == ([], "no_address")
+    assert resolve_upstreams(*([nodata] * 6)) == ([], "no_address")
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
-    assert resolve_upstreams(*([nodata] * 4 + [dead])) == ([], "unknown")
+    assert resolve_upstreams(*([nodata] * 5 + [dead])) == ([], "unknown")
 
 
 def test_missing_upstream_is_inconclusive_not_dead():
@@ -265,5 +265,5 @@ def test_missing_upstream_is_inconclusive_not_dead():
 def test_dns_upstream_disagreement_preserves_previous_unblocked_state():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
-    domain = pingx([dead] * 4 + [unavailable], initially_blocked=False)
+    domain = pingx([dead] * 5 + [unavailable], initially_blocked=False)
     assert domain.blocked is False

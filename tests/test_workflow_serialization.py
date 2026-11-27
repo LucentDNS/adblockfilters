@@ -111,7 +111,6 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     } <= set(update_paths)
     assert "rules/white.txt" not in dns_paths
     assert ".github/workflows/update.yml" not in dns_paths
-    assert "scripts/review_baseline_only.py" in dns_paths
     assert "updater.py" not in update_paths
     assert "readme.py" not in update_paths
     assert "scripts/verify_critical_domains.py" in update_paths

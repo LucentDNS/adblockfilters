@@ -30,7 +30,6 @@ on:
       - requirements.txt
       - scripts/generate_domain_input.py
       - scripts/validated_sources.py
-      - scripts/review_baseline_only.py
       - rules/myblock.txt
 
 env:
@@ -105,7 +104,7 @@ jobs:
               exit 1
             fi
             listeners_ready=1
-            for port in 5053 5054 5055 5056 5057; do
+            for port in 5053 5054 5055 5056 5057 5058; do
               if ! ss -H -lun | grep -Eq "127\\.0\\.0\\.1:$port([[:space:]]|$)"; then
                 listeners_ready=0
                 break
@@ -118,12 +117,12 @@ jobs:
             sleep 1
           done
           if [ "$ready" = "0" ]; then
-            echo "::error::SmartDNS did not bind all five local DNS listeners within 30s"
+            echo "::error::SmartDNS did not bind all six local DNS listeners within 30s"
             cat "$SMARTDNS_LOG"
             exit 1
           fi
 
-      - name: Verify all five SmartDNS upstreams independently
+      - name: Verify all six SmartDNS upstreams independently
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -133,9 +132,10 @@ jobs:
           upstreams = {
               5053: ("baidu.com", "qq.com", "example.com"),
               5054: ("baidu.com", "qq.com", "example.com"),
-              5055: ("example.com", "cloudflare.com", "google.com"),
+              5055: ("baidu.com", "qq.com", "example.com"),
               5056: ("example.com", "cloudflare.com", "google.com"),
               5057: ("example.com", "cloudflare.com", "google.com"),
+              5058: ("example.com", "cloudflare.com", "google.com"),
           }
           probe = "adblock-dns-probe-20261125.example.invalid"
           failures = []
@@ -222,51 +222,6 @@ jobs:
           cp .cache/domain/domain-input-provenance.json domain-input-provenance.json
           echo "message=$(date)" >> "$GITHUB_OUTPUT"
 
-      - name: Review legacy upstream-only domains with all five DNS upstreams
-        run: |
-          set -euo pipefail
-          mkdir -p .cache/baseline-review
-          curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
-            --connect-timeout 20 --max-time 120 \
-            -o .cache/baseline-review/baseline-only-not-effectively-covered-by-current-dns.txt \
-            https://github.com/LucentDNS/adblockfilters/releases/download/audit/baseline-only-not-effectively-covered-by-current-dns.txt
-          test -s .cache/baseline-review/baseline-only-not-effectively-covered-by-current-dns.txt
-          python -m py_compile scripts/review_baseline_only.py
-          python scripts/review_baseline_only.py \
-            --input .cache/baseline-review/baseline-only-not-effectively-covered-by-current-dns.txt \
-            --output-dir .cache/baseline-review \
-            --concurrency 100
-          cat .cache/baseline-review/summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Publish legacy baseline DNS review to audit release
-        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
-        with:
-          tag_name: audit
-          files: |
-            .cache/baseline-review/summary.md
-            .cache/baseline-review/results.json
-            .cache/baseline-review/resolved.txt
-            .cache/baseline-review/nxdomain-all-five-upstreams.txt
-            .cache/baseline-review/no-address-both-groups.txt
-            .cache/baseline-review/inconclusive.txt
-            .cache/baseline-review/invalid-lines.txt
-          overwrite_files: true
-          fail_on_unmatched_files: true
-          make_latest: false
-
-      - name: Verify legacy baseline DNS review assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          assets="$(gh release view audit --json assets --jq '.assets[].name')"
-          for name in summary.md results.json resolved.txt nxdomain-all-five-upstreams.txt no-address-both-groups.txt inconclusive.txt invalid-lines.txt; do
-            if ! grep -Fxq "$name" <<< "$assets"; then
-              echo "::error::Audit release is missing legacy DNS review asset $name"
-              exit 1
-            fi
-          done
-
       - name: Upload DNS validation audit artifact
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -278,13 +233,6 @@ jobs:
             domain-input-provenance.json
             black.txt
             china.txt
-            .cache/baseline-review/summary.md
-            .cache/baseline-review/results.json
-            .cache/baseline-review/resolved.txt
-            .cache/baseline-review/nxdomain-all-five-upstreams.txt
-            .cache/baseline-review/no-address-both-groups.txt
-            .cache/baseline-review/inconclusive.txt
-            .cache/baseline-review/invalid-lines.txt
           if-no-files-found: warn
           retention-days: 30
           include-hidden-files: true

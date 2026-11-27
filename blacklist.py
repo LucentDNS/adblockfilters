@@ -42,10 +42,9 @@ def _blacklist_abnormal(black_count:int, total:int) -> bool:
 DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 # Bump when the evidence required to classify a domain as NXDOMAIN changes.
-DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057)
-DNS_BLOCK_POLICY_VERSION = "4"
-DNS_VALIDATION_MAX_CONCURRENCY = 50
-DNS_VALIDATION_START_INTERVAL_SECONDS = 0.01
+DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
+DNS_BLOCK_POLICY_VERSION = "5"
+DNS_VALIDATION_MAX_CONCURRENCY = 100
 DNS_UNKNOWN_FAILURE_MIN_SAMPLES = 20
 DNS_UNKNOWN_FAILURE_MAX_RATIO = 0.20
 
@@ -460,13 +459,12 @@ class BlackList(object):
             raise
 
     async def __resolve(self, dnsresolvers, domain) -> Tuple[List[str], str]:
-        """Require five independent upstreams to agree before classifying NXDOMAIN.
+        """Require all six independent upstreams (3 domestic + 3 global) to agree.
 
-        Each local SmartDNS port maps to exactly one upstream provider. Any
-        positive address from any provider keeps the domain active. A domain is
-        marked nonexistent only when all five providers return NXDOMAIN for
-        both A and AAAA. NODATA, timeout, SERVFAIL, missing providers, or any
-        disagreement remain inconclusive and must never create a blacklist entry.
+        Each SmartDNS listener maps to one provider. Any positive address keeps
+        the domain active. Only six providers returning NXDOMAIN for both A and
+        AAAA classify a name as nonexistent. A and AAAA are queried concurrently
+        per provider; NODATA, timeout, SERVFAIL, or disagreement are inconclusive.
         """
         if not isinstance(dnsresolvers, (list, tuple)):
             dnsresolvers = [dnsresolvers]
@@ -474,22 +472,30 @@ class BlackList(object):
             return [], "unknown"
 
         async def resolve_one_upstream(dnsresolver):
+            async def query_type(rdtype):
+                try:
+                    return "answer", await dnsresolver.resolve(qname=domain, rdtype=rdtype)
+                except NXDOMAIN:
+                    return "nxdomain", ()
+                except NoAnswer:
+                    return "no_answer", ()
+                except Exception:
+                    return "unknown", ()
+
+            results = await asyncio.gather(query_type("A"), query_type("AAAA"))
             ip_list = []
             no_answer_count = 0
             nxdomain_count = 0
-            for rdtype in ("A", "AAAA"):
-                try:
-                    query_object = await dnsresolver.resolve(qname=domain, rdtype=rdtype)
-                    for item in query_object:
+            for status, answer in results:
+                if status == "nxdomain":
+                    nxdomain_count += 1
+                elif status == "no_answer":
+                    no_answer_count += 1
+                elif status == "answer":
+                    for item in answer:
                         ip = str(item)
                         if ip not in ("0.0.0.0", "::") and ip not in ip_list:
                             ip_list.append(ip)
-                except NXDOMAIN:
-                    nxdomain_count += 1
-                except NoAnswer:
-                    no_answer_count += 1
-                except Exception:
-                    continue
 
             if ip_list:
                 return ip_list, "resolved"
@@ -552,7 +558,7 @@ class BlackList(object):
                         status = "resolved"
                         break
             else: # 域名
-                count = 3
+                count = 2
                 while count > 0:
                     ipList, status = await self.__resolve(dnsresolver, domain.domain)
                     if status != "unknown":
@@ -626,30 +632,17 @@ class BlackList(object):
                 dnsresolver = DNSResolver()
                 dnsresolver.nameservers = nameservers
                 dnsresolver.port = resolver_port
-                dnsresolver.timeout = 2.0
-                dnsresolver.lifetime = 5.0
+                dnsresolver.timeout = 1.5
+                dnsresolver.lifetime = 3.0
                 dnsresolvers.append(dnsresolver)
             semaphore = asyncio.Semaphore(self.__maxTask)
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
-            rate_lock = asyncio.Lock()
-            next_start = 0.0
-            loop = asyncio.get_running_loop()
-
-            async def rate_limited_ping(domain):
-                nonlocal next_start
-                async with rate_lock:
-                    delay = next_start - loop.time()
-                    if delay > 0:
-                        await asyncio.sleep(delay)
-                    next_start = loop.time() + DNS_VALIDATION_START_INTERVAL_SECONDS
-                return await self.__pingx(dnsresolvers, domain, semaphore)
-
             tasks = []
             now = int(time.time())
             for _,v in domainDict.items():
                 ipList = v.getIPList()
                 if _needs_dns_validation(ipList, v.getTimeStamp(), now, v.getUpdate()):
-                    tasks.append(rate_limited_ping(v))
+                    tasks.append(self.__pingx(dnsresolvers, v, semaphore))
             total = len(tasks)
             for completed, task in enumerate(asyncio.as_completed(tasks), 1):
                 domain = await task
@@ -781,7 +774,7 @@ class BlackList(object):
 
             # 域名解析
 
-            domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过5个独立上游分别验证，国内2个、国际3个；全部一致才确认NXDOMAIN
+            domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过国内3个、国际3个共6个独立上游验证；全部一致才确认NXDOMAIN
 
             # 国内域名识别
             thread_pool = ThreadPoolExecutor(max_workers=os.cpu_count() if os.cpu_count() > 4 else 4)
