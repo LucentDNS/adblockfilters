@@ -445,6 +445,11 @@ class Filter(object):
             filterDict, set(blockList), set(unblockList), blackSet, whiteSet, whiteDict
         )
 
+        # Active production-source allow rules are global compatibility vetoes:
+        # an explicit allow from one selected maintainer overrides overlapping
+        # blocks from another. This intentionally favors low false-positive
+        # risk; audit_sources.py records conflicts and hard-fails if an effective
+        # source allow is lost from the compiled Full output.
         # 仅生成两个正式产品：AdGuard 浏览器扩展补充规则与 AdGuard DNS / AdGuard Home 规则
         generaterList:List[APPBase] = [
             AdGuard(
