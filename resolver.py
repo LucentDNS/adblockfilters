@@ -1,7 +1,7 @@
 import os
 import sys
 import re
-from typing import Tuple,Dict,Set,List
+from typing import Optional,Tuple,Dict,Set,List
 
 from tld import get_tld
 import IPy
@@ -509,6 +509,55 @@ class Resolver(object):
                     filterDict[filter[0]] = filter[1]
         logger.info("%s: block=%d, unblock=%d, filter=%d"%(rule.name,len(blockDict),len(unblockDict),len(filterDict)))
         return blockDict,unblockDict,filterDict
+
+    def resolveDNSPattern(self, rule: str) -> Optional[Tuple[str, str]]:
+        """Return (action, fixed registrable domain) for a safe DNS wildcard rule.
+
+        Only hostname wildcards scoped to a fixed registrable domain are accepted.
+        Wildcards in the registrable domain/public suffix and regex or modified
+        rules are deliberately excluded to keep matching narrow and predictable.
+        """
+        try:
+            line = rule.strip()
+            is_allow = line.startswith("@@||")
+            if is_allow:
+                if not line.endswith("^"):
+                    return None
+                pattern = line[4:-1]
+            else:
+                if not line.startswith("||") or not line.endswith("^"):
+                    return None
+                pattern = line[2:-1]
+
+            if "*" not in pattern or len(pattern) > 253:
+                return None
+            labels = pattern.split(".")
+            if len(labels) < 2 or any(not label for label in labels):
+                return None
+
+            label_pattern = r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$"
+            normalized_labels = []
+            for label in labels:
+                normalized = label.replace("*", "x")
+                if not re.fullmatch(label_pattern, normalized):
+                    return None
+                normalized_labels.append(normalized)
+
+            normalized_domain = ".".join(normalized_labels)
+            fld, _ = self.__analysis(normalized_domain)
+            base_domain = fld.lower().strip(".")
+            base_labels = base_domain.split(".")
+            if len(base_labels) < 2 or len(labels) < len(base_labels):
+                return None
+
+            # Reject patterns that wildcard the registrable domain or public suffix.
+            base_pattern = ".".join(labels[-len(base_labels):])
+            if "*" in base_pattern:
+                return None
+
+            return ("allow" if is_allow else "block", base_domain)
+        except Exception:
+            return None
 
     def resolveFilter(self, rule:Rule) -> Tuple[Dict[str,Set[str]],Dict[str,Set[str]],Dict[str,str]]:
         blockDict:Dict[str,Set[str]] = dict()
