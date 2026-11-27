@@ -1496,6 +1496,9 @@ def main():
         "baseline_allow_missing_and_not_currently_blocked": len(baseline_allow_missing_not_needed),
         "baseline_allow_missing_still_blocked_samples": sorted(baseline_allow_missing_still_blocked)[:100],
         "compiled_dns_unparsed_lines": compiled_unparsed,
+        "compiled_dns_pattern_rules": compiled_dns_pattern_rules,
+        "compiled_dns_pattern_block_rules": len(compiled_dns_pattern_block_rules),
+        "compiled_dns_pattern_allow_rules": len(compiled_dns_pattern_allow_rules),
     })
     (OUT_DIR / "baseline-only-allow-exceptions-still-blocked.txt").write_text(
         "\n".join(sorted(baseline_allow_missing_still_blocked))
