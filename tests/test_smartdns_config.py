@@ -6,7 +6,7 @@ def test_dns_validation_uses_six_isolated_recursive_upstreams():
 
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
     groups = (
-        "domestic_dnspod", "domestic_baidu", "domestic_cnnic",
+        "domestic_dnspod", "domestic_baidu", "domestic_unicom",
         "global_google", "global_quad9", "global_cloudflare",
     )
     server_prefixes = ("server ", "server-tls ", "server-https ")
@@ -18,11 +18,11 @@ def test_dns_validation_uses_six_isolated_recursive_upstreams():
         ]
         assert len(servers) == 1, f"{group} must map to exactly one upstream"
         assert "-exclude-default-group" in servers[0]
-        if group == "domestic_cnnic":
+        if group == "domestic_unicom":
             assert "-subnet" not in servers[0]
 
     for provider in (
-        "119.29.29.29", "180.76.76.76", "1.2.4.8",
+        "119.29.29.29", "180.76.76.76", "123.125.81.6",
         "8.8.8.8", "9.9.9.10", "1.1.1.1",
     ):
         assert provider in config
