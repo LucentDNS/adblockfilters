@@ -43,7 +43,7 @@ DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 # Bump when the evidence required to classify a domain as NXDOMAIN changes.
 DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
-# Version 6: re-evaluate cached NXDOMAIN decisions after replacing AliDNS with 114DNS.
+# Version 6: recheck cached NXDOMAIN and inconclusive rows after replacing AliDNS with CNNIC SDNS.
 DNS_BLOCK_POLICY_VERSION = "6"
 DNS_VALIDATION_MAX_CONCURRENCY = 100
 # Keep the event loop bounded: never create one asyncio task per input domain.
