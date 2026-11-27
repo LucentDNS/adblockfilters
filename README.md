@@ -67,6 +67,7 @@
 - AdGuard DNS filter — [来源](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)
 - AWAvenue Ads Rule (Only.Ads) — [来源](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)
 - anti-AD (AdGuard DNS rules) — [来源](https://anti-ad.net/easylist.txt)
+- 1Hosts (Lite) — [来源](https://cdn.jsdelivr.net/gh/badmojr/1Hosts@master/Lite/adblock.txt)
 - HaGeZi DNS-Blocklists (Pro Mini) — [来源](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)
 - StevenBlack hosts — [来源](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)
 
@@ -104,6 +105,7 @@
 | EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |
 | AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
 | anti-AD | [MIT](https://github.com/privacy-protection-tools/anti-AD/blob/master/LICENSE) |
+| 1Hosts | [MPL-2.0](https://github.com/badmojr/1Hosts/blob/master/LICENSE) |
 | HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
 | StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |
 
