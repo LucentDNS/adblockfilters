@@ -261,6 +261,8 @@ jobs:
           python scripts/compare_baseline.py
 
       - name: Audit upstream source contribution (whitelist-aware)
+        env:
+          REQUIRE_LITE_SCOPE_AUDIT: "1"
         run: |
           python scripts/audit_sources.py
 
