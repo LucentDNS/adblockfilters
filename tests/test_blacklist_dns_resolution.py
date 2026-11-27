@@ -5,6 +5,7 @@ from dns.resolver import NXDOMAIN, NoAnswer
 from blacklist import (
     BlackList,
     DNS_NEGATIVE_RECHECK_SECONDS,
+    DNS_VALIDATION_BATCH_SIZE,
     DNS_VALIDATION_PORTS,
     DNS_POSITIVE_REFRESH_SECONDS,
     _needs_dns_validation,
@@ -267,3 +268,66 @@ def test_dns_upstream_disagreement_preserves_previous_unblocked_state():
     unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
     domain = pingx([dead] * 5 + [unavailable], initially_blocked=False)
     assert domain.blocked is False
+
+
+def test_dns_validation_uses_bounded_batches_and_persists_each_completed_batch(monkeypatch):
+    import blacklist as blacklist_module
+
+    class FakeResolver:
+        async def resolve(self, qname, rdtype):
+            return ["192.0.2.10"]
+
+    class FakeDomain:
+        def __init__(self, name):
+            self.domain = name
+            self.ip = None
+            self.port = None
+            self.ip_list = []
+            self.blocked = False
+            self.updated = True
+
+        def getIPList(self):
+            return self.ip_list
+
+        def getTimeStamp(self):
+            return 0
+
+        def getUpdate(self):
+            return self.updated
+
+        def setIPList(self, values):
+            self.ip_list = values
+            self.updated = True
+
+        def setBlock(self, value):
+            self.blocked = value
+            self.updated = True
+
+        def setCheckedAtNow(self):
+            self.updated = True
+
+        def toTuple(self):
+            return (self.domain,)
+
+    class FakeDatabase:
+        def __init__(self):
+            self.batches = []
+
+        def updateALL(self, rows):
+            self.batches.append(len(rows))
+
+    monkeypatch.setattr(blacklist_module, "DNSResolver", FakeResolver)
+    instance = BlackList.__new__(BlackList)
+    instance._BlackList__maxTask = 100
+    database = FakeDatabase()
+    instance._BlackList__db = database
+    domains = {
+        f"host-{index}.example.test": FakeDomain(f"host-{index}.example.test")
+        for index in range(DNS_VALIDATION_BATCH_SIZE + 1)
+    }
+
+    result = instance._BlackList__testDomain(domains, ["127.0.0.1"], 5053)
+
+    assert len(result) == DNS_VALIDATION_BATCH_SIZE + 1
+    assert database.batches == [DNS_VALIDATION_BATCH_SIZE, 1]
+    assert instance._BlackList__dns_validation_stats["resolved"] == DNS_VALIDATION_BATCH_SIZE + 1
