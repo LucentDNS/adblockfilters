@@ -596,7 +596,7 @@ def main():
             candidate_pairwise_overlaps.append((left, right, count))
     candidate_pairwise_overlaps.sort(key=lambda item: item[2], reverse=True)
 
-    # Strict-source policy is an audit-only separation. It never mutates the
+    # Review-focus policy is an audit-only comparison, never a production inclusion rule. It never mutates the
     # production resolver inputs or treats non-membership as explicit allow.
     policy_path = ROOT / "source-policy.json"
     policy = json.loads(policy_path.read_text(encoding="utf-8"))
@@ -738,15 +738,15 @@ def main():
         results, production_names, browser_names, candidate_names,
         overlap, unique_total, pairwise, candidate_overlaps, candidate_pairwise_overlaps
     )
-    report += "\\n## 重点复核来源与上游谱系审计（仅供人工复核）\\n\\n"
-    report += f"- 重点复核来源：{', '.join(sorted(review_focus_names))}。\\n"
-    report += f"- 对照来源：{', '.join(sorted(comparison_names))}。\\n"
-    report += f"- 重点复核来源未共享候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(review_focus_unshared_candidates)} 条，详见 review-focus-unshared-candidates.txt。\\n"
-    report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\\n"
-    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把重点复核来源候选并入正式规则。\\n"
-    report += "- 上游谱系证据按公开文档分级记录；致谢不等于当前实际集成，来源重合不构成独立投票。\\n"
+    report += "\n## 重点复核来源与上游谱系审计（仅供人工复核）\n\n"
+    report += f"- 重点复核来源：{', '.join(sorted(review_focus_names))}。\n"
+    report += f"- 对照来源：{', '.join(sorted(comparison_names))}。\n"
+    report += f"- 重点复核来源未共享候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(review_focus_unshared_candidates)} 条，详见 review-focus-unshared-candidates.txt。\n"
+    report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\n"
+    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把重点复核来源候选并入正式规则。\n"
+    report += "- 上游谱系证据按公开文档分级记录；致谢不等于当前实际集成，来源重合不构成独立投票。\n"
     for evidence in policy.get("lineage_evidence", []):
-        report += f"- {evidence.get('source', 'Unknown')}: {evidence.get('relation', 'unspecified')} — {evidence.get('evidence_url', '')}。{evidence.get('interpretation', '')}\\n"
+        report += f"- {evidence.get('source', 'Unknown')}: {evidence.get('relation', 'unspecified')} — {evidence.get('evidence_url', '')}。{evidence.get('interpretation', '')}\n"
     report += "\n## 项目白名单当前来源覆盖审计\n\n"
     report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\n"
     report += f"- 被当前 DNS/Hosts 或浏览器补充来源实际覆盖：{len(project_whitelist) - len(whitelist_unused)} 条。\n"
