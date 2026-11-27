@@ -25,6 +25,7 @@ on:
       - "scripts/verify_hostlist_compiler.py"
       - "scripts/verify_critical_domains.py"
       - "scripts/audit_sources.py"
+      - "source-policy.json"
       - ".github/workflows/update.yml"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
@@ -482,6 +483,8 @@ jobs:
           files: |
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
+            .cache/audit/source-policy-conflicts.json
+            .cache/audit/strict-only-candidates.txt
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt
             .cache/audit/lite-scope-audit.json
