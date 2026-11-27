@@ -31,9 +31,8 @@ on:
       - 'filter.py'
       - 'rules/**'
       - 'tests/**'
+  # Validate stacked feature branches as well as PRs targeting main.
   pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
