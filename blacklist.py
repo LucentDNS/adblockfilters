@@ -55,6 +55,14 @@ def _dns_validation_infrastructure_unhealthy(total: int, unknown: int) -> bool:
     return total >= DNS_UNKNOWN_FAILURE_MIN_SAMPLES and unknown / total > DNS_UNKNOWN_FAILURE_MAX_RATIO
 
 
+def _iter_batches(items, batch_size: int):
+    """Yield bounded slices without scheduling one coroutine per input item."""
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    for offset in range(0, len(items), batch_size):
+        yield items[offset:offset + batch_size]
+
+
 
 def _needs_dns_validation(ip_list, last_checked, now, is_new=False) -> bool:
     """
@@ -657,8 +665,7 @@ class BlackList(object):
             # of coroutine/task objects at once. Persist each completed batch to
             # SQLite so an interrupted run does not lose all completed lookups
             # on the runner. Only completed domain records are checkpointed.
-            for offset in range(0, total, DNS_VALIDATION_BATCH_SIZE):
-                batch = pending_domains[offset:offset + DNS_VALIDATION_BATCH_SIZE]
+            for batch in _iter_batches(pending_domains, DNS_VALIDATION_BATCH_SIZE):
                 results = await asyncio.gather(
                     *(self.__pingx(dnsresolvers, domain, semaphore) for domain in batch)
                 )
