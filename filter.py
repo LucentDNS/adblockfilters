@@ -423,6 +423,9 @@ class Filter(object):
         dnsPatternAllowListLite = sorted(
             rule for rule, base in dnsPatternAllowMap.items() if base in ChinaSet
         )
+        wildcardWhiteExceptionsLite = sorted(
+            _get_wildcard_white_exceptions(whiteDomainSet, dnsPatternBlockListLite)
+        )
         logger.info(
             "DNS wildcard patterns: block=%d allow=%d; Lite block=%d allow=%d",
             len(dnsPatternBlockList),
@@ -450,6 +453,7 @@ class Filter(object):
                 dnsPatternAllowList=dnsPatternAllowList,
                 dnsPatternBlockListLite=dnsPatternBlockListLite,
                 dnsPatternAllowListLite=dnsPatternAllowListLite,
+                wildcardWhiteExceptionsLite=wildcardWhiteExceptionsLite,
             ),
             DNSMasq           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdnsmasq.txt",           dnsRuleNames),
             Hosts             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockhosts.txt",             dnsRuleNames),
