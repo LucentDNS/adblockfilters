@@ -419,6 +419,24 @@ def domains_overlap(left, right):
     return left == right or left.endswith("." + right) or right.endswith("." + left)
 
 
+def validate_source_policy(policy, production_names, candidate_names):
+    """Validate source roles while allowing explicitly selected candidate-only comparisons."""
+    if not isinstance(policy, dict) or policy.get("version") != 1:
+        raise ValueError("Unsupported source-policy.json version")
+    review_focus_names = set(policy.get("review_focus_sources", []))
+    comparison_names = set(policy.get("comparison_sources", []))
+    if review_focus_names & comparison_names:
+        raise ValueError("Review-focus and comparison source groups must be disjoint")
+    if not review_focus_names <= production_names:
+        raise ValueError("Review-focus sources must be active production DNS/Hosts sources")
+    if (review_focus_names | (comparison_names & production_names)) != production_names:
+        raise ValueError("Every production DNS/Hosts source must be classified exactly once")
+    unknown = comparison_names - production_names - candidate_names
+    if unknown:
+        raise ValueError(f"Unknown comparison sources: {sorted(unknown)}")
+    return review_focus_names, comparison_names
+
+
 def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, comparison_allows, whitelist):
     """Separate review-focus-unshared candidates from explicit cross-source allow conflicts.
 
@@ -616,18 +634,11 @@ def main():
     # production resolver inputs or treats non-membership as explicit allow.
     policy_path = ROOT / "source-policy.json"
     policy = json.loads(policy_path.read_text(encoding="utf-8"))
-    if not isinstance(policy, dict) or policy.get("version") != 1:
-        raise ValueError("Unsupported source-policy.json version")
-    review_focus_names = set(policy.get("review_focus_sources", []))
-    comparison_names = set(policy.get("comparison_sources", []))
-    if review_focus_names & comparison_names:
-        raise ValueError("Review-focus and comparison source groups must be disjoint")
-    if review_focus_names | comparison_names != production_names:
-        raise ValueError(
-            "source-policy.json must classify every active production DNS/Hosts source exactly once"
-        )
+    review_focus_names, comparison_names = validate_source_policy(
+        policy, production_names, candidate_names
+    )
     review_focus_blocks = set().union(*(production_sets[name] for name in review_focus_names))
-    comparison_blocks = set().union(*(production_sets[name] for name in comparison_names))
+    comparison_blocks = set().union(*(domain_sets[name] for name in comparison_names))
     comparison_allows = set().union(*(allow_sets[name] for name in comparison_names))
     review_focus_unshared_candidates, review_focus_allow_conflicts = classify_review_focus_candidates(
         review_focus_blocks, comparison_blocks, comparison_allows, project_whitelist
@@ -669,6 +680,7 @@ def main():
             "source_independence_claimed": False,
             "policy_note": policy.get("policy_note", ""),
             "lineage_evidence": policy.get("lineage_evidence", []),
+            "policy_profiles": policy.get("policy_profiles", []),
             "decision": "audit_only_no_automatic_production_inclusion"
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8"
@@ -766,6 +778,10 @@ def main():
     report += "- CHN AdRules 候选源含混合上游许可，本项目只保留汇总统计，不在公开审计产物中分发其提取域名文件。\n"
     for evidence in policy.get("lineage_evidence", []):
         report += f"- {evidence.get('source', 'Unknown')}: {evidence.get('relation', 'unspecified')} — {evidence.get('evidence_url', '')}。{evidence.get('interpretation', '')}\n"
+    report += "\n### 原作者策略差异（依据公开政策，不作简单投票）\n\n"
+    for profile in policy.get("policy_profiles", []):
+        sources_label = "、".join(profile.get("sources", []))
+        report += f"- {sources_label}（{profile.get('list', '未注明版本')}）：{profile.get('philosophy', '')} 证据：{profile.get('evidence_url', '')}\n"
     report += "\n## 项目白名单当前来源覆盖审计\n\n"
     report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\n"
     report += f"- 被当前 DNS/Hosts 或浏览器补充来源实际覆盖：{len(project_whitelist) - len(whitelist_unused)} 条。\n"
