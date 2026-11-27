@@ -511,26 +511,43 @@ class Resolver(object):
         return blockDict,unblockDict,filterDict
 
     def resolveDNSPattern(self, rule: str) -> Optional[Tuple[str, str]]:
-        """Return (action, fixed registrable domain) for a safe DNS wildcard rule.
+        """Return (action, fixed registrable domain) for safe DNS hostname rules.
 
-        Only hostname wildcards scoped to a fixed registrable domain are accepted.
-        Wildcards in the registrable domain/public suffix and regex or modified
-        rules are deliberately excluded to keep matching narrow and predictable.
+        Preserve wildcard hostname masks and the AdGuard Home dnstype modifier.
+        Other modifiers are deliberately excluded: client/ctag-scoped rules are not
+        universal, while denyallow/badfilter need rule-set-level semantics that
+        this domain aggregator does not currently model.
         """
         try:
             line = rule.strip()
             is_allow = line.startswith("@@||")
-            if is_allow:
-                if not line.endswith("^"):
-                    return None
-                pattern = line[4:-1]
-            else:
-                if not line.startswith("||") or not line.endswith("^"):
-                    return None
-                pattern = line[2:-1]
-
-            if "*" not in pattern or len(pattern) > 253:
+            prefix = "@@||" if is_allow else "||"
+            if not line.startswith(prefix):
                 return None
+
+            # Retain the DNS record-type restriction unchanged. Never strip
+            # modifiers, because doing so would broaden a source rule's scope.
+            body = line[len(prefix):]
+            has_dnstype = "$" in body
+            if has_dnstype:
+                if body.count("$") != 1:
+                    return None
+                body, modifier = body.split("$", 1)
+                if not re.fullmatch(
+                    r"dnstype=(?:~?[A-Za-z][A-Za-z0-9]*)(?:,~?[A-Za-z][A-Za-z0-9]*)*",
+                    modifier,
+                    flags=re.IGNORECASE,
+                ):
+                    return None
+
+            if not body.endswith("^"):
+                return None
+            pattern = body[:-1]
+            if "*" not in pattern and not has_dnstype:
+                return None
+            if len(pattern) > 253:
+                return None
+
             labels = pattern.split(".")
             if len(labels) < 2 or any(not label for label in labels):
                 return None
