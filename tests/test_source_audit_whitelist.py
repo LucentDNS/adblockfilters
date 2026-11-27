@@ -50,3 +50,15 @@ def test_source_audit_gate_does_not_reject_supported_non_domain_filter_rules():
     # 340 supported non-domain filter rules were previously treated as a hard
     # failure even though the AdGuard Hostlist Compiler accepted the output.
     assert audit_sources.source_audit_gate_failures(0, 340, set(), set(), set()) == []
+
+
+
+def test_source_audit_gate_rejects_missing_active_source_allow_conflicts():
+    failures = audit_sources.source_audit_gate_failures(
+        0, 0, set(), set(), set(),
+        {"ads.microsoft.com", "360.cn"},
+    )
+
+    assert len(failures) == 1
+    assert "explicit allow exceptions" in failures[0]
+    assert "ads.microsoft.com" in failures[0]
