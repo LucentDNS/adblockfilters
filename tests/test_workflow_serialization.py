@@ -127,6 +127,7 @@ def test_obsolete_branch_cleanup_runs_before_build_setup():
 def test_source_allow_regression_report_is_published_and_closed_superseded_branches_are_pruned():
     workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
     assert ".cache/audit/source-allow-conflicts-still-blocked.txt" in workflow
+    assert ".cache/audit/source-allow-output-audit.json" in workflow
     cleanup = workflow.split(
         "- name: Remove merged and superseded work branches", 1
     )[1].split("- name: Setup Python", 1)[0]
