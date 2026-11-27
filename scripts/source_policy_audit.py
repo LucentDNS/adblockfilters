@@ -45,7 +45,7 @@ def classify_strict_domains(strict_domains, stability_blocks, stability_allows, 
             explicit_allow_conflicts.add(domain)
         if targeted_block_roots:
             targeted_supported.add(domain)
-        if not stable_block_roots and not stable_allow_roots and not white:
+        if not stable_block_roots and not stable_allow_roots and not targeted_block_roots and not white:
             strict_only.add(domain)
         details[domain] = {
             "stability_block_parent_or_exact": stable_block_roots,
@@ -76,6 +76,8 @@ def main():
     source_policy = {item["name"]: item for item in policy["sources"]}
     all_rules = ReadMe(str(ROOT / "README.md")).getRules()
     candidate_rules = [
+        Rule("CHN: AdRules DNS List (AdGuard Registry candidate only)", "dns",
+             "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt", "live upstream"),
         Rule("CHN: AdRules DNS List (AdGuard Registry candidate only)", "dns",
              "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt", "live upstream"),
         Rule("OISD Blocklist Small (AdGuard Registry candidate only)", "dns",
@@ -117,9 +119,11 @@ def main():
     stability_blocks = union_for("stability_reference", "block")
     stability_allows = union_for("stability_reference", "allow")
     targeted_blocks = union_for("targeted", "block")
+    other_reference_blocks = union_for("other_reference", "block")
     whitelist = load_project_whitelist()
     result = classify_strict_domains(
-        strict_blocks, stability_blocks, stability_allows, targeted_blocks, whitelist
+        strict_blocks, stability_blocks, stability_allows,
+        targeted_blocks | other_reference_blocks, whitelist
     )
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -155,6 +159,7 @@ def main():
             "stability_block_supported": len(result["stability_supported"]),
             "explicit_stability_allow_conflicts": len(result["explicit_allow_conflicts"]),
             "targeted_source_supported": len(result["targeted_supported"]),
+            "other_reference_supported": len(result["targeted_supported"] & other_reference_blocks),
             "project_whitelist_excluded": len(result["whitelist_excluded"]),
         },
         "unavailable_sources": sorted(set(unavailable)),
@@ -184,7 +189,8 @@ def main():
         ("strict_only_review", "严格来源独有待复核"),
         ("stability_block_supported", "稳定型来源拦截覆盖"),
         ("explicit_stability_allow_conflicts", "稳定型明确放行冲突"),
-        ("targeted_source_supported", "广告专项来源交叉覆盖"),
+        ("targeted_source_supported", "广告专项/其他参考来源交叉覆盖"),
+        ("other_reference_supported", "中国区候选来源交叉覆盖"),
         ("project_whitelist_excluded", "项目白名单排除"),
     ]
     for key, label in labels:
