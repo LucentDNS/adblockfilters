@@ -62,7 +62,7 @@ def test_production_build_uses_last_sealed_dns_state_without_waiting_for_current
 def test_source_audit_requires_matching_domain_and_china_inputs_for_lite_scope():
     audit = (ROOT / "scripts" / "audit_sources.py").read_text(encoding="utf-8")
     assert 'validation_input_path = ROOT / ".cache" / "domain" / "domain.txt"' in audit
-    assert "Lite scope audit is required and cannot be skipped" in audit
+    assert "Lite scope audit is required for production builds and cannot be skipped" in audit
     assert "china.txt contains domains outside domain.txt" in audit
     assert "REQUIRE_LITE_SCOPE_AUDIT" in audit
     workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
