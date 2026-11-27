@@ -74,7 +74,7 @@ def test_source_audit_gate_accepts_preserved_active_production_source_allow():
 def test_source_allow_output_audit_checks_parent_and_child_conflicts():
     conflicts, missing = audit_sources.audit_source_allow_output(
         {"360.cn", "ads.microsoft.com", "safe.example.org"},
-        {"ad.dev.360.cn", "microsoft.com", "other.example.org"},
+        {"ad.dev.360.cn", "microsoft.com", "sub.safe.example.org"},
         {"360.cn", "ads.microsoft.com"},
     )
 
