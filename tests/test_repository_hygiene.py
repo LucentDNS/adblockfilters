@@ -133,14 +133,20 @@ def test_only_the_two_supported_adguard_product_adapters_are_registered():
     filter_tree = ast.parse((ROOT / "filter.py").read_text(encoding="utf-8"))
     registered = []
     for node in ast.walk(filter_tree):
-        if not isinstance(node, ast.Assign):
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+            value = node.value
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+            value = node.value
+        else:
             continue
-        if not any(isinstance(target, ast.Name) and target.id == "generaterList" for target in node.targets):
+        if not any(isinstance(target, ast.Name) and target.id == "generaterList" for target in targets):
             continue
-        assert isinstance(node.value, ast.List)
+        assert isinstance(value, ast.List)
         registered = [
             element.func.id
-            for element in node.value.elts
+            for element in value.elts
             if isinstance(element, ast.Call) and isinstance(element.func, ast.Name)
         ]
         break
