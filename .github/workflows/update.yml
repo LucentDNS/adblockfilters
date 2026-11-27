@@ -454,11 +454,8 @@ jobs:
             .cache/audit/lite-scope-china-domains-missing.txt
             .cache/audit/lite-scope-rules-not-classified-china.txt
             .cache/audit/lite-scope-unvalidated-source-domains.txt
-            .cache/audit/lite-scope-invizible-known-non-china-covered.txt
-            .cache/audit/lite-scope-invizible-china-domains-missing.txt
-            .cache/audit/lite-scope-invizible-rules-not-classified-china.txt
-            .cache/audit/invizible-allowlist-audit.json
-            .cache/audit/invizible-allowlist-missing.txt
+            .cache/audit/lite-scope-pattern-block-rules.txt
+            .cache/domain/china-classification.json
             .cache/audit/baseline-browser-analysis.json
             .cache/audit/baseline-only-browser-overlap.txt
             .cache/audit/baseline-only-allow-exceptions-still-blocked.txt
