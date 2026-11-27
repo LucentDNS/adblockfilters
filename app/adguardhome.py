@@ -25,6 +25,7 @@ class AdGuardHome(APPBase):
             if os.path.exists(fileName):
                 os.remove(fileName)
             
+            # Keep the subscription expiry aligned with blacklist.yml's daily 16:43 Beijing-time schedule.
             # 生成规则文件
             with open(fileName, 'a') as f:
                 f.write("!\n")
