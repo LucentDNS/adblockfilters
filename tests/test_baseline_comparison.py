@@ -142,3 +142,16 @@ def test_baseline_script_bootstraps_repo_root_when_run_from_another_directory(tm
 
     assert "No module named 'resolver'" not in result.stderr
     assert "DNS filter file is missing or empty" in result.stderr
+
+
+def test_parse_filter_allows_legacy_underscore_labels_only_for_reference_baseline(tmp_path):
+    path = tmp_path / "legacy-baseline.txt"
+    _write_filter(path, "! Title: AdBlock DNS", "upstream-v1", ["||fb_servpub-a.akamaihd.net^"])
+
+    with pytest.raises(SystemExit, match="non-domain rules"):
+        parse_filter(path, "! Title: AdBlock DNS", 1)
+
+    parsed = parse_filter(
+        path, "! Title: AdBlock DNS", 1, allow_legacy_service_labels=True
+    )
+    assert "||fb_servpub-a.akamaihd.net^" in parsed["rules"]

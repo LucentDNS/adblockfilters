@@ -20,10 +20,11 @@ EXPECTED_TITLES = {
     "lite": "! Title: AdBlock DNS Lite",
 }
 DOMAIN_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+LEGACY_BASELINE_LABEL = re.compile(r"^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$")
 DNS_PATTERN_RESOLVER = Resolver(".")
 
 
-def _is_domain_rule(rule: str) -> bool:
+def _is_domain_rule(rule: str, allow_legacy_service_labels: bool = False) -> bool:
     if rule.startswith("@@||"):
         domain = rule[4:]
     elif rule.startswith("||"):
@@ -39,13 +40,19 @@ def _is_domain_rule(rule: str) -> bool:
     if not domain or len(domain) > 253:
         return False
     labels = domain.split(".")
+    label_pattern = LEGACY_BASELINE_LABEL if allow_legacy_service_labels else DOMAIN_LABEL
     return all(
-        label and len(label) <= 63 and DOMAIN_LABEL.fullmatch(label)
+        label and len(label) <= 63 and label_pattern.fullmatch(label)
         for label in labels
     )
 
 
-def parse_filter(path: Path, expected_title: str, minimum_rules: int) -> dict:
+def parse_filter(
+    path: Path,
+    expected_title: str,
+    minimum_rules: int,
+    allow_legacy_service_labels: bool = False,
+) -> dict:
     if not path.is_file() or path.stat().st_size == 0:
         raise SystemExit(f"DNS filter file is missing or empty: {path}")
     lines = path.read_text(encoding="utf-8-sig").splitlines()
@@ -67,7 +74,10 @@ def parse_filter(path: Path, expected_title: str, minimum_rules: int) -> dict:
         raise SystemExit(
             f"DNS filter is unexpectedly small: {path} contains {len(rules)} rules"
         )
-    invalid = [rule for rule in rules if not _is_domain_rule(rule)]
+    invalid = [
+        rule for rule in rules
+        if not _is_domain_rule(rule, allow_legacy_service_labels)
+    ]
     if invalid:
         raise SystemExit(
             f"DNS filter contains non-domain rules in {path}: {invalid[:10]}"
@@ -83,7 +93,9 @@ def compare_variant(
 ) -> dict:
     title = EXPECTED_TITLES[name]
     minimum = MINIMUM_RULES[name] if minimum_rules is None else minimum_rules
-    baseline = parse_filter(baseline_path, title, minimum)
+    baseline = parse_filter(
+        baseline_path, title, minimum, allow_legacy_service_labels=True
+    )
     current = parse_filter(current_path, title, minimum)
     baseline_rules = baseline["rules"]
     current_rules = current["rules"]
