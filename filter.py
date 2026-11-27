@@ -86,7 +86,7 @@ class Filter(object):
         self.sourcePath = sourcePath if sourcePath else path   # 上游源目录：resolver 读取（.cache/source）
 
     # 获取拦截规则
-    def __getFilters(self) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]], Dict[str, str]]:
+    def __getFilters(self) -> Tuple[Dict[str, Set[str]], Dict[str, Set[str]], Dict[str, str], Dict[str, str], Dict[str, str]]:
         def dictadd(d1:Dict[str,Set], d2:Dict[str,Set]) -> Dict[str,Set]:
             d3 = dict()
             s = set.union(set(d1), set(d2))
@@ -118,14 +118,23 @@ class Filter(object):
         blockDict:Dict[str,Set[str]] = dict()
         unblockDict:Dict[str,Set[str]] = dict()
         filterDict:Dict[str,str] = dict()
+        dnsPatternBlockMap:Dict[str,str] = dict()
+        dnsPatternAllowMap:Dict[str,str] = dict()
         for source_type, future in taskList:
             __blockDict,__unblockDict,__filterDict = future.result()
             if source_type == "domain":
                 blockDict = dictadd(blockDict, __blockDict)
                 unblockDict = dictadd(unblockDict, __unblockDict)
+                for filter_rule, domain in __filterDict.items():
+                    pattern = resolver.resolveDNSPattern(filter_rule)
+                    if pattern:
+                        action, base_domain = pattern
+                        if action == "allow":
+                            dnsPatternAllowMap[filter_rule] = base_domain
+                        else:
+                            dnsPatternBlockMap[filter_rule] = base_domain
             else:
-                # filter 解析器识别出的纯域名规则也保留为标准 AdGuard 规则，
-                # 供浏览器过滤订阅使用，但不进入 DNS 域名订阅。
+                # Browser-only filter sources never enter DNS output.
                 for suffix, subdomains in __blockDict.items():
                     for subdomain in subdomains:
                         domain = (subdomain + "." + suffix) if suffix else subdomain
@@ -134,10 +143,10 @@ class Filter(object):
                     for subdomain in subdomains:
                         domain = (subdomain + "." + suffix) if suffix else subdomain
                         filterDict["@@||%s^" % domain] = domain
-            for filter,domain in __filterDict.items():
-                filterDict[filter] = domain
+            for filter_rule, domain in __filterDict.items():
+                filterDict[filter_rule] = domain
 
-        return blockDict,unblockDict,filterDict
+        return blockDict,unblockDict,filterDict,dnsPatternBlockMap,dnsPatternAllowMap
 
     # 获取黑名单，经测试已无法解析的域名
     def __getBlackList(self, fileName:str) -> Set[str]:
@@ -359,7 +368,7 @@ class Filter(object):
         # 分别记录 DNS/Hosts 来源与浏览器内容过滤来源，避免 DNS 订阅头部误报来源。
         dnsRuleNames = "、".join(rule.name for rule in self.ruleList if rule.type in {"host", "dns", "dnsfilter"})
         # 从上游规则中提取规则
-        blockDict,unblockDict,filterDict = self.__getFilters()
+        blockDict,unblockDict,filterDict,dnsPatternBlockMap,dnsPatternAllowMap = self.__getFilters()
 
         # 提取黑名单、白名单、China domain
         blackSet = self.__getBlackList(self.path + "/black.txt")  # 经测试已无法解析的域名
@@ -380,6 +389,7 @@ class Filter(object):
         whiteExceptions = self.__getWhiteExceptions(whiteDict, blockList)
         unblockList = sorted(set(unblockList) | set(whiteExceptions))
         unblockSet_unblock |= set(whiteExceptions)
+        logger.info("DNS wildcard patterns: block=%d allow=%d; Lite block=%d allow=%d", len(dnsPatternBlockMap), len(dnsPatternAllowMap), sum(1 for base in dnsPatternBlockMap.values() if base in ChinaSet), sum(1 for base in dnsPatternAllowMap.values() if base in ChinaSet))
         filterList_var, filterList, domainSet_filter = self.__filterSort(
             filterDict, set(blockList), set(unblockList), blackSet, whiteSet, whiteDict
         )
@@ -387,7 +397,7 @@ class Filter(object):
         # 生成合并规则 AdGuard, AdGuardHome, DNSMasq, InviZible, SmartDNS等
         generaterList:List[APPBase] = [
             AdGuard           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockfilters.txt",           sourceRule),
-            AdGuardHome       (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdns.txt",               dnsRuleNames),
+            AdGuardHome       (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdns.txt",               dnsRuleNames, dnsPatternBlockList=sorted(dnsPatternBlockMap), dnsPatternAllowList=sorted(dnsPatternAllowMap), dnsPatternBlockListLite=sorted(rule for rule, base in dnsPatternBlockMap.items() if base in ChinaSet), dnsPatternAllowListLite=sorted(rule for rule, base in dnsPatternAllowMap.items() if base in ChinaSet)),
             DNSMasq           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdnsmasq.txt",           dnsRuleNames),
             Hosts             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockhosts.txt",             dnsRuleNames),
             InviZible         (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdomain.txt",            dnsRuleNames),
