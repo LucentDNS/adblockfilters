@@ -62,3 +62,18 @@ def test_source_audit_gate_rejects_missing_active_source_allow_conflicts():
     assert len(failures) == 1
     assert "explicit allow exceptions" in failures[0]
     assert "ads.microsoft.com" in failures[0]
+
+
+
+def test_source_policy_documents_explicit_allow_precedence():
+    import json
+    from pathlib import Path
+
+    policy = json.loads(
+        (Path(__file__).parents[1] / "source-policy.json").read_text(encoding="utf-8")
+    )
+
+    resolution = policy["conflict_resolution"]
+    assert resolution["active_production_source_allow"] == "global_compatibility_veto"
+    assert resolution["candidate_only_source_allow"] == "audit_only_no_effect_on_production"
+    assert "false positives" in resolution["rationale"]
