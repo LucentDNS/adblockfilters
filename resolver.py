@@ -534,10 +534,13 @@ class Resolver(object):
                     return None
                 body, modifier = body.split("$", 1)
                 if not re.fullmatch(
-                    r"dnstype=(?:~?[A-Za-z][A-Za-z0-9]*)(?:,~?[A-Za-z][A-Za-z0-9]*)*",
+                    r"dnstype=(?:~?[A-Za-z][A-Za-z0-9]*)(?:\|~?[A-Za-z][A-Za-z0-9]*)*",
                     modifier,
                     flags=re.IGNORECASE,
                 ):
+                    return None
+                types = modifier[len("dnstype="):].split("|")
+                if len({value.startswith("~") for value in types}) > 1:
                     return None
 
             if not body.endswith("^"):
