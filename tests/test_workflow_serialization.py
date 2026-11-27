@@ -145,3 +145,22 @@ def test_dns_state_dispatch_guard_tracks_only_dns_validation_inputs():
     assert "readme\\.py" in guard
     assert "updater\\.py" in guard
     assert "verify_critical_domains" not in guard
+
+
+def test_rule_release_prunes_unsupported_assets_before_upload():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    cleanup = workflow.split(
+        "- name: Remove unsupported legacy client assets from rule release", 1
+    )[1].split("- name: Upload rules to release", 1)[0]
+
+    assert "releases/tags/rule" in cleanup
+    assert "gh api --method DELETE" in cleanup
+    assert "adblockdns.txt" in cleanup
+    assert "adblockdnslite.txt" in cleanup
+    assert "adblockfilters.txt" in cleanup
+    assert "adblockfilterslite.txt" in cleanup
+    assert "LICENSE-GPL-3.0.txt" in cleanup
+    assert "THIRD-PARTY-NOTICES.md" in cleanup
+    assert workflow.index("Remove unsupported legacy client assets from rule release") < workflow.index(
+        "- name: Upload rules to release"
+    )
