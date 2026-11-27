@@ -233,7 +233,7 @@ def test_adguard_filter_metadata_matches_daily_update_schedule(tmp_path):
     browser_generator = AdGuard(
         [],
         [],
-        {},
+        {"||ads.example.com^": "ads.example.com"},
         ["||ads.example.com^"],
         [],
         {"ads.example.com"},
