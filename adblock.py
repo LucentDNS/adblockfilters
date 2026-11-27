@@ -1,7 +1,4 @@
 import os
-import hashlib
-import json
-
 from loguru import logger
 from tld.utils import update_tld_names
 
