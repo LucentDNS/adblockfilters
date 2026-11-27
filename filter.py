@@ -73,10 +73,13 @@ def _build_exact_block_list(block_domains, allow_domains, blacklist, include_dom
 
 
 def _dns_pattern_matches_domain(rule: str, domain: str) -> bool:
-    """Match an exact whitelist domain against a validated AdGuard DNS wildcard rule."""
-    if not rule.startswith("||") or not rule.endswith("^"):
+    """Match a whitelist domain against a validated AdGuard DNS hostname rule."""
+    if not rule.startswith("||"):
         return False
-    pattern = re.escape(rule[2:-1]).replace(r"\*", ".*")
+    body = rule[2:].split("$", 1)[0]
+    if not body.endswith("^"):
+        return False
+    pattern = re.escape(body[:-1]).replace(r"\*", ".*")
     return re.fullmatch(rf"(?:.*\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
 
 
