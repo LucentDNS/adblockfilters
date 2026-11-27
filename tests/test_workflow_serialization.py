@@ -129,7 +129,7 @@ def test_obsolete_branch_cleanup_runs_before_build_setup():
     assert "pulls?state=closed" in cleanup
     assert '[[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]]' in cleanup
     assert workflow.index("Remove merged and superseded work branches") < workflow.index(
-        "- name: Prepare optional DNS classification inputs"
+        "- name: Prepare verified DNS classification inputs for Lite"
     )
 
 
