@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
+def test_dns_validation_uses_six_isolated_independent_upstreams():
     from blacklist import DNS_VALIDATION_PORTS
 
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
