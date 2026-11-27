@@ -39,6 +39,22 @@ def test_source_policy_classifies_every_enabled_dns_source_once():
         for item in lineage
     )
     assert "not as an author-defined strict/aggressive tier" in policy["policy_note"]
+    profiles = policy["policy_profiles"]
+    assert any(
+        item["sources"] == ["HaGeZi DNS-Blocklists"]
+        and "low-to-moderate breakage" in item["philosophy"]
+        for item in profiles
+    )
+    assert any(
+        "OISD Blocklist Small (AdGuard Registry candidate only)" in item["sources"]
+        and "zero breakage" in item["philosophy"]
+        for item in profiles
+    )
+    assert any(
+        item["sources"] == ["AdGuard DNS filter"]
+        and "sufficient site traffic" in item["philosophy"]
+        for item in profiles
+    )
 
 
 def test_review_focus_unshared_candidates_are_not_treated_as_explicit_allows():
