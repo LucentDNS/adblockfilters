@@ -10,9 +10,10 @@ concurrency:
   group: update-filters-${{ github.repository }}
   cancel-in-progress: true
 on:
-  # Build-only changes may reuse the current validated DNS state.
-  # DNS inputs and validation logic are handled exclusively by blacklist.yml,
-  # which dispatches this workflow only after publishing fresh state.
+  schedule:
+    # Daily production build at 16:43 Beijing time (08:43 UTC).
+    - cron: '43 8 * * *'
+  # Build directly from freshly downloaded upstream sources; DNS checks are auxiliary only.
   push:
     branches: [main]
     paths:
@@ -32,8 +33,14 @@ on:
       - "THIRD-PARTY-NOTICES.md"
       - "scripts/build_licenses.py"
       - ".github/workflows/update.yml"
-  # DNS-state workflow validates and publishes fresh state before dispatching production builds.
-  # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
+      - "README.md"
+      - "sources.json"
+      - "rules/myblock.txt"
+      - "updater.py"
+      - "resolver.py"
+      - "readme.py"
+      - "requirements.txt"
+  # DNS diagnostics never dispatch or gate production builds.
   workflow_dispatch:
 
 env:
@@ -143,73 +150,26 @@ jobs:
           python -m compileall -q app
           python -m pytest -q tests
 
-      - name: Wait for a complete DNS state matching current inputs
-        timeout-minutes: 190
-        run: |
-          set -euo pipefail
-          mkdir -p .cache/domain
-          state_files=(
-            black.txt
-            china.txt
-            domain.txt
-            domain-input-provenance.json
-            dns-validation-bootstrap-complete-v2.txt
-            validated-dns-sources.tar.gz
-          )
-          state_ready=0
-          for attempt in $(seq 1 360); do
-            git fetch origin main --quiet
-            if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-              echo "::error::main advanced while waiting for DNS state; refusing a stale build."
-              exit 1
-            fi
-            for name in "${state_files[@]}"; do
-              rm -f ".cache/domain/$name"
-            done
-            download_ok=1
-            for name in "${state_files[@]}"; do
-              if ! curl --fail --location --silent --show-error --retry 1 --retry-all-errors --connect-timeout 10 --max-time 120 \
-                -o ".cache/domain/$name" \
-                "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/$name"; then
-                download_ok=0
-                break
-              fi
-              if ! test -s ".cache/domain/$name"; then
-                download_ok=0
-                break
-              fi
-            done
-            if [ "$download_ok" -eq 1 ] && python scripts/validated_sources.py check-current; then
-              state_ready=1
-              break
-            fi
-            echo "Waiting for a complete DNS state matching the current source manifest, validation logic, and myblock.txt ($attempt/360)"
-            sleep 30
-          done
-          if [ "$state_ready" -ne 1 ]; then
-            echo "::error::No complete, current DNS validation state was published within 180 minutes."
-            exit 1
-          fi
-          git fetch origin main
-          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "::error::main advanced while waiting for DNS validation; refusing to build a stale checkout."
-            exit 1
-          fi
-
-      - name: Prepare domain inputs
+      - name: Prepare optional DNS classification inputs
         run: |
           set -euo pipefail
           mkdir -p .cache/domain .cache/source
-          : > .cache/domain/input-provenance.txt
-          for name in black.txt china.txt domain.txt domain-input-provenance.json dns-validation-bootstrap-complete-v2.txt validated-dns-sources.tar.gz; do
-            test -s ".cache/domain/$name" || { echo "::error::Verified DNS validation state asset is missing: $name"; exit 1; }
-            printf '%s\t%s\n' "$name" "sealed six-upstream DNS validation state" >> .cache/domain/input-provenance.txt
-          done
-          # Preserve the exact validation input before Filter.generate rewrites domain.txt.
-          cp .cache/domain/domain.txt .cache/domain/validated-domain-input.txt
-          python scripts/validated_sources.py restore
+          # DNS existence checks are auxiliary diagnostics, not production truth.
+          # Never remove upstream rules because a domain was temporarily NXDOMAIN.
+          : > .cache/domain/black.txt
+          # Reuse the latest successful domestic classification only to scope Lite.
+          # It cannot remove entries from Full and is never treated as a block decision.
+          if curl --fail --location --silent --show-error --retry 1 --retry-all-errors --connect-timeout 10 --max-time 60 \
+            -o .cache/domain/china.txt \
+            "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/china.txt"; then
+            echo "Using last published DNS-derived domestic classification for Lite scope only."
+          else
+            : > .cache/domain/china.txt
+            echo "::warning::No previous domestic classification is available; Lite will use an empty DNS-derived China scope for this build."
+          fi
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
+          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tlast-known auxiliary Lite classification only\n' > .cache/domain/input-provenance.txt
 
       - name: Restore previous upstream snapshots for anomaly checks
         env:
