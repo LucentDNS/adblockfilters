@@ -50,10 +50,8 @@ class ADBlock(object):
         # This avoids making every daily production build wait for bulk DNS probes.
         china_provenance = generate_china_list(self.domainDir)
         logger.info(
-            "Lite domestic classification: %s domains (%s direct, %s previous DNS-positive)",
+            "Lite domestic classification: %s domains from conservative direct rules",
             china_provenance["china_classified_domain_count"],
-            china_provenance["direct_classified_domain_count"],
-            china_provenance["retained_previous_dns_classified_domain_count"],
         )
         filter.generate(readme.getRulesNames())
 
