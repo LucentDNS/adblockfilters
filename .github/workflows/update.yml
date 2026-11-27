@@ -534,11 +534,11 @@ jobs:
           git clean -fdx
           cp /tmp/dist-out/* .
           git add -A
-          expected_files="$(printf '%s\\n' adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt | sort)"
+          expected_files="$(printf '%s\n' adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt | sort)"
           actual_files="$(git ls-files | sort)"
           if [ "$actual_files" != "$expected_files" ]; then
             echo "::error::dist must contain exactly the four AdGuard subscription files."
-            printf 'Expected:\\n%s\\nActual:\\n%s\\n' "$expected_files" "$actual_files"
+            printf 'Expected:\n%s\nActual:\n%s\n' "$expected_files" "$actual_files"
             exit 1
           fi
           git commit -m "Publish rules $(date -u +%Y%m%d%H%M)"
@@ -578,10 +578,10 @@ jobs:
           set -euo pipefail
           release_id="$(gh api "repos/${REPOSITORY}/releases/tags/rule" --jq '.id')"
           actual="$(gh api --paginate "repos/${REPOSITORY}/releases/${release_id}/assets?per_page=100" --jq '.[].name' | sort)"
-          expected="$(printf '%s\\n' adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt LICENSE-GPL-3.0.txt LICENSE-LGPL-3.0.txt LICENSE-MIT-anti-AD.txt LICENSE-MIT-StevenBlack.txt LICENSE-MPL-2.0-1Hosts.txt THIRD-PARTY-NOTICES.md source-licenses.json | sort)"
+          expected="$(printf '%s\n' adblockdns.txt adblockdnslite.txt adblockfilters.txt adblockfilterslite.txt LICENSE-GPL-3.0.txt LICENSE-LGPL-3.0.txt LICENSE-MIT-anti-AD.txt LICENSE-MIT-StevenBlack.txt LICENSE-MPL-2.0-1Hosts.txt THIRD-PARTY-NOTICES.md source-licenses.json | sort)"
           if [ "$actual" != "$expected" ]; then
             echo "::error::The rule release does not contain exactly the four subscriptions and approved license notices."
-            printf 'Expected:\\n%s\\nActual:\\n%s\\n' "$expected" "$actual"
+            printf 'Expected:\n%s\nActual:\n%s\n' "$expected" "$actual"
             exit 1
           fi
           echo "Verified the exact AdGuard rule release asset manifest."
