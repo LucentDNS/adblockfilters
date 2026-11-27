@@ -336,7 +336,9 @@ uk-mobile.events.data.microsoft.com
 us-mobile.events.data.microsoft.com
 
 # Preserve exact allow exceptions from the original published DNS baseline
-# Preserve the original baseline exception beneath the parent porn300.com block.\npics.porn300.com\npgpartner.com
+# Preserve the original baseline exception beneath the parent porn300.com block.
+pics.porn300.com
+pgpartner.com
 puma.112.2o7.net
 s.optnx.com
 vitacost.122.2o7.net
