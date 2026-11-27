@@ -430,8 +430,6 @@ def main():
              "https://small.oisd.nl/", "live upstream"),
         Rule("OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)", "dns",
              "https://big.oisd.nl/", "live upstream"),
-        Rule("1Hosts Lite (AdGuard Registry candidate only)", "dns",
-             "https://cdn.jsdelivr.net/gh/badmojr/1Hosts@master/Lite/adblock.txt", "live upstream"),
         Rule("HaGeZi Pro (AdGuard Registry benchmark against Pro Mini)", "dns",
              "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt", "live upstream"),
         Rule("HaGeZi Normal (AdGuard Registry benchmark against Pro Mini)", "dns",
