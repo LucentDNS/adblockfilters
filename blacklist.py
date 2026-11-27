@@ -530,7 +530,11 @@ class BlackList(object):
         statuses = [status for _ip_list, status in upstream_results]
         if all(status == "not_found" for status in statuses):
             return [], "not_found"
-        if all(status == "no_address" for status in statuses):
+        # NXDOMAIN and NOERROR/NODATA are both valid DNS responses. A mix
+        # across independent resolvers is a semantic disagreement, not proof
+        # of resolver infrastructure failure. It must remain non-blocking.
+        # Only transient/failed resolver outcomes belong in "unknown".
+        if all(status in ("not_found", "no_address") for status in statuses):
             return [], "no_address"
         return [], "unknown"
 
