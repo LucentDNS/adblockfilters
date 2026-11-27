@@ -1083,6 +1083,16 @@ def main():
         source_allow_missing_still_blocked,
         "Every active production-source allow exception overlapping a compiled block remains effective."
     )
+    (OUT_DIR / "source-allow-output-audit.json").write_text(
+        json.dumps({
+            "available": compiled_dns_path.is_file(),
+            "active_production_source_allow_domains": len(current_source_allow_domains),
+            "allow_domains_overlapping_compiled_blocks": len(source_allow_conflicts),
+            "overlapping_allows_missing_from_compiled_output": len(source_allow_missing_still_blocked),
+            "missing_allow_samples": sorted(source_allow_missing_still_blocked)[:100],
+        }, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
     source_presence_parent_output_covered = {
         domain for domain in current_source_exact_active
