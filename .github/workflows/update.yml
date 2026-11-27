@@ -23,6 +23,7 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
+      - "scripts/generate_china_list.py"
       - "scripts/check_source_anomalies.py"
       - "scripts/verify_hostlist_compiler.py"
       - "scripts/verify_critical_domains.py"
@@ -146,7 +147,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/generate_china_list.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py
           python -m compileall -q app
           python -m pytest -q tests
 
@@ -165,11 +166,11 @@ jobs:
             echo "Using last published DNS-derived domestic classification for Lite scope only."
           else
             : > .cache/domain/china.txt
-            echo "::warning::No previous domestic classification is available; Lite will use an empty DNS-derived China scope for this build."
+            echo "::notice::No previous DNS-positive classification is available; the production build will derive a conservative Lite scope from .cn and domestic direct-domain rules."
           fi
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
-          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tlast-known auxiliary Lite classification only\n' > .cache/domain/input-provenance.txt
+          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tprevious successful DNS positives are optional enrichment; production rebuilds the baseline from .cn and direct-domain rules\n' > .cache/domain/input-provenance.txt
 
       - name: Restore previous upstream snapshots for anomaly checks
         env:
