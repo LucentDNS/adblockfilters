@@ -81,6 +81,7 @@ def test_wildcard_dns_block_rules_generate_exact_whitelist_exceptions():
         "ads123.example.com",
         "sub.ads123.example.com",
         "ping.x.sogou.com",
+        "typed.example.com",
     }
 
 
