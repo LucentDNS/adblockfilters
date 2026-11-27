@@ -45,7 +45,6 @@ DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
 DNS_BLOCK_POLICY_VERSION = "5"
 DNS_VALIDATION_MAX_CONCURRENCY = 100
-DNS_VALIDATION_START_INTERVAL_SECONDS = 0.0
 DNS_UNKNOWN_FAILURE_MIN_SAMPLES = 20
 DNS_UNKNOWN_FAILURE_MAX_RATIO = 0.20
 
@@ -775,7 +774,7 @@ class BlackList(object):
 
             # 域名解析
 
-            domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过5个独立上游分别验证，国内2个、国际3个；全部一致才确认NXDOMAIN
+            domainDict = self.__testDomain(domainDict, ["127.0.0.1"], 5053) # 通过国内3个、国际3个共6个独立上游验证；全部一致才确认NXDOMAIN
 
             # 国内域名识别
             thread_pool = ThreadPoolExecutor(max_workers=os.cpu_count() if os.cpu_count() > 4 else 4)
