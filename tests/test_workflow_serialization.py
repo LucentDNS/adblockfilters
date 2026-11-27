@@ -162,5 +162,8 @@ def test_rule_release_prunes_unsupported_assets_before_upload():
     assert "LICENSE-GPL-3.0.txt" in cleanup
     assert "THIRD-PARTY-NOTICES.md" in cleanup
     assert workflow.index("Remove unsupported legacy client assets from rule release") < workflow.index(
+        "- name: Wait for a complete DNS state matching current inputs"
+    )
+    assert workflow.index("Remove unsupported legacy client assets from rule release") < workflow.index(
         "- name: Upload rules to release"
     )
