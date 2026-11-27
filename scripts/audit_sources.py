@@ -1333,7 +1333,7 @@ def main():
             "source_domain_input_count": len(source_input_domains),
             "validated_domain_input_count": len(validated_domains),
             "china_classification_mode": china_provenance.get(
-                "generator", "previous successful DNS classification"
+                "generator", "conservative direct-domain classification"
             ),
             "china_classification_policy": china_provenance.get("classification_policy", []),
             "china_classified_domain_count": len(china_domains),
@@ -1372,7 +1372,7 @@ def main():
         write_domain_list(
             OUT_DIR / "lite-scope-unvalidated-source-domains.txt",
             unvalidated_source_blocks,
-            "All current source domains have a successful DNS validation state.",
+            "Unvalidated current source domains are listed here; no DNS liveness inference is made.",
         )
         write_domain_list(
             OUT_DIR / "lite-scope-pattern-block-rules.txt",
@@ -1396,7 +1396,7 @@ def main():
         )
     report += "\n## Lite 国内域名范围审计\n\n"
     report += f"- 国内分类方式：{lite_scope['china_classification_mode']}。\n"
-    report += f"- 当前 DNS/Hosts 来源域名输入：{lite_scope['source_domain_input_count']} 条；成功 DNS 验证输入：{lite_scope['validated_domain_input_count']} 条；国内分类域名：{lite_scope['china_classified_domain_count']} 条。\n"
+    report += f"- 当前 DNS/Hosts 来源域名输入：{lite_scope['source_domain_input_count']} 条；独立 DNS 验证输入：{lite_scope['validated_domain_input_count']} 条；国内分类域名：{lite_scope['china_classified_domain_count']} 条。\n"
     report += f"- Lite 拦截规则：{lite_scope['lite_block_rules']} 条（精确主机：{lite_scope['lite_exact_block_rules']}；后缀规则：{lite_scope['lite_suffix_block_rules']}；通配/类型限定模式：{lite_scope['lite_pattern_block_rules']}）；放行例外：{lite_scope['lite_allow_rules']} 条。\n"
     report += f"- 已归类为国内的来源拦截域名，未被 Lite 拦截或放行规则覆盖：{lite_scope['china_classified_source_domains_missing_from_lite']} 条。\n"
     report += f"- 当前来源中尚未进入 DNS 验证状态的域名：{lite_scope['unvalidated_current_source_block_domains']} 条；未验证不等于非国内。\n"
