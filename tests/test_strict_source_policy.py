@@ -51,7 +51,7 @@ def test_project_whitelist_excludes_review_focus_unshared_candidates():
     assert conflicts == []
 
 
-def test_parent_allow_conflicts_cover_strict_subdomains():
+def test_parent_allow_conflicts_cover_review_focus_subdomains():
     review_focus_unshared, conflicts = classify_review_focus_candidates(
         review_focus_blocks={"child.allowed.example"},
         comparison_blocks=set(),
