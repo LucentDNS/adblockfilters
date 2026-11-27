@@ -14,8 +14,6 @@ on:
     # Daily production build at 16:43 Beijing time (08:43 UTC).
     - cron: '43 8 * * *'
   # Build directly from freshly downloaded upstream sources; DNS checks are auxiliary only.
-  # DNS inputs and validation logic are handled exclusively by blacklist.yml,
-  # which dispatches this workflow only after publishing fresh state.
   push:
     branches: [main]
     paths:
