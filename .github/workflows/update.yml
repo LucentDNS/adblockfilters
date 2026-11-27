@@ -77,6 +77,39 @@ jobs:
             esac
           done <<< "${asset_rows}"
 
+      - name: Remove merged and superseded work branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branches="$(gh api --paginate "repos/${REPOSITORY}/branches?per_page=100" --jq '.[].name')"
+          open_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].head.ref')"
+          merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" | jq -r --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
+          # These closed, unmerged branches are explicitly superseded:
+          # PR #22 by merged PR #23; PR #29 by merged PRs #31 and #33. DNS/CNNIC experiments are superseded by the validated main-branch resolver and cache policy.
+          superseded_refs="fix/dns-dnstype-rule-preservation fix/source-policy-conflict-audit diagnostics/domestic-resolver-shortlist fix/cnnic-dns-upstream-and-cache-migration fix/cnnic-dns-upstream-and-cache-migration-v2 diagnostics/cnnic-secondary-endpoint qa/independent-dns-group-regression"
+          deleted=0
+          while IFS= read -r branch_name; do
+            [[ -n "${branch_name}" ]] || continue
+            [[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]] && continue
+            if grep -Fxq "${branch_name}" <<< "${open_refs}"; then
+              echo "Keeping ${branch_name}: an open PR still uses it."
+              continue
+            fi
+            if grep -Fxq "${branch_name}" <<< "${merged_refs}" || [[ " ${superseded_refs} " == *" ${branch_name} "* ]]; then
+              if gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch_name}"; then
+                echo "Deleted obsolete branch: ${branch_name}"
+                deleted=$((deleted + 1))
+              else
+                echo "::warning::Could not delete obsolete branch: ${branch_name}"
+              fi
+            else
+              echo "Keeping ${branch_name}: no merged PR or explicit supersession evidence."
+            fi
+          done <<< "${branches}"
+          echo "Deleted ${deleted} obsolete branches; main and dist were retained."
+
       - name: Setup Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
@@ -520,37 +553,4 @@ jobs:
           [ -n "$(git status --porcelain)" ] || exit 0
           git commit -m "Publish rules $(date -u +%Y%m%d%H%M)"
           git push -f origin dist
-
-      - name: Remove merged and superseded work branches
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          branches="$(gh api --paginate "repos/${REPOSITORY}/branches?per_page=100" --jq '.[].name')"
-          open_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].head.ref')"
-          merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" | jq -r --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
-          # These closed, unmerged branches are explicitly superseded:
-          # PR #22 by merged PR #23; PR #29 by merged PRs #31 and #33. DNS/CNNIC experiments are superseded by the validated main-branch resolver and cache policy.
-          superseded_refs="fix/dns-dnstype-rule-preservation fix/source-policy-conflict-audit diagnostics/domestic-resolver-shortlist fix/cnnic-dns-upstream-and-cache-migration fix/cnnic-dns-upstream-and-cache-migration-v2 diagnostics/cnnic-secondary-endpoint qa/independent-dns-group-regression"
-          deleted=0
-          while IFS= read -r branch_name; do
-            [[ -n "${branch_name}" ]] || continue
-            [[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]] && continue
-            if grep -Fxq "${branch_name}" <<< "${open_refs}"; then
-              echo "Keeping ${branch_name}: an open PR still uses it."
-              continue
-            fi
-            if grep -Fxq "${branch_name}" <<< "${merged_refs}" || [[ " ${superseded_refs} " == *" ${branch_name} "* ]]; then
-              if gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch_name}"; then
-                echo "Deleted obsolete branch: ${branch_name}"
-                deleted=$((deleted + 1))
-              else
-                echo "::warning::Could not delete obsolete branch: ${branch_name}"
-              fi
-            else
-              echo "Keeping ${branch_name}: no merged PR or explicit supersession evidence."
-            fi
-          done <<< "${branches}"
-          echo "Deleted ${deleted} obsolete branches; main and dist were retained."
 

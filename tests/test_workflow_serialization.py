@@ -167,3 +167,18 @@ def test_rule_release_prunes_unsupported_assets_before_upload():
     assert workflow.index("Remove unsupported legacy client assets from rule release") < workflow.index(
         "- name: Upload rules to release"
     )
+
+
+def test_obsolete_branch_cleanup_runs_before_dns_state_wait():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    cleanup = workflow.split(
+        "- name: Remove merged and superseded work branches", 1
+    )[1].split("- name: Setup Python", 1)[0]
+
+    assert "pulls?state=open" in cleanup
+    assert "pulls?state=closed" in cleanup
+    assert '[[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]]' in cleanup
+    assert "diagnostics/cnnic-secondary-endpoint" in cleanup
+    assert workflow.index("Remove merged and superseded work branches") < workflow.index(
+        "- name: Wait for a complete DNS state matching current inputs"
+    )
