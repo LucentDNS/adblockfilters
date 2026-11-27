@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from app.adguard import AdGuard
 from app.adguardhome import AdGuardHome
 from app.dnsmasq import DNSMasq
 from app.smartdns import SmartDNS
@@ -209,3 +210,43 @@ def test_smartdns_full_preserves_specific_allow_and_parent_allow(tmp_path):
     assert "address /safe.parent.example.com/-" in output
     assert "address /ads.parent.example.net/#" not in output
     assert "address /parent.example.net/-" in output
+
+
+
+def test_adguard_filter_metadata_matches_daily_update_schedule(tmp_path):
+    dns_generator = AdGuardHome(
+        ["blocked.example.com"],
+        ["safe.example.com"],
+        {},
+        [],
+        [],
+        {"blocked.example.com"},
+        str(tmp_path / "adblockdns.txt"),
+        "test",
+    )
+    dns_generator.blockListLite = ["blocked.example.com"]
+    dns_generator.generate()
+    dns_full = Path(dns_generator.fileName).read_text(encoding="utf-8")
+    dns_generator.generate(isLite=True)
+    dns_lite = Path(dns_generator.fileNameLite).read_text(encoding="utf-8")
+
+    browser_generator = AdGuard(
+        [],
+        [],
+        {},
+        ["||ads.example.com^"],
+        [],
+        {"ads.example.com"},
+        str(tmp_path / "adblockfilters.txt"),
+        "test",
+    )
+    browser_generator.filterListLite = ["||ads.example.com^"]
+    browser_generator.generate()
+    browser_full = Path(browser_generator.fileName).read_text(encoding="utf-8")
+    browser_generator.generate(isLite=True)
+    browser_lite = Path(browser_generator.fileNameLite).read_text(encoding="utf-8")
+
+    for output in (dns_full, dns_lite, browser_full, browser_lite):
+        assert "! Expires: 1 day" in output
+        assert "每日自动更新一次" in output
+        assert "8 个小时" not in output
