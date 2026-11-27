@@ -2,9 +2,6 @@
 ! 项目维护补充规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 拦截规则
-! EasyPrivacy: third-party tracking endpoint on Akamai CDN; block only this hostname.
-! https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty_international.txt
-||fb_servpub-a.akamaihd.net^
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Phishing and brand-impersonation indicators reviewed 2026-11-23/25; evidence links are listed per domain.
 ! https://gridinsoft.com/online-virus-scanner/url/easywebtd_authenticate-com
