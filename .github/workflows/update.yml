@@ -10,7 +10,10 @@ concurrency:
   group: update-filters-${{ github.repository }}
   cancel-in-progress: true
 on:
-  # Build-only changes may reuse the current validated DNS state.
+  schedule:
+    # Daily production build at 16:43 Beijing time (08:43 UTC).
+    - cron: '43 8 * * *'
+  # Build directly from freshly downloaded upstream sources; DNS checks are auxiliary only.
   # DNS inputs and validation logic are handled exclusively by blacklist.yml,
   # which dispatches this workflow only after publishing fresh state.
   push:
@@ -35,8 +38,8 @@ on:
       - "README.md"
       - "sources.json"
       - "rules/myblock.txt"
-  # DNS-state workflow validates and publishes fresh state before dispatching production builds.
-  # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
+      - "updater.py"
+  # DNS diagnostics never dispatch or gate production builds.
   workflow_dispatch:
 
 env:
