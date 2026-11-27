@@ -59,4 +59,4 @@ def test_targeted_source_support_is_reported_separately():
         set(),
     )
     assert result["targeted_supported"] == {"ads.example.com"}
-    assert result["strict_only_review"] == {"ads.example.com"}
+    assert result["strict_only_review"] == set()
