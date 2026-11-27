@@ -267,6 +267,7 @@ jobs:
             domain-input-provenance.json
             black.txt
             china.txt
+            /tmp/smartdns/smartdns.log
           if-no-files-found: warn
           retention-days: 30
           include-hidden-files: true
