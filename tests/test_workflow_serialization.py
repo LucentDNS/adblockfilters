@@ -41,17 +41,29 @@ def test_dns_and_build_workflows_use_independent_concurrency_groups():
     assert "cancel-in-progress: true" in dns
 
 
-def test_production_build_does_not_wait_for_or_require_dns_validation_state():
+def test_production_build_uses_last_sealed_dns_state_without_waiting_for_current_validation():
     workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
     assert "Wait for a complete DNS state" not in workflow
-    assert "validated_sources.py check-current" not in workflow
-    assert "validated-dns-sources.tar.gz" not in workflow
+    assert "gh workflow run" not in workflow
     prepare = workflow.split(
-        "- name: Prepare optional DNS classification inputs", 1
+        "- name: Prepare verified DNS classification inputs for Lite", 1
     )[1].split("- name:", 1)[0]
-    assert ': > .cache/domain/black.txt' in prepare
-    assert "china.txt" in prepare
-    assert "Lite" in prepare
+    for asset in (
+        "black.txt", "china.txt", "domain.txt", "domain-input-provenance.json",
+        "validated-dns-sources.tar.gz", "dns-validation-bootstrap-complete-v2.txt",
+    ):
+        assert asset in prepare
+    assert "validated_sources.py check-current" in prepare
+    assert "No previous domestic classification" not in prepare
+    assert "validated-black.txt" in prepare
+    assert "diagnostic only" in prepare
+
+
+def test_source_audit_requires_matching_domain_and_china_inputs_for_lite_scope():
+    audit = (ROOT / "scripts" / "audit_sources.py").read_text(encoding="utf-8")
+    assert 'validation_input_path = ROOT / ".cache" / "domain" / "domain.txt"' in audit
+    assert "Lite scope audit is required and cannot be skipped" in audit
+    assert "china.txt contains domains outside domain.txt" in audit
 
 
 def test_production_build_rechecks_main_before_publishing():
@@ -119,3 +131,26 @@ def test_obsolete_branch_cleanup_runs_before_build_setup():
     assert workflow.index("Remove merged and superseded work branches") < workflow.index(
         "- name: Prepare optional DNS classification inputs"
     )
+
+
+
+def test_publication_waits_for_audit_and_dist_manifest_before_rule_release():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    assert workflow.index("Publish source audit and baseline comparison reports") < workflow.index(
+        "- name: Upload rules to release"
+    )
+    assert workflow.index("Publish to dist branch") < workflow.index(
+        "- name: Upload rules to release"
+    )
+    dist = workflow.split("- name: Publish to dist branch", 1)[1].split(
+        "- name: Verify main is still the build commit", 1
+    )[0]
+    for name in (
+        "adblockdns.txt", "adblockdnslite.txt",
+        "adblockfilters.txt", "adblockfilterslite.txt",
+    ):
+        assert name in dist
+    assert "dist must contain exactly the four AdGuard subscription files" in dist
+    assert "cp -r .cache/out /tmp/release-out" in dist
+    assert "cp /tmp/release-out/* .cache/out/" in dist
+    assert "Verify published rule release manifest" in workflow
