@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 
 from scripts.verify_hostlist_compiler import compare_rules
