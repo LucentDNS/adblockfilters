@@ -90,7 +90,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py
           python -m compileall -q app
           python -m pytest -q tests
 
@@ -193,7 +193,7 @@ jobs:
       - name: Validate Full and Lite DNS filters with AdGuard Hostlist Compiler
         run: |
           set -euo pipefail
-          npm install --global @adguard/hostlist-compiler@2.1.1
+          npm install --global --ignore-scripts @adguard/hostlist-compiler@2.1.1
           for variant in full lite; do
             if [[ "$variant" == "full" ]]; then
               input_file=".cache/out/adblockdns.txt"
