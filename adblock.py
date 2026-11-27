@@ -1,5 +1,4 @@
 import os
-import hashlib
 from loguru import logger
 from tld.utils import update_tld_names
 
@@ -8,14 +7,6 @@ from updater import Updater
 from filter import Filter
 from resolver import configure_logging
 from scripts.generate_china_list import generate_china_list
-
-
-def _sha256_file(path):
-    digest = hashlib.sha256()
-    with open(path, "rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 class ADBlock(object):
@@ -36,7 +27,7 @@ class ADBlock(object):
         # DNS existence checks are independent diagnostics and never gate source updates.
         update, ruleList = Updater(ruleList).update(self.sourceDir)
 
-        # 每次都重新生成：black/china/white/myblock 等输入也会变化。
+        # 每次都重新生成：china/white/myblock 等输入也会变化。
         # 不能只在上游源变化时构建，否则域名有效性名单更新后产物会长期过期。
         logger.info("source changed: %s; regenerate outputs from current inputs" % update)
 
@@ -45,9 +36,8 @@ class ADBlock(object):
         filter.generate(readme.getRulesNames())
 
         # The first pass writes the current normalized DNS/Hosts domain input.
-        # Build Lite's domestic scope from .cn and explicit routing-domain rules,
-        # optionally retaining previous successful DNS-positive classifications.
-        # This avoids making every daily production build wait for bulk DNS probes.
+        # Build Lite's domestic scope from .cn and explicit routing-domain rules.
+        # This avoids making daily production builds depend on bulk DNS probes.
         china_provenance = generate_china_list(self.domainDir)
         logger.info(
             "Lite domestic classification: %s domains from conservative direct rules",
