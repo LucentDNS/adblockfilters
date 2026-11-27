@@ -60,7 +60,7 @@ def test_source_audit_gate_rejects_missing_active_source_allow_conflicts():
     )
 
     assert len(failures) == 1
-    assert "explicit allow exceptions" in failures[0]
+    assert "source allow exceptions" in failures[0]
     assert "ads.microsoft.com" in failures[0]
 
 
