@@ -37,11 +37,10 @@ def source_audit_gate_failures(
     failures = []
     if compiled_unparsed:
         failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
-    if compiled_non_domain_filters:
-        failures.append(
-            "compiled DNS output contains non-domain filter rules: "
-            f"{compiled_non_domain_filters}"
-        )
+    # Valid AdGuard DNS filter syntax is not limited to hostname rules.
+    # Wildcards, regex-like patterns and other supported filter directives may
+    # not expose a single domain to this audit's coverage model. Keep their
+    # count in the report, but do not misclassify them as invalid or lost rules.
     if source_presence_unexplained:
         failures.append(
             "active baseline DNS source rules are missing from compiled output: "
