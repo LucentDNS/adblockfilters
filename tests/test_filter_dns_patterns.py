@@ -16,7 +16,7 @@ def test_only_scoped_patterns_from_dns_sources_enter_adguard_dns_patterns(tmp_pa
                 "||ads*-normal-hl.zijieapi.com^",
                 "@@||profile*.se.360.cn^",
                 "||typed.example.com^$dnstype=A",
-                "||typed-ads*.example.net^$dnstype=A,AAAA",
+                "||typed-ads*.example.net^$dnstype=A|AAAA",
                 "@@||typed-safe*.example.org^$dnstype=AAAA",
                 "||important.example.com^$important",
                 "||client.example.com^$client=phone",
@@ -48,7 +48,7 @@ def test_only_scoped_patterns_from_dns_sources_enter_adguard_dns_patterns(tmp_pa
     assert dns_pattern_blocks == {
         "||ads*-normal-hl.zijieapi.com^": "zijieapi.com",
         "||typed.example.com^$dnstype=A": "example.com",
-        "||typed-ads*.example.net^$dnstype=A,AAAA": "example.net",
+        "||typed-ads*.example.net^$dnstype=A|AAAA": "example.net",
     }
     assert dns_pattern_allows == {
         "@@||profile*.se.360.cn^": "360.cn",
@@ -96,10 +96,15 @@ def test_dns_pattern_parser_preserves_only_safe_dnstype_modifier(tmp_path):
         "allow",
         "example.com",
     )
-    assert resolver.resolveDNSPattern("||ads*.example.com^$dnstype=A,AAAA") == (
+    assert resolver.resolveDNSPattern("||ads*.example.com^$dnstype=A|AAAA") == (
         "block",
         "example.com",
     )
+    assert resolver.resolveDNSPattern("||ads.example.com^$dnstype=~A|~CNAME") == (
+        "block",
+        "example.com",
+    )
+    assert resolver.resolveDNSPattern("||ads.example.com^$dnstype=~A|AAAA") is None
 
     # Do not widen or reinterpret rules whose modifiers need different semantics.
     assert resolver.resolveDNSPattern("||ads.example.com^$important") is None
