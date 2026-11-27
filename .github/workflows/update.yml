@@ -183,6 +183,45 @@ jobs:
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
 
+      - name: Set up Node.js for AdGuard DNS syntax validation
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Validate Full and Lite DNS filters with AdGuard Hostlist Compiler
+        run: |
+          set -euo pipefail
+          npm install --global @adguard/hostlist-compiler@2.1.1
+          for variant in full lite; do
+            if [[ "$variant" == "full" ]]; then
+              input_file=".cache/out/adblockdns.txt"
+            else
+              input_file=".cache/out/adblockdnslite.txt"
+            fi
+            config_file=".adguard-hostlist-compiler-$variant.json"
+            validated_file=".cache/out/.adguard-hostlist-compiler-$variant.txt"
+            cat > "$config_file" <<EOF
+          {
+            "name": "AdBlock DNS $variant",
+            "sources": [
+              {
+                "name": "Generated DNS filter",
+                "source": "$input_file",
+                "type": "adblock",
+                "transformations": ["Validate"]
+              }
+            ],
+            "transformations": ["Deduplicate"]
+          }
+          EOF
+            hostlist-compiler --config "$config_file" --output "$validated_file"
+            python scripts/verify_hostlist_compiler.py \
+              --input "$input_file" \
+              --validated "$validated_file"
+            rm -f "$config_file" "$validated_file"
+          done
+
       - name: Check upstream source size anomalies
         run: |
           python scripts/check_source_anomalies.py \
