@@ -468,6 +468,20 @@ def domains_overlap(left, right):
     return left == right or left.endswith("." + right) or right.endswith("." + left)
 
 
+
+def audit_source_allow_output(source_allow_domains, compiled_block_domains, compiled_allow_domains):
+    """Return production-source allows that conflict with blocks and those not effective in output."""
+    conflicts = {
+        allow_domain for allow_domain in source_allow_domains
+        if any(domains_overlap(allow_domain, block_domain) for block_domain in compiled_block_domains)
+    }
+    missing = {
+        allow_domain for allow_domain in conflicts
+        if not covered_by_rule_domain(allow_domain, compiled_allow_domains)
+    }
+    return conflicts, missing
+
+
 def validate_source_policy(policy, production_names, candidate_names):
     """Validate source roles while allowing explicitly selected candidate-only comparisons."""
     if not isinstance(policy, dict) or policy.get("version") != 1:
@@ -1070,14 +1084,11 @@ def main():
     # Explicit allows from active production DNS/Hosts sources are compatibility
     # exceptions across the merged output. Verify that every allow overlapping
     # a compiled block remains effective after generation.
-    source_allow_conflicts = {
-        allow_domain for allow_domain in current_source_allow_domains
-        if any(domains_overlap(allow_domain, block_domain) for block_domain in compiled_block_domains)
-    }
-    source_allow_missing_still_blocked = {
-        allow_domain for allow_domain in source_allow_conflicts
-        if not covered_by_rule_domain(allow_domain, compiled_allow_domains)
-    }
+    source_allow_conflicts, source_allow_missing_still_blocked = audit_source_allow_output(
+        current_source_allow_domains,
+        compiled_block_domains,
+        compiled_allow_domains,
+    )
     write_domain_list(
         OUT_DIR / "source-allow-conflicts-still-blocked.txt",
         source_allow_missing_still_blocked,
