@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "policy_note": "This manifest records the upstream license evidence used for attribution and packaging. It does not provide a legal opinion that every generated combination is a derivative work or an aggregate; source-specific terms remain applicable.",
+  "sources": [
+    {
+      "name": "AdGuard Base filter",
+      "role": "browser_supplement",
+      "license": "LGPL-3.0",
+      "license_file": "licenses/LGPL-3.0.txt",
+      "license_evidence": "AdguardTeam/FiltersRegistry LICENSE",
+      "source_url": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+      "license_url": "https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "AdGuard Chinese filter",
+      "role": "browser_supplement",
+      "license": "LGPL-3.0",
+      "license_file": "licenses/LGPL-3.0.txt",
+      "license_evidence": "AdguardTeam/FiltersRegistry LICENSE",
+      "source_url": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt",
+      "license_url": "https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "AdGuard Mobile Ads filter",
+      "role": "browser_supplement",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "AdguardTeam/AdguardFilters LICENSE",
+      "source_url": "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt",
+      "license_url": "https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "AdGuard DNS filter",
+      "role": "production",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "AdguardTeam/AdGuardSDNSFilter LICENSE",
+      "source_url": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+      "license_url": "https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "CJX's Annoyance List",
+      "role": "browser_supplement",
+      "license": "LGPL-3.0",
+      "license_file": "licenses/LGPL-3.0.txt",
+      "license_evidence": "cjx82630/cjxlist LICENSE",
+      "source_url": "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
+      "license_url": "https://github.com/cjx82630/cjxlist/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "EasyList",
+      "role": "browser_supplement",
+      "license": "GPL-3.0-or-later OR CC-BY-SA-3.0; this project selects GPL-3.0-or-later",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "EasyList official repository licensing page; GPL option selected",
+      "source_url": "https://easylist-downloads.adblockplus.org/easylist.txt",
+      "license_url": "https://easylist.to/pages/licence.html",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "EasyList China",
+      "role": "browser_supplement",
+      "license": "GPL-3.0-or-later OR CC-BY-SA-3.0; this project selects GPL-3.0-or-later",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "Source header links to EasyList official licensing page; upstream list catalog identifies GPL-3.0",
+      "source_url": "https://easylist-downloads.adblockplus.org/easylistchina.txt",
+      "license_url": "https://easylist.to/pages/licence.html",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "EasyPrivacy",
+      "role": "browser_supplement",
+      "license": "GPL-3.0-or-later OR CC-BY-SA-3.0; this project selects GPL-3.0-or-later",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "EasyList official repository licensing page; GPL option selected",
+      "source_url": "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
+      "license_url": "https://easylist.to/pages/licence.html",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "AWAvenue Ads Rule (Only.Ads)",
+      "role": "production",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "TG-Twilight/AWAvenue-Ads-Rule LICENSE",
+      "source_url": "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt",
+      "license_url": "https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "HaGeZi DNS-Blocklists",
+      "role": "production",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "HaGeZi repository LICENSE and redistribution disclaimer",
+      "source_url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/main/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "StevenBlack hosts",
+      "role": "production",
+      "license": "MIT",
+      "license_file": "licenses/MIT-StevenBlack.txt",
+      "license_evidence": "StevenBlack/hosts license.txt",
+      "source_url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+      "license_url": "https://github.com/StevenBlack/hosts/blob/master/license.txt",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "anti-AD (AdGuard DNS rules)",
+      "role": "production",
+      "license": "MIT",
+      "license_file": "licenses/MIT-anti-AD.txt",
+      "license_evidence": "privacy-protection-tools/anti-AD LICENSE",
+      "source_url": "https://anti-ad.net/easylist.txt",
+      "license_url": "https://github.com/privacy-protection-tools/anti-AD/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "1Hosts (Lite)",
+      "role": "production",
+      "license": "MPL-2.0",
+      "license_file": "licenses/MPL-2.0-1Hosts.txt",
+      "license_evidence": "badmojr/1Hosts LICENSE",
+      "source_url": "https://cdn.jsdelivr.net/gh/badmojr/1Hosts@master/Lite/adblock.txt",
+      "license_url": "https://github.com/badmojr/1Hosts/blob/master/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "CHN: AdRules DNS List (AdGuard Registry candidate only)",
+      "role": "candidate_only",
+      "license": "mixed upstream licenses; generated branch 0BSD does not blanket-license the compiled rules",
+      "license_file": null,
+      "license_evidence": "Cats-Team/AdRules Source.md lists mixed upstream licenses, including unknown and non-commercial terms",
+      "source_url": "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
+      "license_url": "https://github.com/Cats-Team/AdRules/blob/main/Source.md",
+      "redistribute_audit_data": false,
+      "notes": "Candidate comparison only. Do not publish extracted candidate-domain files; retain aggregate counts and overlap statistics only."
+    },
+    {
+      "name": "OISD Blocklist Small (AdGuard Registry candidate only)",
+      "role": "candidate_only",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "OISD official FAQ",
+      "source_url": "https://small.oisd.nl/",
+      "license_url": "https://oisd.nl/?p=faq",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)",
+      "role": "candidate_only",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "OISD official FAQ",
+      "source_url": "https://big.oisd.nl/",
+      "license_url": "https://oisd.nl/?p=faq",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "HaGeZi Pro (AdGuard Registry benchmark against Pro Mini)",
+      "role": "candidate_only",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "HaGeZi repository LICENSE and redistribution disclaimer",
+      "source_url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/main/LICENSE",
+      "redistribute_audit_data": true
+    },
+    {
+      "name": "HaGeZi Normal (AdGuard Registry benchmark against Pro Mini)",
+      "role": "candidate_only",
+      "license": "GPL-3.0",
+      "license_file": "licenses/GPL-3.0.txt",
+      "license_evidence": "HaGeZi repository LICENSE and redistribution disclaimer",
+      "source_url": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/multi.txt",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/main/LICENSE",
+      "redistribute_audit_data": true
+    }
+  ]
+}
