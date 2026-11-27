@@ -116,7 +116,7 @@ jobs:
           with sqlite3.connect(".cache/dns-candidate/domain.db") as connection:
               domains = [
                   row[0] for row in connection.execute(
-                      "SELECT domain FROM T_DOMAIN WHERE isBlock = 0 ORDER BY RANDOM() LIMIT 200"
+                      "SELECT domain FROM T_DOMAIN WHERE (ipList IS NULL OR ipList = '') AND isBlock = 0 ORDER BY RANDOM() LIMIT 200"
                   ).fetchall()
               ]
           if len(domains) < 100:
