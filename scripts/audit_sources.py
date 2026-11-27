@@ -551,8 +551,6 @@ def main():
 
     for row in results:
         name = row["name"]
-        if name in nonredistributable_candidate_names:
-            continue
         own = domain_sets.get(name, set())
         if name in production_names:
             other_sets = [domains for other, domains in production_sets.items() if other != name]
