@@ -412,6 +412,13 @@ def covered_by_rule_domain(domain, ruleset):
     return any(".".join(labels[index:]) in ruleset for index in range(len(labels)))
 
 
+def domains_overlap(left, right):
+    """Whether two suffix-scoped DNS domain rules can affect overlapping names."""
+    left = left.lower()
+    right = right.lower()
+    return left == right or left.endswith("." + right) or right.endswith("." + left)
+
+
 def classify_strict_source_candidates(strict_blocks, comparison_blocks, comparison_allows, whitelist):
     """Separate strict-only candidates from explicit cross-source allow conflicts.
 
@@ -424,12 +431,12 @@ def classify_strict_source_candidates(strict_blocks, comparison_blocks, comparis
 
     allow_conflicts = sorted(
         domain for domain in strict_blocks
-        if covered_by_rule_domain(domain, comparison_allows)
+        if any(domains_overlap(domain, allowed) for allowed in comparison_allows)
     )
     strict_only = sorted(
         domain for domain in strict_blocks
         if not covered_by_rule_domain(domain, comparison_blocks)
-        and not covered_by_rule_domain(domain, comparison_allows)
+        and not any(domains_overlap(domain, allowed) for allowed in comparison_allows)
         and not covered_by_whitelist(domain, whitelist)
     )
     return strict_only, allow_conflicts
@@ -615,7 +622,7 @@ def main():
         for source_name in sorted(comparison_names):
             matched = sorted(
                 allow_domain for allow_domain in allow_sets[source_name]
-                if domain == allow_domain or domain.endswith("." + allow_domain)
+                if domains_overlap(domain, allow_domain)
             )
             if matched:
                 allow_sources.append({"source": source_name, "allow_domains": matched})
