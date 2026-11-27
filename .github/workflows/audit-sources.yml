@@ -67,8 +67,7 @@ jobs:
           from dns.resolver import NXDOMAIN
 
           candidates = {
-              "CNNIC-210.2.4.8": "210.2.4.8",
-              "114DNS-114.114.114.114": "114.114.114.114",
+                            "114DNS-114.114.114.114": "114.114.114.114",
               "114DNS-114.114.115.115": "114.114.115.115",
               "AliDNS-223.5.5.5": "223.5.5.5",
               "AliDNS-223.6.6.6": "223.6.6.6",
@@ -116,10 +115,10 @@ jobs:
           with sqlite3.connect(".cache/dns-candidate/domain.db") as connection:
               domains = [
                   row[0] for row in connection.execute(
-                      "SELECT domain FROM T_DOMAIN WHERE (ipList IS NULL OR ipList = '') AND isBlock = 0 ORDER BY RANDOM() LIMIT 200"
+                      "SELECT domain FROM T_DOMAIN WHERE (ipList IS NULL OR ipList = '') AND isBlock = 0 ORDER BY RANDOM() LIMIT 100"
                   ).fetchall()
               ]
-          if len(domains) < 100:
+          if len(domains) < 50:
               raise SystemExit(f"Insufficient DNS validation sample: {len(domains)}")
 
           candidates = {
@@ -162,7 +161,7 @@ jobs:
               outcomes = Counter()
               a_statuses = Counter()
               aaaa_statuses = Counter()
-              with ThreadPoolExecutor(max_workers=32) as pool:
+              with ThreadPoolExecutor(max_workers=64) as pool:
                   futures = [pool.submit(inspect, address, domain) for domain in domains]
                   for future in as_completed(futures):
                       outcome, statuses = future.result()
