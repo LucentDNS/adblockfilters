@@ -28,7 +28,7 @@ class AdGuard(APPBase):
                 f.write("!\n")
                 if isLite:
                     f.write("! Title: AdBlock Filter Lite\n")
-                    f.write("! Description: 适用于 AdGuard 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按 .cn 域名及国内直连域名规则进行保守分类，最近一次成功 DNS 正向分类仅作补充；浏览器过滤规则保留原有匹配语义。\n"%(self.sourceRule))
+                    f.write("! Description: 适用于 AdGuard 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按 .cn 域名及国内直连域名规则进行保守分类；浏览器过滤规则保留原有匹配语义。\n"%(self.sourceRule))
                     f.write("! Expires: 1 day\n")
                 else:
                     f.write("! Title: AdBlock Filter\n")
