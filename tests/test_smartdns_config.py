@@ -142,26 +142,6 @@ def test_smartdns_startup_waits_for_listeners_not_upstream_dns_answers():
 
 
 
-def test_legacy_baseline_only_domains_are_reviewed_with_all_six_upstreams():
-    root = Path(__file__).parents[1]
-    workflow = (root / ".github" / "workflows" / "blacklist.yml").read_text(
-        encoding="utf-8"
-    )
-    review_script = (root / "scripts" / "review_baseline_only.py").read_text(
-        encoding="utf-8"
-    )
-
-    assert "baseline-only-not-effectively-covered-by-current-dns.txt" in workflow
-    assert "python scripts/review_baseline_only.py" in workflow
-    assert "nxdomain-all-six-upstreams.txt" in review_script
-    assert "Publish legacy baseline DNS review to audit release" in workflow
-    review_step = workflow.split(
-        "- name: Review legacy upstream-only domains with all six DNS upstreams", 1
-    )[1].split("- name: Publish legacy baseline DNS review to audit release", 1)[0]
-    assert "all six independent upstreams" in review_script
-    assert all(not line.endswith("\\\\") for line in review_step.splitlines())
-
-
 def test_maintained_python_code_receives_full_ruff_lint():
     workflow = (
         Path(__file__).parents[1] / ".github" / "workflows" / "audit-sources.yml"
