@@ -85,7 +85,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert len(dns_paths) == len(set(dns_paths))
     assert set(update_paths).isdisjoint(dns_paths)
     assert all(not path.startswith("tests/") for path in update_paths)
-    assert all(not path.startswith("tests/") for path in dns_paths)
+    assert "tests/**" in dns_paths
 
     assert {
         "blacklist.py",
@@ -145,3 +145,29 @@ def test_dns_state_dispatch_guard_tracks_only_dns_validation_inputs():
     assert "readme\\.py" in guard
     assert "updater\\.py" in guard
     assert "verify_critical_domains" not in guard
+
+
+
+def test_one_time_dns_checkpoint_migration_is_scoped_and_removed_after_publish():
+    workflow = (WORKFLOWS / "blacklist.yml").read_text(encoding="utf-8")
+    restore = workflow.split(
+        "- name: Restore latest compatible DNS validation checkpoint", 1
+    )[1].split("- name: Run DNS validation and generate independent blacklist", 1)[0]
+    after_verify = workflow.split(
+        "- name: Verify dns-validation-state release assets", 1
+    )[1]
+    fingerprint = workflow.split(
+        "- name: Fingerprint DNS validation inputs", 1
+    )[1].split("- name: Restore latest compatible DNS validation checkpoint", 1)[0]
+
+    assert "dns-validation-cache-migration.json" not in fingerprint
+    assert "id: restore_checkpoint" in restore
+    assert "Restore legacy DNS checkpoint for CNNIC resolver migration" in restore
+    assert "steps.restore_checkpoint.outputs.cache-matched-key == ''" in restore
+    assert "dns-validation-cache-migration.json" in restore
+    assert "607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad-" in restore
+    assert "One-time legacy DNS checkpoint was not restored" in restore
+    assert "Remove one-time DNS checkpoint migration marker after successful publication" in after_verify
+    assert after_verify.index("Remove one-time DNS checkpoint migration marker") < after_verify.index(
+        "Trigger production rule build after dns-validation-state publication"
+    )
