@@ -52,5 +52,32 @@
       ],
       "interpretation": "These appear in the project's acknowledgements; do not treat acknowledgements as proof of current active ingestion."
     }
+  ],
+  "policy_profiles": [
+    {
+      "sources": [
+        "HaGeZi DNS-Blocklists"
+      ],
+      "list": "Pro Mini",
+      "philosophy": "Balanced coverage with low-to-moderate breakage risk. Mini is a size-optimized version of Pro, not a more aggressive tier. Do not label this selected input as HaGeZi Ultimate or strict.",
+      "evidence_url": "https://github.com/hagezi/dns-blocklists/blob/main/README.md"
+    },
+    {
+      "sources": [
+        "OISD Blocklist Small (AdGuard Registry candidate only)",
+        "OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)"
+      ],
+      "list": "Small / Big",
+      "philosophy": "The maintainer explicitly prioritizes a functional internet experience and describes zero breakage as the goal; legitimate shared-use domains may be omitted when blocking them would break legitimate content. Candidate-only comparison; never auto-promote.",
+      "evidence_url": "https://oisd.nl/faq"
+    },
+    {
+      "sources": [
+        "AdGuard DNS filter"
+      ],
+      "list": "AdGuard DNS",
+      "philosophy": "Published filtering policy requires sufficient site traffic for site-specific rules and documents exceptions and limitations, including contextual advertising and paywall-related behavior. Absence from the list is not an explicit allow.",
+      "evidence_url": "https://adguard.com/kb/general/ad-filtering/filter-policy/"
+    }
   ]
 }
