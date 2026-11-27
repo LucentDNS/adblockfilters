@@ -31,7 +31,7 @@ def query(address: str, port: int, domain: str, rdtype: str) -> str:
     resolver.lifetime = 3.0
     try:
         answer = resolver.resolve(domain, rdtype)
-        values = ",".join(str(item) for item in answer[:3])
+        values = ",".join(str(item) for item in list(answer)[:3])
         return f"ANSWER({values})"
     except NXDOMAIN:
         return "NXDOMAIN"
