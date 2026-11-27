@@ -98,6 +98,81 @@ jobs:
               passed = len(positive) >= 2 and len(negative) == 2
               print(f"RESOLVER_PROBE {name} {address} positive={positive} negative={negative} result={'PASS' if passed else 'FAIL'}")
           PY
+      - name: Compare candidate resolvers against a real DNS-validation sample
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/dns-candidate
+          gh release download dns-validation-state --pattern domain.db --dir .cache/dns-candidate
+          python - <<'PY'
+          import random
+          import sqlite3
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+          import dns.resolver
+          from dns.resolver import NXDOMAIN, NoAnswer, NoNameservers
+
+          database = ".cache/dns-candidate/domain.db"
+          with sqlite3.connect(database) as connection:
+              domains = [
+                  row[0] for row in connection.execute(
+                      """
+                      SELECT domain FROM T_DOMAIN
+                      WHERE isBlock = 0
+                      ORDER BY RANDOM()
+                      LIMIT 200
+                      """
+                  ).fetchall()
+              ]
+          if len(domains) < 100:
+              raise SystemExit(f"Insufficient DNS validation sample: {len(domains)}")
+
+          candidates = {
+              "AliDNS-223.6.6.6": "223.6.6.6",
+              "114DNS-114.114.114.114": "114.114.114.114",
+              "CNNIC-210.2.4.8": "210.2.4.8",
+          }
+
+          def inspect(address, domain):
+              statuses = []
+              for rdtype in ("A", "AAAA"):
+                  resolver = dns.resolver.Resolver(configure=False)
+                  resolver.nameservers = [address]
+                  resolver.port = 53
+                  resolver.timeout = 1.5
+                  resolver.lifetime = 3
+                  try:
+                      answer = resolver.resolve(domain, rdtype)
+                      statuses.append("answer" if len(answer) else "no_answer")
+                  except NXDOMAIN:
+                      statuses.append("nxdomain")
+                  except NoAnswer:
+                      statuses.append("no_answer")
+                  except NoNameservers:
+                      statuses.append("servfail")
+                  except Exception as exc:
+                      statuses.append(type(exc).__name__)
+              if "answer" in statuses:
+                  return "resolved"
+              if statuses == ["nxdomain", "nxdomain"]:
+                  return "nxdomain"
+              if all(status in ("nxdomain", "no_answer") for status in statuses):
+                  return "no_address"
+              return "unknown"
+
+          for name, address in candidates.items():
+              counts = {"resolved": 0, "nxdomain": 0, "no_address": 0, "unknown": 0}
+              with ThreadPoolExecutor(max_workers=32) as pool:
+                  futures = [pool.submit(inspect, address, domain) for domain in domains]
+                  for future in as_completed(futures):
+                      counts[future.result()] += 1
+              print(
+                  f"REAL_SAMPLE {name} {address} n={len(domains)} "
+                  f"resolved={counts['resolved']} nxdomain={counts['nxdomain']} "
+                  f"no_address={counts['no_address']} unknown={counts['unknown']}"
+              )
+          PY
       - name: Static analysis
         run: |
           python -m ruff check --no-cache .
