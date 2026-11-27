@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Build a conservative domestic-domain set for Lite without bulk DNS lookups.
 
-The primary classification is based on .cn domains and exact/domain entries from
-217heidai RoutingRules. A previously published, successful DNS classification may
-be merged as positive evidence, but is intersected with the current source domain
-input so stale domains cannot leak into the current Lite output.
+The classification is based only on .cn domains and exact/domain entries from
+217heidai RoutingRules. It does not require or infer DNS liveness.
 """
 import hashlib
 import json
@@ -76,9 +74,8 @@ def classify_domains(
     domains: set[str],
     full_domains: set[str],
     domain_roots: set[str],
-    previous_validated_china: set[str] | None = None,
-) -> tuple[set[str], set[str], set[str]]:
-    """Return combined China set plus direct-rule and retained validated counts."""
+) -> set[str]:
+    """Classify only .cn, explicit full-host, and registrable direct-domain matches."""
     direct = set()
     for domain in domains:
         normalized = domain.strip().lower().strip(".")
@@ -90,8 +87,7 @@ def classify_domains(
         fld = _registrable_domain(normalized)
         if fld and fld in domain_roots:
             direct.add(normalized)
-    retained = (previous_validated_china or set()) & domains
-    return direct | retained, direct, retained
+    return direct
 
 
 def generate_china_list(domain_dir: str | Path) -> dict:
@@ -110,19 +106,9 @@ def generate_china_list(domain_dir: str | Path) -> dict:
     if not domains:
         raise RuntimeError("Current DNS source domain input contains no usable domains")
 
-    previous = set()
-    if china_file.is_file():
-        previous = {
-            line.strip().lower().strip(".")
-            for line in china_file.read_text(encoding="utf-8-sig").splitlines()
-            if line.strip() and not line.lstrip().startswith(("#", "!"))
-        }
-
     direct_bytes = _download_direct_rules(direct_file)
     full_domains, domain_roots = parse_direct_rules(direct_bytes.decode("utf-8-sig", errors="replace"))
-    china, direct, retained = classify_domains(
-        domains, full_domains, domain_roots, previous
-    )
+    china = classify_domains(domains, full_domains, domain_roots)
     if not china:
         raise RuntimeError(
             "Domestic Lite classification produced no domains; refusing an empty DNS Lite scope"
@@ -135,13 +121,11 @@ def generate_china_list(domain_dir: str | Path) -> dict:
             ".cn suffix",
             "217heidai RoutingRules full: exact-domain entries",
             "217heidai RoutingRules domain: registrable-domain entries",
-            "previous successful DNS classification positives intersected with current source domains",
         ],
         "direct_rules_url": DIRECT_RULES_URL,
         "direct_rules_sha256": hashlib.sha256(direct_bytes).hexdigest(),
         "current_source_domain_count": len(domains),
         "direct_classified_domain_count": len(direct),
-        "retained_previous_dns_classified_domain_count": len(retained),
         "china_classified_domain_count": len(china),
         "china_file_sha256": hashlib.sha256(china_file.read_bytes()).hexdigest(),
     }
