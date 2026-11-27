@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from filter import Filter
+from filter import Filter, _get_wildcard_white_exceptions
 from readme import Rule
 
 
@@ -51,3 +51,23 @@ def test_only_scoped_patterns_from_dns_sources_enter_adguard_dns_patterns(tmp_pa
     assert "/^.+stat\\.kugou\\.com/" not in dns_pattern_blocks
     assert "||browser*.example.com^" not in dns_pattern_blocks
     assert "||browser*.example.com^" in filter_rules
+
+
+
+def test_wildcard_dns_block_rules_generate_exact_whitelist_exceptions():
+    white_domains = {
+        "ads123.example.com",
+        "sub.ads123.example.com",
+        "safe.example.com",
+        "ping.x.sogou.com",
+    }
+    patterns = {
+        "||ads*.example.com^",
+        "||ping.*.sogou.com^",
+    }
+
+    assert _get_wildcard_white_exceptions(white_domains, patterns) == {
+        "ads123.example.com",
+        "sub.ads123.example.com",
+        "ping.x.sogou.com",
+    }
