@@ -7,6 +7,7 @@ from readme import ReadMe
 from updater import Updater
 from filter import Filter
 from resolver import configure_logging
+from scripts.generate_china_list import generate_china_list
 
 
 def _sha256_file(path):
@@ -41,6 +42,19 @@ class ADBlock(object):
 
         # 生成新规则（读 .cache/domain，输出 .cache/out）
         filter = Filter(ruleList, self.domainDir, self.outDir, self.sourceDir)
+        filter.generate(readme.getRulesNames())
+
+        # The first pass writes the current normalized DNS/Hosts domain input.
+        # Build Lite's domestic scope from .cn and explicit routing-domain rules,
+        # optionally retaining previous successful DNS-positive classifications.
+        # This avoids making every daily production build wait for bulk DNS probes.
+        china_provenance = generate_china_list(self.domainDir)
+        logger.info(
+            "Lite domestic classification: %s domains (%s direct, %s previous DNS-positive)",
+            china_provenance["china_classified_domain_count"],
+            china_provenance["direct_classified_domain_count"],
+            china_provenance["retained_previous_dns_classified_domain_count"],
+        )
         filter.generate(readme.getRulesNames())
 
 
