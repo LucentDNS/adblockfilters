@@ -562,7 +562,7 @@ jobs:
           set -euo pipefail
           branches="$(gh api --paginate "repos/${REPOSITORY}/branches?per_page=100" --jq '.[].name')"
           open_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].head.ref')"
-          merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" --jq --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
+          merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" | jq -r --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
           # These closed, unmerged branches are explicitly superseded:
           # PR #22 by merged PR #23; PR #29 by merged PRs #31 and #33.
           superseded_refs="fix/dns-dnstype-rule-preservation fix/source-policy-conflict-audit"
@@ -575,9 +575,12 @@ jobs:
               continue
             fi
             if grep -Fxq "${branch_name}" <<< "${merged_refs}" || [[ " ${superseded_refs} " == *" ${branch_name} "* ]]; then
-              gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch_name}"
-              echo "Deleted obsolete branch: ${branch_name}"
-              deleted=$((deleted + 1))
+              if gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch_name}"; then
+                echo "Deleted obsolete branch: ${branch_name}"
+                deleted=$((deleted + 1))
+              else
+                echo "::warning::Could not delete obsolete branch: ${branch_name}"
+              fi
             else
               echo "Keeping ${branch_name}: no merged PR or explicit supersession evidence."
             fi
