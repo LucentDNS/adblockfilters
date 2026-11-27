@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "strict_review_sources": [
+    "HaGeZi DNS-Blocklists"
+  ],
+  "comparison_sources": [
+    "AdGuard DNS filter",
+    "AWAvenue Ads Rule (Only.Ads)",
+    "StevenBlack hosts",
+    "anti-AD (AdGuard DNS rules)",
+    "1Hosts (Lite)"
+  ],
+  "policy_note": "These are operational audit groups, not claims that all comparison sources share one philosophy or that source overlap proves independence. Strict-source-only domains remain review candidates and are never automatically added to production output. Upstream lineage and author intent require separate evidence-based review."
+}
