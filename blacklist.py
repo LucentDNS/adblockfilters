@@ -503,6 +503,11 @@ class BlackList(object):
                     self.__dns_validation_error_counts[key] = (
                         self.__dns_validation_error_counts.get(key, 0) + 1
                     )
+                    # Keep one bounded representative error per upstream/RR type.
+                    # NoNameservers wraps the actual SERVFAIL/timeout/refusal detail;
+                    # the exception class alone is not enough to diagnose outages.
+                    sample = str(exc).replace(domain, "<query>", 1)[:500]
+                    self.__dns_validation_error_samples.setdefault(key, sample)
                     return "unknown", ()
 
             results = await asyncio.gather(query_type("A"), query_type("AAAA"))
@@ -668,6 +673,7 @@ class BlackList(object):
             semaphore = asyncio.Semaphore(self.__maxTask)
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
             self.__dns_validation_error_counts = {}
+            self.__dns_validation_error_samples = {}
             now = int(time.time())
             pending_domains = [
                 domain for domain in domainDict.values()
@@ -713,7 +719,8 @@ class BlackList(object):
                 logger.warning(
                     "DNS validation resolver exception summary (attempt counts; retries included): "
                     + ", ".join(
-                        f"port={port} rrtype={rdtype} exception={exception} count={count}"
+                        f"port={port} rrtype={rdtype} exception={exception} count={count} "
+                        f"sample={self.__dns_validation_error_samples.get((port, rdtype, exception), '')}"
                         for (port, rdtype, exception), count in sorted(error_counts.items())
                     )
                 )
