@@ -7,7 +7,7 @@ from typing import List,Dict,Set,Tuple
 from loguru import logger
 from tld import get_tld
 
-from app import APPBase, AdGuard, AdGuardHome, DNSMasq, Hosts, InviZible, Loon, Mihomo, MosDNS, QuantumultX, Shadowrocket, ShadowrocketModule, SingBox, SmartDNS, Surge, V2ray
+from app import APPBase, AdGuard, AdGuardHome
 from readme import Rule
 from resolver import Resolver
 
@@ -447,7 +447,10 @@ class Filter(object):
 
         # 生成合并规则 AdGuard, AdGuardHome, DNSMasq, InviZible, SmartDNS等
         generaterList:List[APPBase] = [
-            AdGuard           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockfilters.txt",           sourceRule),
+            AdGuard(
+                blockList, unblockList, filterDict, filterList, filterList_var,
+                ChinaSet, self.outPath + "/adblockfilters.txt", sourceRule
+            ),
             AdGuardHome(
                 blockList,
                 unblockList,
@@ -463,19 +466,6 @@ class Filter(object):
                 dnsPatternAllowListLite=dnsPatternAllowListLite,
                 wildcardWhiteExceptionsLite=wildcardWhiteExceptionsLite,
             ),
-            DNSMasq           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdnsmasq.txt",           dnsRuleNames),
-            Hosts             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockhosts.txt",             dnsRuleNames),
-            InviZible         (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockdomain.txt",            dnsRuleNames),
-            Loon              (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockloon.list",             dnsRuleNames),
-            Mihomo            (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockmihomo.yaml",           dnsRuleNames),
-            MosDNS            (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockmosdns.txt",            dnsRuleNames),
-            QuantumultX       (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockqx.conf",               dnsRuleNames),
-            Shadowrocket      (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockclash.list",            dnsRuleNames),
-            ShadowrocketModule(blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockshadowrocket.sgmodule", dnsRuleNames),
-            SingBox           (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblocksingbox.json",          dnsRuleNames),
-            SmartDNS          (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblocksmartdns.conf",         dnsRuleNames),
-            Surge             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblocksurge.list",            dnsRuleNames),
-            V2ray             (blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, self.outPath + "/adblockv2ray.txt",             dnsRuleNames),
         ]
         # Lite uses raw DNS-validated domestic hostnames, not the already-compressed Full list.
         # Each client adapter emits its own exact-host syntax for these entries.
