@@ -83,7 +83,7 @@
   "conflict_resolution": {
     "active_production_source_allow": "source_local_only",
     "candidate_only_source_allow": "source_local_only_for_candidate_analysis",
-    "rationale": "An upstream allow is interpreted only within the same source: it may remove that source's own matching block, but it never vetoes another source's independent block. Cross-source allow/block disagreements are recorded for review, not resolved by global allow precedence. Only the project-maintained, evidence-based whitelist is a global compatibility exception.",
+    "rationale": "An upstream allow is interpreted only within the same source: it may remove that source's own matching block, but it never vetoes another source's independent block. Cross-source allow/block disagreements are recorded for review, not resolved by global allow precedence. Only the project-maintained, evidence-based whitelist is a global compatibility exception. This avoids turning one author's preference for broader coverage or another author's preference for fewer false positives into a universal veto over unrelated sources.",
     "audit_requirement": "Verify that each source's allow affects only that source's blocks, that another source's block survives an unrelated allow, and that upstream allows are not emitted as global allow rules.",
     "project_whitelist": "The project-maintained whitelist is the only global compatibility exception and requires evidence-based review.",
     "non_claim": "Absence from a source is not an allow decision, and source overlap is not independent confirmation."
