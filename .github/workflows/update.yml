@@ -492,6 +492,7 @@ jobs:
             .cache/audit/source-policy/strict-stability-supported.txt
             .cache/audit/source-policy/strict-explicit-allow-conflicts.txt
             .cache/audit/source-policy/strict-targeted-source-supported.txt
+            .cache/audit/source-policy/strict-other-reference-supported.txt
             .cache/audit/source-policy/strict-project-whitelist-excluded.txt
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt
