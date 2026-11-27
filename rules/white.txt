@@ -383,3 +383,5 @@ hasugu1004.did.kr
 # https://urlscan.io/result/01a0b641-56a4-73cd-aee3-e5bb451d70bf/
 api-yuedu.iqiyi.com
 
+# Preserve explicit upstream exception: this host is allowed by the published baseline.
+@@||pics.porn300.com^
