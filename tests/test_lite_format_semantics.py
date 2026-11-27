@@ -38,7 +38,7 @@ def test_adguard_home_lite_uses_upstream_compatible_domain_suffix_rule(tmp_path)
 def test_adguard_home_lite_keeps_upstream_block_and_allow_syntax(tmp_path):
     generator = AdGuardHome(
         ["blocked.example.com"],
-        ["safe.example.com", "ads123.example.com"],
+        ["safe.example.com"],
         {},
         [],
         [],
@@ -61,7 +61,7 @@ def test_adguard_home_emits_scoped_dns_wildcards_in_full_and_lite(tmp_path):
     allow_pattern = "@@||profile*.se.360.cn^"
     generator = AdGuardHome(
         ["blocked.example.com"],
-        ["safe.example.com"],
+        ["safe.example.com", "ads123.example.com"],
         {},
         [],
         [],
