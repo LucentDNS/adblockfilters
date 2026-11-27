@@ -81,7 +81,7 @@ def main() -> int:
         raise SystemExit("No non-blocked empty-answer domains found in the checkpoint database")
 
     print(f"Read-only DNS upstream diagnostic; sample={len(domains)}")
-    print("Ports: 5053=DNSPod, 5054=Baidu, 5055=CNNIC SDNS, 5056=Google, 5057=Quad9 unfiltered, 5058=Cloudflare")
+    print("Ports: 5053=DNSPod, 5054=Baidu, 5055=China Unicom, 5056=Google, 5057=Quad9 unfiltered, 5058=Cloudflare")
     print("No result from this diagnostic is used to block or unblock a domain.")
 
     jobs = ((domain, port) for domain in domains for port in PORTS)
@@ -146,11 +146,10 @@ def main() -> int:
     candidates = {
         "ByteDance 180.184.1.1": "180.184.1.1",
         "114DNS 114.114.114.114 (filtering; comparison only)": "114.114.114.114",
-        "CNNIC SDNS 1.2.4.8": "1.2.4.8",
-        "CNNIC SDNS 210.2.4.8": "210.2.4.8",
+        "AliDNS 223.6.6.6": "223.6.6.6",
+        "China Unicom alternate 123.123.123.123": "123.123.123.123",
         "Gansu Telecom 202.100.64.68": "202.100.64.68",
         "Gansu Telecom 61.178.0.93": "61.178.0.93",
-        "China Unicom 123.125.81.6": "123.125.81.6",
         "Huawei DNS 122.112.208.1": "122.112.208.1",
         "Huawei DNS 139.9.23.90": "139.9.23.90",
         "Yamu DNS 1.1.8.8": "1.1.8.8",
