@@ -235,7 +235,7 @@ jobs:
             dns-validation-checkpoint-607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad-
 
       - name: Verify one-time legacy DNS checkpoint restored
-        if: hashFiles('dns-validation-cache-migration.json') != ''
+        if: steps.restore_checkpoint.outputs.cache-matched-key == '' && hashFiles('dns-validation-cache-migration.json') != ''
         env:
           MATCHED_KEY: ${{ steps.restore_legacy_checkpoint.outputs.cache-matched-key }}
         run: |
