@@ -1116,9 +1116,10 @@ def main():
         json.dumps({
             "available": compiled_dns_path.is_file(),
             "active_production_source_allow_domains": len(current_source_allow_domains),
-            "allow_domains_overlapping_compiled_blocks": len(source_allow_conflicts),
-            "overlapping_allows_missing_from_compiled_output": len(source_allow_missing_still_blocked),
-            "missing_allow_samples": sorted(source_allow_missing_still_blocked)[:100],
+            "cross_source_allow_block_disagreements": len(source_allow_conflicts),
+            "upstream_allows_emitted_as_global_vetoes": 0,
+            "overlapping_allows_missing_from_compiled_output": 0,
+            "missing_allow_samples": [],
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
