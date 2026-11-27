@@ -71,3 +71,17 @@ def test_source_allow_output_audit_reports_disagreements_without_global_veto():
 
     assert conflicts == {"360.cn", "ads.microsoft.com", "safe.example.org"}
     assert missing == set()
+
+
+def test_source_audit_applies_allows_only_to_same_source_blocks():
+    effective_a = audit_sources.source_local_effective_blocks(
+        {"ads.example.com", "tracker.other.net"},
+        {"example.com"},
+    )
+    source_b_blocks = audit_sources.source_local_effective_blocks(
+        {"ads.example.com", "tracker.other.net"},
+        set(),
+    )
+
+    assert effective_a == {"tracker.other.net"}
+    assert source_b_blocks == {"ads.example.com", "tracker.other.net"}
