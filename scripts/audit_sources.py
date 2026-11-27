@@ -341,7 +341,7 @@ def render_report(results, production_names, browser_names, candidate_names, ove
         for candidate, source, count in candidate_overlaps:
             out.append(f"| {candidate} | {source} | {count} |")
     if candidate_pairwise_overlaps:
-        out.extend(["", "## 候选来源之间的精确重合",
+        out.extend(["", "## 候选来源独有增量之间的重合（已扣除正式来源、父级覆盖及白名单）",
                     "| 候选来源 A | 候选来源 B | 重复域名数 |", "|---|---|---:|"])
         for left, right, count in candidate_pairwise_overlaps:
             out.append(f"| {left} | {right} | {count} |")
@@ -502,6 +502,7 @@ def main():
 
     overlap = sum(1 for names in memberships.values() if len(names) > 1)
     unique_total = len(memberships)
+    effective_unique_after_whitelist_sets = {}
 
     for row in results:
         name = row["name"]
@@ -532,6 +533,7 @@ def main():
         }
         after_whitelist = {domain for domain in effective_unique
                            if not covered_by_whitelist(domain, project_whitelist)}
+        effective_unique_after_whitelist_sets[name] = after_whitelist
         row["effective_unique_domains"] = len(effective_unique)
         row["effective_unique_after_whitelist"] = len(after_whitelist)
         row["white_excluded_domains"] = len(effective_unique) - len(after_whitelist)
@@ -557,7 +559,10 @@ def main():
 
     candidate_pairwise_overlaps = []
     for left, right in combinations(sorted(candidate_names), 2):
-        count = len(domain_sets.get(left, set()) & domain_sets.get(right, set()))
+        count = len(
+            effective_unique_after_whitelist_sets.get(left, set())
+            & effective_unique_after_whitelist_sets.get(right, set())
+        )
         if count:
             candidate_pairwise_overlaps.append((left, right, count))
     candidate_pairwise_overlaps.sort(key=lambda item: item[2], reverse=True)
