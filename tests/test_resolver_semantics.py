@@ -1,4 +1,6 @@
-import pytest\n\nfrom resolver import Resolver
+import pytest
+
+from resolver import Resolver
 
 
 def test_path_specific_dns_block_is_not_promoted_to_domain_block():
