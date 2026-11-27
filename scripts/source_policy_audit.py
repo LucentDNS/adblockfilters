@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Policy-aware audit of strict-source domains; never changes production rules."""
 import json
-import re
 import sys
 from collections import defaultdict
 from pathlib import Path
