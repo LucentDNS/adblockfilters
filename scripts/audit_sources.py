@@ -154,11 +154,15 @@ def audit_one(rule, resolver, download):
         "candidate_lines": 0, "parsed_lines": 0, "unparsed_candidate_lines": 0,
         "block_entries": 0, "block_ip_entries": 0,
         "allow_entries": 0, "allow_ip_entries": 0, "filter_entries": 0,
+        "dns_pattern_block_entries": 0, "dns_pattern_allow_entries": 0,
+        "dns_pattern_excluded": 0, "dns_regex_excluded": 0,
         "filter_domain_extracted": 0, "filter_ip_extracted": 0, "filter_domain_unresolved": 0,
         "unique_block_domains": 0, "unique_allow_domains": 0,
         "unique_filter_rules": 0, "unique_extracted_domains": 0,
+        "unique_dns_pattern_block_rules": 0, "unique_dns_pattern_allow_rules": 0,
         "duplicate_raw_lines": 0, "download_error": download.get("error", ""),
-        "samples_unparsed": [], "samples_filter_domain_unresolved": []
+        "samples_unparsed": [], "samples_filter_domain_unresolved": [],
+        "samples_dns_patterns": [], "samples_dns_pattern_excluded": []
     }
     if not download.get("ok"):
         return result, set(), set()
@@ -168,6 +172,7 @@ def audit_one(rule, resolver, download):
     result["total_lines"] = len(lines)
     seen_lines = set()
     blocks, allows, filters, extracted = set(), set(), set(), set()
+    dns_pattern_blocks, dns_pattern_allows = set(), set()
 
     for line in lines:
         s = line.strip()
@@ -213,21 +218,47 @@ def audit_one(rule, resolver, download):
                 filters.add(filt[0])
                 result["filter_entries"] += 1
                 parsed = True
-                if filt[1]:
-                    extracted_domain = full_domain(filt[1])
-                    if extracted_domain:
-                        extracted.add(extracted_domain)
-                        result["filter_domain_extracted"] += 1
-                    elif is_ip_literal(filt[1]):
-                        result["filter_ip_extracted"] += 1
+                pattern = (
+                    resolver.resolveDNSPattern(filt[0])
+                    if rule.type in {"dns", "dnsfilter"}
+                    else None
+                )
+                if pattern:
+                    action, base_domain = pattern
+                    if action == "allow":
+                        dns_pattern_allows.add(filt[0])
+                        result["dns_pattern_allow_entries"] += 1
+                    else:
+                        dns_pattern_blocks.add(filt[0])
+                        result["dns_pattern_block_entries"] += 1
+                    if len(result["samples_dns_patterns"]) < 20:
+                        result["samples_dns_patterns"].append({
+                            "rule": filt[0],
+                            "action": action,
+                            "base_domain": base_domain,
+                        })
+                else:
+                    if rule.type in {"dns", "dnsfilter"} and "*" in filt[0]:
+                        result["dns_pattern_excluded"] += 1
+                        if len(result["samples_dns_pattern_excluded"]) < 20:
+                            result["samples_dns_pattern_excluded"].append(s[:240])
+                    if rule.type in {"dns", "dnsfilter"} and filt[0].startswith("/") and filt[0].endswith("/"):
+                        result["dns_regex_excluded"] += 1
+                    if filt[1]:
+                        extracted_domain = full_domain(filt[1])
+                        if extracted_domain:
+                            extracted.add(extracted_domain)
+                            result["filter_domain_extracted"] += 1
+                        elif is_ip_literal(filt[1]):
+                            result["filter_ip_extracted"] += 1
+                        else:
+                            result["filter_domain_unresolved"] += 1
+                            if len(result["samples_filter_domain_unresolved"]) < 20:
+                                result["samples_filter_domain_unresolved"].append(s[:240])
                     else:
                         result["filter_domain_unresolved"] += 1
                         if len(result["samples_filter_domain_unresolved"]) < 20:
                             result["samples_filter_domain_unresolved"].append(s[:240])
-                else:
-                    result["filter_domain_unresolved"] += 1
-                    if len(result["samples_filter_domain_unresolved"]) < 20:
-                        result["samples_filter_domain_unresolved"].append(s[:240])
             if parsed:
                 result["parsed_lines"] += 1
             else:
@@ -244,6 +275,8 @@ def audit_one(rule, resolver, download):
     result["allow_domain_samples"] = sorted(allows)[:100]
     result["unique_filter_rules"] = len(filters)
     result["unique_extracted_domains"] = len(extracted)
+    result["unique_dns_pattern_block_rules"] = len(dns_pattern_blocks)
+    result["unique_dns_pattern_allow_rules"] = len(dns_pattern_allows)
     return result, blocks, allows
 
 
@@ -263,7 +296,11 @@ def render_report(results, production_names, browser_names, candidate_names, ove
         ("internal_parent_covered_domains", "被本来源父域名压缩"),
         ("unique_allow_domains", "唯一放行域名"),
         ("unique_filter_rules", "过滤规则"),
-        ("filter_domain_unresolved", "过滤规则未提取域名"),
+        ("unique_dns_pattern_block_rules", "DNS 通配拦截规则"),
+        ("unique_dns_pattern_allow_rules", "DNS 通配放行规则"),
+        ("dns_pattern_excluded", "宽泛/不支持通配规则（排除）"),
+        ("dns_regex_excluded", "DNS 正则规则（未纳入）"),
+        ("filter_domain_unresolved", "其他过滤规则未提取域名"),
         ("filter_ip_extracted", "过滤规则提取的 IP（不计域名）")
     ]
     out = [
