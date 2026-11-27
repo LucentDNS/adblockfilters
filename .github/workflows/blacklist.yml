@@ -104,7 +104,7 @@ jobs:
               exit 1
             fi
             listeners_ready=1
-            for port in 5053 5054 5055 5056 5057 5058 5058; do
+            for port in 5053 5054 5055 5056 5057 5058; do
               if ! ss -H -lun | grep -Eq "127\\.0\\.0\\.1:$port([[:space:]]|$)"; then
                 listeners_ready=0
                 break
