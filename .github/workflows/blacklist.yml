@@ -1,7 +1,6 @@
 name: Generate DNS State
 
-# Only DNS inputs and validation logic trigger a fresh state; documentation is not DNS input.
-# Keep the schedule regression test aligned with this workflow's Beijing-time cron.
+# Auxiliary DNS diagnostics run weekly or on manual request. They never gate production builds.
 permissions:
   contents: write
   actions: write
