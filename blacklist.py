@@ -513,7 +513,10 @@ class BlackList(object):
                 return ip_list, "resolved"
             if nxdomain_count == 2:
                 return [], "not_found"
-            if no_answer_count == 2:
+            # Both NXDOMAIN and NOERROR/NODATA are valid DNS outcomes.
+            # Their combination across A/AAAA is inconclusive, not an
+            # infrastructure failure and never sufficient to block.
+            if nxdomain_count + no_answer_count == 2:
                 return [], "no_address"
             return [], "unknown"
 
@@ -530,7 +533,11 @@ class BlackList(object):
         statuses = [status for _ip_list, status in upstream_results]
         if all(status == "not_found" for status in statuses):
             return [], "not_found"
-        if all(status == "no_address" for status in statuses):
+        # NXDOMAIN and NOERROR/NODATA are both valid DNS responses. A mix
+        # across independent resolvers is a semantic disagreement, not proof
+        # of resolver infrastructure failure. It must remain non-blocking.
+        # Only transient/failed resolver outcomes belong in "unknown".
+        if all(status in ("not_found", "no_address") for status in statuses):
             return [], "no_address"
         return [], "unknown"
 
