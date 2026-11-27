@@ -1,5 +1,6 @@
 import os
 import ipaddress
+import re
 from concurrent.futures import ThreadPoolExecutor,as_completed
 from typing import List,Dict,Set,Tuple
 
@@ -69,6 +70,23 @@ def _build_exact_block_list(block_domains, allow_domains, blacklist, include_dom
             continue
         result.append(domain)
     return sorted(result)
+
+
+def _dns_pattern_matches_domain(rule: str, domain: str) -> bool:
+    """Match an exact whitelist domain against a validated AdGuard DNS wildcard rule."""
+    if not rule.startswith("||") or not rule.endswith("^"):
+        return False
+    pattern = re.escape(rule[2:-1]).replace(r"\\*", ".*")
+    return re.fullmatch(rf"(?:.*\\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
+
+
+def _get_wildcard_white_exceptions(white_domains, wildcard_block_rules):
+    """Keep explicitly allowlisted domains reachable when a wildcard block would match."""
+    return {
+        domain
+        for domain in white_domains
+        if any(_dns_pattern_matches_domain(rule, domain) for rule in wildcard_block_rules)
+    }
 
 
 def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklist):
@@ -385,10 +403,18 @@ class Filter(object):
         # 规则处理：合并、去重、排序、剔除剔除黑名单、剔除白名单
         blockList, blockSet_block = self.__domainSort(blockDict, blackSet, whiteDict)
         unblockList, unblockSet_unblock = self.__domainSort(unblockDict, blackSet, whiteDict)
-        # 若白名单子域名被上游父域名规则覆盖，必须生成更具体的 DNS 放行例外。
+        whiteDomainSet = {
+            (f"{subdomain}.{fld}" if subdomain else fld)
+            for fld, subdomains in whiteDict.items()
+            for subdomain in subdomains
+        }
+        # 若白名单子域名被上游父域名或 DNS 通配规则覆盖，必须生成更具体的放行例外。
         whiteExceptions = self.__getWhiteExceptions(whiteDict, blockList)
-        unblockList = sorted(set(unblockList) | set(whiteExceptions))
-        unblockSet_unblock |= set(whiteExceptions)
+        wildcardWhiteExceptions = _get_wildcard_white_exceptions(
+            whiteDomainSet, dnsPatternBlockList
+        )
+        unblockList = sorted(set(unblockList) | set(whiteExceptions) | wildcardWhiteExceptions)
+        unblockSet_unblock |= set(whiteExceptions) | wildcardWhiteExceptions
         dnsPatternBlockList = sorted(dnsPatternBlockMap)
         dnsPatternAllowList = sorted(dnsPatternAllowMap)
         dnsPatternBlockListLite = sorted(
@@ -441,11 +467,6 @@ class Filter(object):
         ]
         # Lite uses raw DNS-validated domestic hostnames, not the already-compressed Full list.
         # Each client adapter emits its own exact-host syntax for these entries.
-        whiteDomainSet = {
-            (f"{subdomain}.{fld}" if subdomain else fld)
-            for fld, subdomains in whiteDict.items()
-            for subdomain in subdomains
-        }
         allowDomainSet = unblockSet_unblock | whiteDomainSet
         liteBlockList = _build_lite_block_list(
             blockSet_block, ChinaSet, allowDomainSet, blackSet
