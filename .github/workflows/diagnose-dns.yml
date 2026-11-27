@@ -7,6 +7,7 @@ on:
       - ".github/workflows/diagnose-dns.yml"
       - "scripts/diagnose_dns_upstreams.py"
       - "scripts/diagnose_smartdns_cnnic.py"
+      - "scripts/diagnose_domestic_resolver_candidates.py"
 
 permissions:
   contents: read
@@ -104,6 +105,12 @@ jobs:
           python -m py_compile scripts/diagnose_smartdns_cnnic.py
           python scripts/diagnose_smartdns_cnnic.py 2>&1 | tee dns-cnnic-smartdns-diagnostic.log
 
+      - name: Compare alternative domestic recursive resolvers
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/diagnose_domestic_resolver_candidates.py
+          python scripts/diagnose_domestic_resolver_candidates.py --sample-size 100 2>&1 | tee dns-domestic-candidate-diagnostic.log
+
       - name: Capture SmartDNS debug log
         if: always()
         run: |
@@ -119,6 +126,7 @@ jobs:
           name: dns-upstream-diagnostic-${{ github.run_id }}
           path: |
             dns-cnnic-smartdns-diagnostic.log
+            dns-domestic-candidate-diagnostic.log
             smartdns-debug.log
           if-no-files-found: warn
           retention-days: 30
