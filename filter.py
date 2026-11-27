@@ -411,7 +411,7 @@ class Filter(object):
         # 若白名单子域名被上游父域名或 DNS 通配规则覆盖，必须生成更具体的放行例外。
         whiteExceptions = self.__getWhiteExceptions(whiteDict, blockList)
         wildcardWhiteExceptions = _get_wildcard_white_exceptions(
-            whiteDomainSet, dnsPatternBlockList
+            whiteDomainSet, dnsPatternBlockMap
         )
         unblockList = sorted(set(unblockList) | set(whiteExceptions) | wildcardWhiteExceptions)
         unblockSet_unblock |= set(whiteExceptions) | wildcardWhiteExceptions
