@@ -27,7 +27,14 @@ def compare_rules(source_path: Path, validated_path: Path) -> int:
 
     source_counts = Counter(source_rules)
     validated_counts = Counter(validated_rules)
-    missing = sorted(source_counts.keys() - validated_counts.keys())
+    # Hostlist Compiler may omit standalone allow exceptions that do not match
+    # any block rule in this one list. They remain in our published source file;
+    # the compiler output is validation-only and is never used as the artifact.
+    # Missing block rules, however, are a hard compatibility failure.
+    missing = sorted(
+        rule for rule in source_counts.keys() - validated_counts.keys()
+        if not rule.startswith("@@")
+    )
     unexpected = sorted(validated_counts.keys() - source_counts.keys())
     duplicates = sorted(rule for rule, count in source_counts.items() if count > 1)
     compiler_duplicates = sorted(rule for rule, count in validated_counts.items() if count > 1)
@@ -38,7 +45,7 @@ def compare_rules(source_path: Path, validated_path: Path) -> int:
             f"compiler rules: {len(validated_rules)}",
         ]
         if missing:
-            details.append(f"removed or changed by compiler ({len(missing)}): {missing[:20]}")
+            details.append(f"removed or changed blocking rules ({len(missing)}): {missing[:20]}")
         if unexpected:
             details.append(f"unexpected compiler rules ({len(unexpected)}): {unexpected[:20]}")
         if duplicates:

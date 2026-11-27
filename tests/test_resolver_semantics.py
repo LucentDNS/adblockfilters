@@ -1,3 +1,5 @@
+import pytest
+
 from resolver import Resolver
 
 
@@ -123,3 +125,22 @@ def test_stale_legacy_blogspot_trojan_hosts_are_not_kept_without_current_evidenc
     assert "||2006mindfreaklike.blogspot.com^" not in rules
     assert "||girlownedbypolicelike.blogspot.com^" not in rules
     assert "||blogspot.com^" not in rules
+
+
+def test_dns_service_record_labels_with_underscores_are_not_host_block_rules():
+    resolver = Resolver(".")
+    for address in (
+        "10dkim1._domainkey.business.example.com",
+        "metrics._tcp.example.net",
+        "09_19.example.org",
+    ):
+        with pytest.raises(Exception, match="not a valid hostname"):
+            resolver._Resolver__analysis(address)
+
+
+def test_regular_dns_hostnames_remain_accepted():
+    resolver = Resolver(".")
+    fld, subdomain = resolver._Resolver__analysis("ads.example.com")
+
+    assert fld == "example.com"
+    assert subdomain == "ads"

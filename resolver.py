@@ -47,6 +47,11 @@ class Resolver(object):
         address_tmp = address
         if address.rfind(":") > 0:
             address_tmp = address[ : address.rfind(":")]
+        # Underscores are valid in DNS service-record labels (for example DKIM),
+        # but not in URL hostnames accepted by AdGuard DNS host rules. Do not
+        # turn _domainkey / _service records into ineffective blocking rules.
+        if "_" in address_tmp:
+            raise Exception('"%s": not a valid hostname for an AdGuard DNS rule' % address)
         ip, fld, subdomain = self.__ip_or_domain(address_tmp)
         if ip:
             return address, "" # 可能包含port，因此直接return address
