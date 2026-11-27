@@ -64,6 +64,12 @@ def test_source_audit_requires_matching_domain_and_china_inputs_for_lite_scope()
     assert 'validation_input_path = ROOT / ".cache" / "domain" / "domain.txt"' in audit
     assert "Lite scope audit is required and cannot be skipped" in audit
     assert "china.txt contains domains outside domain.txt" in audit
+    assert "REQUIRE_LITE_SCOPE_AUDIT" in audit
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    audit_step = workflow.split(
+        "- name: Audit upstream source contribution (whitelist-aware)", 1
+    )[1].split("- name:", 1)[0]
+    assert 'REQUIRE_LITE_SCOPE_AUDIT: "1"' in audit_step
 
 
 def test_production_build_rechecks_main_before_publishing():
