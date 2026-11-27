@@ -110,6 +110,23 @@ def test_source_and_build_changes_trigger_production_refresh():
     assert "scripts/**" in audit_paths
 
 
+
+def test_failed_build_keeps_last_verified_subscription_release():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    rollback = workflow.split(
+        "- name: Restore rule subscriptions to last verified dist before rebuilding", 1
+    )[1].split("- name:", 1)[0]
+    for name in (
+        "adblockdns.txt", "adblockdnslite.txt",
+        "adblockfilters.txt", "adblockfilterslite.txt",
+    ):
+        assert name in rollback
+    assert "/dist/$name" in rollback
+    assert "gh release upload rule .cache/rollback/*.txt --clobber" in rollback
+    assert workflow.index("Restore rule subscriptions to last verified dist") < workflow.index(
+        "Prepare verified DNS classification inputs for Lite"
+    )
+
 def test_rule_release_prunes_unsupported_assets_before_upload():
     workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
     cleanup = workflow.split(
