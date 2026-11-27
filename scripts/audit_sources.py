@@ -374,18 +374,24 @@ def main():
     all_rules = ReadMe(str(ROOT / "README.md")).getRules()
     production_rules = [rule for rule in all_rules if rule.type in ("host", "dns", "dnsfilter")]
     browser_rules = [rule for rule in all_rules if rule.type == "filter"]
+    # Benchmark currently listed AdGuard HostlistsRegistry DNS filters as audit-only sources.
+    # They are never merged into production automatically; contribution and parser coverage
+    # are measured first, then false-positive and compatibility evidence is reviewed manually.
     candidate_rules = [
-        Rule("Pollock hosts (candidate only)", "host",
-             "https://someonewhocares.org/hosts/hosts", "2026/11/22"),
-        # The upstream release asset is named OISD_Basic.txt, but the downloaded payload
-        # metadata identifies itself as "oisd small". In the latest audit it
-        # shares 62,805 of 62,806 parsed block domains with the production OISD
-        # Small snapshot (one snapshot-specific domain differs on each side).
-        # Keep it audit-only; do not infer a distinct Basic-vs-Small advantage
-        # from the README label.
-        Rule("OISD legacy source snapshot (asset named Basic; payload title says Small)", "dns",
-             "https://github.com/217heidai/adblockfilters/releases/download/source/OISD_Basic.txt",
-             "upstream release snapshot")
+        Rule("CHN: anti-AD (AdGuard Registry candidate only)", "dns",
+             "https://anti-ad.net/adguard.txt", "live upstream"),
+        Rule("CHN: AdRules DNS List (AdGuard Registry candidate only)", "dns",
+             "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt", "live upstream"),
+        Rule("OISD Blocklist Small (AdGuard Registry candidate only)", "dns",
+             "https://small.oisd.nl/", "live upstream"),
+        Rule("OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)", "dns",
+             "https://big.oisd.nl/", "live upstream"),
+        Rule("1Hosts Lite (AdGuard Registry candidate only)", "dns",
+             "https://cdn.jsdelivr.net/gh/badmojr/1Hosts@master/Lite/adblock.txt", "live upstream"),
+        Rule("HaGeZi Pro (AdGuard Registry benchmark against Pro Mini)", "dns",
+             "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt", "live upstream"),
+        Rule("HaGeZi Normal (AdGuard Registry benchmark against Pro Mini)", "dns",
+             "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/multi.txt", "live upstream")
     ]
     rules = production_rules + browser_rules + candidate_rules
     production_names = {rule.name for rule in production_rules}
