@@ -20,6 +20,7 @@ class AdGuardHome(APPBase):
         dnsPatternAllowList=None,
         dnsPatternBlockListLite=None,
         dnsPatternAllowListLite=None,
+        wildcardWhiteExceptionsLite=None,
     ):
         super(AdGuardHome, self).__init__(
             blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, fileName, sourceRule
@@ -28,6 +29,7 @@ class AdGuardHome(APPBase):
         self.dnsPatternAllowList = sorted(set(dnsPatternAllowList or []))
         self.dnsPatternBlockListLite = sorted(set(dnsPatternBlockListLite or []))
         self.dnsPatternAllowListLite = sorted(set(dnsPatternAllowListLite or []))
+        self.wildcardWhiteExceptionsLite = sorted(set(wildcardWhiteExceptionsLite or []))
 
     def generate(self, isLite=False):
         try:
@@ -35,7 +37,9 @@ class AdGuardHome(APPBase):
                 logger.info("generate adblock AdGuardHome Lite...")
                 fileName = self.fileNameLite
                 blockList = self.blockListLite
-                unblockList = self.unblockListLite
+                unblockList = sorted(
+                    set(self.unblockListLite) | set(self.wildcardWhiteExceptionsLite)
+                )
                 patternBlockList = self.dnsPatternBlockListLite
                 patternAllowList = self.dnsPatternAllowListLite
             else:
