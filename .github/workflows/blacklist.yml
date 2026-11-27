@@ -229,6 +229,7 @@ jobs:
           name: dns-validation-audit-${{ github.run_id }}
           path: |
             blacklist.log
+            domain.db
             domain.txt
             domain-input-provenance.json
             black.txt
