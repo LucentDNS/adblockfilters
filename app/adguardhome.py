@@ -30,10 +30,12 @@ class AdGuardHome(APPBase):
                 f.write("!\n")
                 if isLite:
                     f.write("! Title: AdBlock DNS Lite\n")
-                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每 8 个小时更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选；AdGuard DNS 规则按标准语法匹配该域名及其子域名。\n"%(self.sourceRule))
+                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选；AdGuard DNS 规则按标准语法匹配该域名及其子域名。\n"%(self.sourceRule))
+                    f.write("! Expires: 1 day\n")
                 else:
                     f.write("! Title: AdBlock DNS\n")
-                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每 8 个小时更新一次。规则源：%s。\n"%(self.sourceRule))
+                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每日自动更新一次。规则源：%s。\n"%(self.sourceRule))
+                    f.write("! Expires: 1 day\n")
                 f.write("! Homepage: %s\n"%(self.homepage))
                 f.write("! Source: %s/%s\n"%(self.source, os.path.basename(fileName)))
                 f.write("! Version: %s\n"%(self.version))
