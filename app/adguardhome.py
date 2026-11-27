@@ -84,12 +84,9 @@ class AdGuardHome(APPBase):
                     f.write("%s\n" % (rule))
             
             logger.info(
-                "adblock AdGuardHome%s: block=%d, allow=%d, wildcard_block=%d, wildcard_allow=%d",
-                " Lite" if isLite else "",
-                len(blockList),
-                len(unblockList),
-                len(patternBlockList),
-                len(patternAllowList),
+                f"adblock AdGuardHome{' Lite' if isLite else ''}: "
+                f"block={len(blockList)}, allow={len(unblockList)}, "
+                f"wildcard_block={len(patternBlockList)}, wildcard_allow={len(patternAllowList)}"
             )
         except Exception as e:
             logger.exception("%s"%(e))
