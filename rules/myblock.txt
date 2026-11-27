@@ -3,7 +3,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 拦截规则
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Manual DNS host entries must pass AdGuard Hostlist Compiler hostname validation; browser-only path/wildcard exceptions stay in their separate section.
+! Manual DNS entries must pass AdGuard Hostlist Compiler validation. DNS wildcards are allowed only when scoped to a fixed registrable domain; broad wildcards, regex, and path-scoped rules are excluded from DNS output. Browser-only path exceptions stay in their own section.
 ! Phishing and brand-impersonation indicators reviewed 2026-11-23/25; evidence links are listed per domain.
 ! https://gridinsoft.com/online-virus-scanner/url/easywebtd_authenticate-com
 ||easywebtd-authenticate.com^
