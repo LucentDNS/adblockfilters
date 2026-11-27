@@ -7,7 +7,7 @@ from blacklist import (
 )
 
 
-def test_policy_upgrade_resets_only_cached_nxdomain_decisions(tmp_path):
+def test_policy_upgrade_resets_blocked_and_inconclusive_rows_but_keeps_positive_cache(tmp_path):
     database = DomainDatabase(str(tmp_path / "domain.db"))
     database.updateALL(
         [
@@ -20,6 +20,18 @@ def test_policy_upgrade_resets_only_cached_nxdomain_decisions(tmp_path):
                 1,
                 0,
                 100,
+                None,
+                "example",
+            ),
+            (
+                "inconclusive.example",
+                "inconclusive.example",
+                None,
+                None,
+                None,
+                0,
+                1,
+                150,
                 None,
                 "example",
             ),
@@ -38,13 +50,17 @@ def test_policy_upgrade_resets_only_cached_nxdomain_decisions(tmp_path):
         ]
     )
 
-    assert _apply_dns_block_policy_version(database) == 1
+    assert _apply_dns_block_policy_version(database) == 2
     rows = {row[0]: row for row in database.getAll()}
 
     assert rows["blocked.example"][6] == 0
     assert rows["blocked.example"][7] == 0
     assert rows["blocked.example"][8] == 0
     assert rows["blocked.example"][9] is None
+    assert rows["inconclusive.example"][6] == 0
+    assert rows["inconclusive.example"][7] == 0
+    assert rows["inconclusive.example"][8] == 0
+    assert rows["inconclusive.example"][9] is None
     assert rows["resolved.example"][6] == 0
     assert rows["resolved.example"][8] == 200
     assert rows["resolved.example"][9] == "203.0.113.10"
