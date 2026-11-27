@@ -175,6 +175,53 @@ jobs:
               raise SystemExit("DNS validation upstream health check failed:\\n- " + "\\n- ".join(failures))
           PY
 
+      - name: Verify all six upstreams under production query load
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import asyncio
+          import dns.asyncresolver
+          from dns.resolver import NoAnswer
+
+          ports = (5053, 5054, 5055, 5056, 5057, 5058)
+          domains = (
+              "example.com", "cloudflare.com", "google.com", "github.com",
+              "microsoft.com", "apple.com", "wikipedia.org", "baidu.com",
+              "qq.com", "amazon.com", "mozilla.org", "iana.org",
+          )
+
+          async def check(port, domain):
+              resolver = dns.asyncresolver.Resolver(configure=False)
+              resolver.nameservers = ["127.0.0.1"]
+              resolver.port = port
+              resolver.timeout = 2.5
+              resolver.lifetime = 6.0
+              results = await asyncio.gather(
+                  resolver.resolve(domain, "A"),
+                  resolver.resolve(domain, "AAAA"),
+                  return_exceptions=True,
+              )
+              a_ok = not isinstance(results[0], Exception) and len(results[0]) > 0
+              aaaa_ok = not isinstance(results[1], Exception) or isinstance(results[1], NoAnswer)
+              return a_ok and aaaa_ok, domain, results
+
+          async def main():
+              failures = []
+              for port in ports:
+                  # Match the production per-upstream cap: 12 domains x A/AAAA.
+                  results = await asyncio.gather(*(check(port, domain) for domain in domains))
+                  passed = sum(1 for ok, _, _ in results if ok)
+                  print(f"Upstream {port}: production-load probe {passed}/{len(domains)}")
+                  if passed < 11:
+                      for ok, domain, answers in results:
+                          if not ok:
+                              failures.append(f"port={port} domain={domain}: {answers}")
+              if failures:
+                  raise SystemExit("Production-load DNS preflight failed:\\n" + "\\n".join(failures))
+
+          asyncio.run(main())
+          PY
+
       - name: Download database
         run: |
           set -euo pipefail

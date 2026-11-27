@@ -6,6 +6,7 @@ from blacklist import (
     BlackList,
     DNS_NEGATIVE_RECHECK_SECONDS,
     DNS_VALIDATION_PORTS,
+    DNS_VALIDATION_PER_UPSTREAM_CONCURRENCY,
     DNS_POSITIVE_REFRESH_SECONDS,
     _needs_dns_validation,
 )
@@ -301,3 +302,8 @@ def test_dns_upstream_disagreement_preserves_previous_unblocked_state():
     unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
     domain = pingx([dead] * 5 + [unavailable], initially_blocked=False)
     assert domain.blocked is False
+
+
+def test_dns_validation_caps_each_upstream_independently():
+    # Six-provider fan-out must not become 100 x 12 simultaneous DNS requests.
+    assert DNS_VALIDATION_PER_UPSTREAM_CONCURRENCY == 12
