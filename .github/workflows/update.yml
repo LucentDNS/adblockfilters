@@ -2,6 +2,7 @@ name: Update Filters
 
 permissions:
   contents: write
+  pull-requests: read
 
 # 避免连续提交触发多个发布任务并发覆盖 Releases 和 dist。
 concurrency:
@@ -552,4 +553,35 @@ jobs:
           [ -n "$(git status --porcelain)" ] || exit 0
           git commit -m "Publish rules $(date -u +%Y%m%d%H%M)"
           git push -f origin dist
+
+      - name: Remove merged and superseded work branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branches="$(gh api --paginate "repos/${REPOSITORY}/branches?per_page=100" --jq '.[].name')"
+          open_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=open&per_page=100" --jq '.[].head.ref')"
+          merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" --jq --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
+          # These closed, unmerged branches are explicitly superseded:
+          # PR #22 by merged PR #23; PR #29 by merged PRs #31 and #33.
+          superseded_refs=
+fix/dns-dnstype-rule-preservation\nfix/source-policy-conflict-audit'
+          deleted=0
+          while IFS= read -r branch_name; do
+            [[ -n "${branch_name}" ]] || continue
+            [[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]] && continue
+            if grep -Fxq "${branch_name}" <<< "${open_refs}"; then
+              echo "Keeping ${branch_name}: an open PR still uses it."
+              continue
+            fi
+            if grep -Fxq "${branch_name}" <<< "${merged_refs}" || grep -Fxq "${branch_name}" <<< "${superseded_refs}"; then
+              gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch_name}"
+              echo "Deleted obsolete branch: ${branch_name}"
+              deleted=$((deleted + 1))
+            else
+              echo "Keeping ${branch_name}: no merged PR or explicit supersession evidence."
+            fi
+          done <<< "${branches}"
+          echo "Deleted ${deleted} obsolete branches; main and dist were retained."
 
