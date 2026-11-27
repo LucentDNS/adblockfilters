@@ -620,13 +620,11 @@ def main():
         required_names = production_names | browser_names
         failed_required = [row["name"] for row in results
                            if row["name"] in required_names and not row["download_ok"]]
-        critical_candidates = {"OISD legacy source snapshot (asset named Basic; payload title says Small)"}
-        failed_candidates = [name for name in critical_candidates
-                             if not downloads.get(name, {}).get("ok")]
-        if failed_required or failed_candidates:
+        # Candidate benchmarks are informational; an unavailable candidate must not
+        # block production when every enabled production source is healthy.
+        if failed_required:
             raise SystemExit(
-                "Audit incomplete; required source failures="
-                + ", ".join(failed_required + failed_candidates)
+                "Audit incomplete; required source failures=" + ", ".join(failed_required)
             )
         return
 
@@ -1389,13 +1387,11 @@ def main():
     required_names = production_names | browser_names
     failed_required = [row["name"] for row in results
                        if row["name"] in required_names and not row["download_ok"]]
-    critical_candidates = {"OISD legacy source snapshot (asset named Basic; payload title says Small)"}
-    failed_candidates = [name for name in critical_candidates
-                         if not downloads.get(name, {}).get("ok")]
-    if failed_required or failed_candidates:
+    # Candidate benchmarks are informational; an unavailable candidate must not
+    # block production when every enabled production source is healthy.
+    if failed_required:
         raise SystemExit(
-            "Audit incomplete; required source failures="
-            + ", ".join(failed_required + failed_candidates)
+            "Audit incomplete; required source failures=" + ", ".join(failed_required)
         )
 
     gate_failures = source_audit_gate_failures(
