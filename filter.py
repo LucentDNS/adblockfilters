@@ -76,8 +76,8 @@ def _dns_pattern_matches_domain(rule: str, domain: str) -> bool:
     """Match an exact whitelist domain against a validated AdGuard DNS wildcard rule."""
     if not rule.startswith("||") or not rule.endswith("^"):
         return False
-    pattern = re.escape(rule[2:-1]).replace(r"\\*", ".*")
-    return re.fullmatch(rf"(?:.*\\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
+    pattern = re.escape(rule[2:-1]).replace(r"\*", ".*")
+    return re.fullmatch(rf"(?:.*\.)?{pattern}", domain, flags=re.IGNORECASE) is not None
 
 
 def _get_wildcard_white_exceptions(white_domains, wildcard_block_rules):
