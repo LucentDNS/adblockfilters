@@ -1,4 +1,25 @@
+import json
+from pathlib import Path
+
 from scripts.audit_sources import classify_strict_source_candidates
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_source_policy_classifies_every_enabled_dns_source_once():
+    manifest = json.loads((ROOT / "sources.json").read_text(encoding="utf-8"))
+    policy = json.loads((ROOT / "source-policy.json").read_text(encoding="utf-8"))
+    production = {
+        source["name"]
+        for source in manifest["sources"]
+        if source.get("enabled", True) and source["type"] in {"host", "dns", "dnsfilter"}
+    }
+    strict = set(policy["strict_review_sources"])
+    comparison = set(policy["comparison_sources"])
+    assert strict.isdisjoint(comparison)
+    assert strict | comparison == production
+    assert strict == {"HaGeZi DNS-Blocklists"}
 
 
 def test_strict_only_candidates_are_not_treated_as_explicit_allows():
