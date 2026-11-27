@@ -67,7 +67,7 @@ def test_project_googleusercontent_exception_is_path_scoped_and_valid():
     assert filt == (expected, "clients2.googleusercontent.com")
 
 
-def test_bare_wildcard_from_dns_source_is_preserved_as_browser_filter_only():
+def test_non_adblock_wildcard_is_not_promoted_to_dns_pattern():
     resolver = Resolver(".")
     rule = "*-ad.sm.cn*"
 
@@ -76,6 +76,41 @@ def test_bare_wildcard_from_dns_source_is_preserved_as_browser_filter_only():
     assert block is None
     assert unblock is None
     assert filt == (rule, None)
+
+def test_scoped_dns_wildcard_block_is_recognized_for_adguard_output():
+    resolver = Resolver(".")
+    rule = "||ads*-normal-hl.zijieapi.com^"
+
+    block, unblock, filt = resolver._Resolver__resolveDNS(rule)
+
+    assert block is None
+    assert unblock is None
+    assert filt == (rule, None)
+    assert resolver.resolveDNSPattern(rule) == ("block", "zijieapi.com")
+
+
+def test_scoped_dns_wildcard_allow_is_recognized_for_adguard_output():
+    resolver = Resolver(".")
+    rule = "@@||profile*.se.360.cn^"
+
+    assert resolver.resolveDNSPattern(rule) == ("allow", "360.cn")
+
+
+def test_scoped_dns_wildcard_inside_subdomain_label_is_recognized():
+    resolver = Resolver(".")
+    rule = "||ping.*.sogou.com^"
+
+    assert resolver.resolveDNSPattern(rule) == ("block", "sogou.com")
+
+
+def test_broad_dns_wildcards_and_regex_are_excluded():
+    resolver = Resolver(".")
+
+    assert resolver.resolveDNSPattern("||ad-*.com^") is None
+    assert resolver.resolveDNSPattern("||admob.*^") is None
+    assert resolver.resolveDNSPattern("/^.+stat\\.kugou\\.com/") is None
+    assert resolver.resolveDNSPattern("||fxhpaoxqyajvmdg.") is None
+
 
 def test_stale_legacy_blogspot_trojan_hosts_are_not_kept_without_current_evidence():
     from pathlib import Path
