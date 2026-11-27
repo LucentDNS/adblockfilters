@@ -156,10 +156,10 @@ def test_get_filters_keeps_other_sources_block_after_source_local_allow(tmp_path
     source_b = Rule("Source B", "dns", "https://example.test/b.txt", "live")
 
     (source_dir / source_a.filename).write_text(
-        "||ads.example.com^\\n@@||example.com^\\n", encoding="utf-8"
+        "ads.example.com\\n@@||example.com^\\n", encoding="utf-8"
     )
     (source_dir / source_b.filename).write_text(
-        "||ads.example.com^\\n", encoding="utf-8"
+        "ads.example.com\\n", encoding="utf-8"
     )
     (source_dir / "myblock.txt").write_text("", encoding="utf-8")
 
