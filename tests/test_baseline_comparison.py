@@ -1,4 +1,6 @@
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -130,3 +132,13 @@ def test_parse_filter_accepts_supported_dns_wildcard_patterns(tmp_path):
     )
     parsed = parse_filter(path, "! Title: AdBlock DNS", 1)
     assert len(parsed["rules"]) == 3
+
+
+def test_baseline_script_bootstraps_repo_root_when_run_from_another_directory(tmp_path):
+    script = Path(__file__).parents[1] / "scripts" / "compare_baseline.py"
+    result = subprocess.run(
+        [sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True
+    )
+
+    assert "No module named 'resolver'" not in result.stderr
+    assert "DNS filter file is missing or empty" in result.stderr

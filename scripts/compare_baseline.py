@@ -2,9 +2,13 @@
 """Validate and compare both Full and Lite outputs with the upstream release baseline."""
 import json
 import re
+import sys
 from pathlib import Path
 
-from resolver import Resolver
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from resolver import Resolver  # noqa: E402 - project-root bootstrap above
 
 BASELINE_DIR = Path(".cache/baseline")
 CURRENT_DIR = Path(".cache/out")
