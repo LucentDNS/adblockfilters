@@ -20,6 +20,7 @@ RESOLVERS = (
     ("SmartDNS bootstrap", "127.0.0.1", 5059),
     ("SmartDNS ECS", "127.0.0.1", 5060),
     ("SmartDNS bootstrap+ECS", "127.0.0.1", 5061),
+    ("SmartDNS default group", "127.0.0.1", 5062),
 )
 
 
