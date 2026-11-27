@@ -15,7 +15,6 @@ from dns.resolver import NXDOMAIN, NoAnswer, NoNameservers
 CANDIDATES = {
     "Gansu Telecom 202.100.64.68": "202.100.64.68",
     "Gansu Telecom 61.178.0.93": "61.178.0.93",
-    "China Unicom 123.125.81.6": "123.125.81.6",
     "Huawei DNS 122.112.208.1": "122.112.208.1",
     "Huawei DNS 139.9.23.90": "139.9.23.90",
     "AliDNS secondary 223.6.6.6": "223.6.6.6",
