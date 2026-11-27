@@ -238,27 +238,31 @@ def audit_one(rule, resolver, download):
                             "base_domain": base_domain,
                         })
                 else:
+                    excluded_dns_pattern = False
                     if rule.type in {"dns", "dnsfilter"} and "*" in filt[0]:
                         result["dns_pattern_excluded"] += 1
+                        excluded_dns_pattern = True
                         if len(result["samples_dns_pattern_excluded"]) < 20:
                             result["samples_dns_pattern_excluded"].append(s[:240])
                     if rule.type in {"dns", "dnsfilter"} and filt[0].startswith("/") and filt[0].endswith("/"):
                         result["dns_regex_excluded"] += 1
-                    if filt[1]:
-                        extracted_domain = full_domain(filt[1])
-                        if extracted_domain:
-                            extracted.add(extracted_domain)
-                            result["filter_domain_extracted"] += 1
-                        elif is_ip_literal(filt[1]):
-                            result["filter_ip_extracted"] += 1
+                        excluded_dns_pattern = True
+                    if not excluded_dns_pattern:
+                        if filt[1]:
+                            extracted_domain = full_domain(filt[1])
+                            if extracted_domain:
+                                extracted.add(extracted_domain)
+                                result["filter_domain_extracted"] += 1
+                            elif is_ip_literal(filt[1]):
+                                result["filter_ip_extracted"] += 1
+                            else:
+                                result["filter_domain_unresolved"] += 1
+                                if len(result["samples_filter_domain_unresolved"]) < 20:
+                                    result["samples_filter_domain_unresolved"].append(s[:240])
                         else:
                             result["filter_domain_unresolved"] += 1
                             if len(result["samples_filter_domain_unresolved"]) < 20:
                                 result["samples_filter_domain_unresolved"].append(s[:240])
-                    else:
-                        result["filter_domain_unresolved"] += 1
-                        if len(result["samples_filter_domain_unresolved"]) < 20:
-                            result["samples_filter_domain_unresolved"].append(s[:240])
             if parsed:
                 result["parsed_lines"] += 1
             else:
@@ -280,7 +284,7 @@ def audit_one(rule, resolver, download):
     return result, blocks, allows
 
 
-def render_report(results, production_names, browser_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps):
+def render_report(results, production_names, browser_names, candidate_names, overlap, unique_total, pairwise, candidate_overlaps, candidate_pairwise_overlaps):
     cols = [
         ("name", "来源"), ("role", "身份"), ("type", "类型"), ("total_lines", "总行数"),
         ("candidate_lines", "候选行"), ("parsed_lines", "解析接受"),
@@ -336,12 +340,17 @@ def render_report(results, production_names, browser_names, candidate_names, ove
                     "| 候选来源 | 正式来源 | 重复域名数 |", "|---|---|---:|"])
         for candidate, source, count in candidate_overlaps:
             out.append(f"| {candidate} | {source} | {count} |")
+    if candidate_pairwise_overlaps:
+        out.extend(["", "## 候选来源之间的精确重合",
+                    "| 候选来源 A | 候选来源 B | 重复域名数 |", "|---|---|---:|"])
+        for left, right, count in candidate_pairwise_overlaps:
+            out.append(f"| {left} | {right} | {count} |")
     out.extend([
         "", "## 指标说明",
         "- 候选行：排除空行、注释和列表头后的行。",
         "- 解析接受：当前解析器识别为拦截、放行或过滤规则的行。",
         "- 唯一拦截域名：当前解析器可归一化的拦截域名去重数。",
-        "- 过滤规则未提取域名：规则本身被保留，但当前解析器未能关联出域名；不能简单视为规则丢失。",
+        "- 其他过滤规则未提取域名：不包括已单独统计的宽泛通配模式和未纳入的 DNS 正则规则。",
         "- IP 字面量单独计数，不纳入 DNS 域名唯一数、来源覆盖或基线域名差异。",
         "- 跨来源重复拦截域名：仅统计正式集成来源中解析为 block 的域名；不把候选来源或浏览器过滤规则提取的域名混入。",
         "- 父级压缩后独有候选（白名单前）：先排除其他正式来源的相同域名/父域名覆盖，再排除本来源内被父域名覆盖的子域名。",
@@ -546,6 +555,13 @@ def main():
                 candidate_overlaps.append((candidate, source, count))
     candidate_overlaps.sort(key=lambda item: item[2], reverse=True)
 
+    candidate_pairwise_overlaps = []
+    for left, right in combinations(sorted(candidate_names), 2):
+        count = len(domain_sets.get(left, set()) & domain_sets.get(right, set()))
+        if count:
+            candidate_pairwise_overlaps.append((left, right, count))
+    candidate_pairwise_overlaps.sort(key=lambda item: item[2], reverse=True)
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     unique_dir = OUT_DIR / "effective-unique"
     unique_dir.mkdir(parents=True, exist_ok=True)
@@ -614,6 +630,10 @@ def main():
                 {"candidate": a, "production_source": b, "shared_domains": n}
                 for a, b, n in candidate_overlaps
             ],
+            "candidate_pairwise_overlaps": [
+                {"candidate_a": a, "candidate_b": b, "shared_domains": n}
+                for a, b, n in candidate_pairwise_overlaps
+            ],
             "top_pairwise_overlaps": [
                 {"source_a": a, "source_b": b, "shared_domains": n}
                 for a, b, n in pairwise[:20]
@@ -622,7 +642,7 @@ def main():
     )
     report = render_report(
         results, production_names, browser_names, candidate_names,
-        overlap, unique_total, pairwise, candidate_overlaps
+        overlap, unique_total, pairwise, candidate_overlaps, candidate_pairwise_overlaps
     )
     report += "\n## 项目白名单当前来源覆盖审计\n\n"
     report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\n"
