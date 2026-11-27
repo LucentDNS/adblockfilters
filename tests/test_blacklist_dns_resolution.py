@@ -209,6 +209,11 @@ def test_domain_input_deduplicates_normalized_variants(tmp_path):
     assert list(domains) == ["example.com"]
 
 
+def test_nxdomain_and_nodata_for_different_record_types_are_valid_inconclusive():
+    mixed = {"A": NXDOMAIN(), "AAAA": NoAnswer()}
+    assert resolve(mixed) == ([], "no_address")
+
+
 def test_nxdomain_plus_valid_other_family_keeps_domain():
     assert resolve({"A": NXDOMAIN(), "AAAA": ["2001:db8::1"]}) == (
         ["2001:db8::1"], "resolved"
