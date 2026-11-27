@@ -154,7 +154,7 @@ jobs:
           : > .cache/domain/input-provenance.txt
           for name in black.txt china.txt domain.txt domain-input-provenance.json dns-validation-bootstrap-complete-v2.txt validated-dns-sources.tar.gz; do
             test -s ".cache/domain/$name" || { echo "::error::Verified DNS validation state asset is missing: $name"; exit 1; }
-            printf '%s\t%s\n' "$name" "sealed five-upstream DNS validation state" >> .cache/domain/input-provenance.txt
+            printf '%s\t%s\n' "$name" "sealed six-upstream DNS validation state" >> .cache/domain/input-provenance.txt
           done
           # Preserve the exact validation input before Filter.generate rewrites domain.txt.
           cp .cache/domain/domain.txt .cache/domain/validated-domain-input.txt
