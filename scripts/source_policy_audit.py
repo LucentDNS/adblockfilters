@@ -24,7 +24,7 @@ def covered_by(domain, roots):
     return sorted(".".join(labels[index:]) for index in range(len(labels)) if ".".join(labels[index:]) in roots)
 
 
-def classify_strict_domains(strict_domains, stability_blocks, stability_allows, targeted_blocks, whitelist):
+def classify_strict_domains(\n    strict_domains, stability_blocks, stability_allows, targeted_blocks, whitelist,\n    other_reference_blocks=None,\n):
     """Classify strict hits without treating source absence as an allow or source count as votes."""
     strict_only = set()
     stability_supported = set()
@@ -45,7 +45,7 @@ def classify_strict_domains(strict_domains, stability_blocks, stability_allows, 
             explicit_allow_conflicts.add(domain)
         if targeted_block_roots:
             targeted_supported.add(domain)
-        if not stable_block_roots and not stable_allow_roots and not targeted_block_roots and not white:
+        if (not stable_block_roots and not stable_allow_roots and not targeted_block_roots\n                and not other_reference_roots and not white):
             strict_only.add(domain)
         details[domain] = {
             "stability_block_parent_or_exact": stable_block_roots,
@@ -159,7 +159,7 @@ def main():
             "stability_block_supported": len(result["stability_supported"]),
             "explicit_stability_allow_conflicts": len(result["explicit_allow_conflicts"]),
             "targeted_source_supported": len(result["targeted_supported"]),
-            "other_reference_supported": len(result["targeted_supported"] & other_reference_blocks),
+            "other_reference_supported": len(result["other_reference_supported"]),
             "project_whitelist_excluded": len(result["whitelist_excluded"]),
         },
         "unavailable_sources": sorted(set(unavailable)),
