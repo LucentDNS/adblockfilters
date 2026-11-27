@@ -25,22 +25,30 @@ def test_curated_dns_supplement_rules_are_present():
     assert "||oth.str.mdt.qq.com^" in entries
 
 
-def test_manual_dns_supplement_rules_use_dns_label_syntax():
+def test_manual_dns_supplement_rules_use_supported_dns_syntax():
     import re
+
+    from resolver import Resolver
 
     path = Path(__file__).parents[1] / "rules" / "myblock.txt"
     pattern = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+    resolver = Resolver("unused")
 
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line or line.startswith("!") or line.startswith("#"):
             continue
-        if line.startswith("@@||") and line.endswith("^") and ("*" in line or "/" in line):
-            # Wildcard/path-scoped exceptions are browser-filter rules, not DNS names.
+        if line.startswith("@@||") and line.endswith("^") and "/" in line:
+            # Path-scoped exceptions remain browser-only.
+            continue
+        if "*" in line:
+            assert resolver.resolveDNSPattern(line) is not None, (
+                f"Unsupported or overly broad manual DNS wildcard: {line}"
+            )
             continue
         if line.startswith("@@||") and line.endswith("^"):
             domain = line[4:-1]
-        elif line.startswith("||") and line.endswith("^") and "*" not in line and "/" not in line:
+        elif line.startswith("||") and line.endswith("^"):
             domain = line[2:-1]
         else:
             raise AssertionError(f"Unsupported manual DNS rule syntax: {line}")
