@@ -42,10 +42,10 @@ def test_hostlist_compiler_validation_allows_redundant_standalone_allow_exceptio
     source = tmp_path / "source.txt"
     validated = tmp_path / "validated.txt"
     source.write_text(
-        "||ads.example.com^\\n@@||unrelated.example.net^\\n",
+        "||ads.example.com^\n@@||unrelated.example.net^\n",
         encoding="utf-8",
     )
-    validated.write_text("||ads.example.com^\\n", encoding="utf-8")
+    validated.write_text("||ads.example.com^\n", encoding="utf-8")
 
     assert compare_rules(source, validated) == 2
 
@@ -54,10 +54,10 @@ def test_hostlist_compiler_validation_still_rejects_missing_block_rules(tmp_path
     source = tmp_path / "source.txt"
     validated = tmp_path / "validated.txt"
     source.write_text(
-        "||ads.example.com^\\n||tracker.example.net^\\n@@||safe.example.org^\\n",
+        "||ads.example.com^\n||tracker.example.net^\n@@||safe.example.org^\n",
         encoding="utf-8",
     )
-    validated.write_text("||ads.example.com^\\n", encoding="utf-8")
+    validated.write_text("||ads.example.com^\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="removed or changed blocking rules"):
         compare_rules(source, validated)
