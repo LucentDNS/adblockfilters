@@ -61,3 +61,16 @@ def test_dns_pattern_audit_does_not_treat_dnstype_rules_as_all_type_coverage():
     assert not audit_sources.dns_pattern_matches_domain(
         "||*.example.com^$dnstype=TXT", "ads.example.com"
     )
+
+
+def test_project_whitelist_preserves_explicit_upstream_baseline_allow_exception(tmp_path, monkeypatch):
+    rules = tmp_path / "rules"
+    rules.mkdir()
+    (rules / "white.txt").write_text(
+        "# Preserve original baseline allow beneath parent block\n"
+        "pics.porn300.com\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(audit_sources, "ROOT", tmp_path)
+
+    assert audit_sources.load_project_whitelist() == {"pics.porn300.com"}
