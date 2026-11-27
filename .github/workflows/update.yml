@@ -439,6 +439,7 @@ jobs:
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
             .cache/audit/source-policy-conflicts.json
+            .cache/audit/source-allow-conflicts-still-blocked.txt
             .cache/audit/review-focus-unshared-candidates.txt
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt
