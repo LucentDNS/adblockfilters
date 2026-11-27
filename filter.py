@@ -164,8 +164,11 @@ class Filter(object):
                     for subdomain in subdomains:
                         domain = (subdomain + "." + suffix) if suffix else subdomain
                         filterDict["@@||%s^" % domain] = domain
-            for filter_rule, domain in __filterDict.items():
-                filterDict[filter_rule] = domain
+                # DNS/Hosts source leftovers that cannot be represented safely as
+                # DNS rules must not leak into the browser subscription. Only actual
+                # browser-filter sources contribute their non-domain filter syntax.
+                for filter_rule, domain in __filterDict.items():
+                    filterDict[filter_rule] = domain
 
         return blockDict,unblockDict,filterDict,dnsPatternBlockMap,dnsPatternAllowMap
 

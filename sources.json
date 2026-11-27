@@ -66,6 +66,12 @@
       "type": "host",
       "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
       "latest": "2026/11/24"
+    },
+    {
+      "name": "anti-AD (AdGuard DNS rules)",
+      "type": "dnsfilter",
+      "url": "https://anti-ad.net/easylist.txt",
+      "latest": "2026/11/26"
     }
   ]
 }
