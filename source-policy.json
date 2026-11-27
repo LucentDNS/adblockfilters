@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "principles": {
+    "absence_is_not_allow": true,
+    "source_count_is_not_vote": true,
+    "same_family_is_not_independent_evidence": true,
+    "strict_only_is_review_only": true,
+    "explicit_allow_is_conflict_evidence": true
+  },
+  "sources": [
+    {
+      "name": "HaGeZi DNS-Blocklists",
+      "style": "strict",
+      "family": "hagezi",
+      "role": "production",
+      "rationale": "Strict-oriented upstream reference; unique coverage is isolated for review, not automatically promoted."
+    },
+    {
+      "name": "HaGeZi Pro",
+      "style": "strict",
+      "family": "hagezi",
+      "role": "candidate",
+      "rationale": "Same upstream family as HaGeZi DNS-Blocklists; never counted as independent corroboration."
+    },
+    {
+      "name": "HaGeZi Normal",
+      "style": "strict",
+      "family": "hagezi",
+      "role": "candidate",
+      "rationale": "Same upstream family as HaGeZi DNS-Blocklists; never counted as independent corroboration."
+    },
+    {
+      "name": "AdGuard DNS filter",
+      "style": "stability_reference",
+      "family": "adguard",
+      "role": "production",
+      "rationale": "Stability-oriented comparison reference; absence is not treated as an explicit allow."
+    },
+    {
+      "name": "OISD Blocklist Small (AdGuard Registry candidate only)",
+      "style": "stability_reference",
+      "family": "oisd",
+      "role": "candidate",
+      "rationale": "Stability-oriented comparison reference; same OISD family is not independent evidence."
+    },
+    {
+      "name": "OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)",
+      "style": "stability_reference",
+      "family": "oisd",
+      "role": "candidate",
+      "rationale": "Benchmark-only reference; same OISD family is not independent evidence and it is not promoted to production."
+    },
+    {
+      "name": "1Hosts (Lite)",
+      "style": "stability_reference",
+      "family": "1hosts",
+      "role": "production",
+      "rationale": "Conservative/lightweight comparison reference."
+    },
+    {
+      "name": "StevenBlack hosts",
+      "style": "stability_reference",
+      "family": "stevenblack",
+      "role": "production",
+      "rationale": "Hosts-based comparison reference."
+    },
+    {
+      "name": "anti-AD (AdGuard DNS rules)",
+      "style": "targeted",
+      "family": "anti-ad",
+      "role": "production",
+      "rationale": "Dedicated advertising/tracking source; evidence is reported separately from stability references."
+    },
+    {
+      "name": "AWAvenue Ads Rule (Only.Ads)",
+      "style": "targeted",
+      "family": "awavenue",
+      "role": "production",
+      "rationale": "Advertising-focused source; evidence is reported separately from stability references."
+    }
+  ]
+}
