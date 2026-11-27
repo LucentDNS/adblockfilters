@@ -565,8 +565,7 @@ jobs:
           merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" --jq --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
           # These closed, unmerged branches are explicitly superseded:
           # PR #22 by merged PR #23; PR #29 by merged PRs #31 and #33.
-          superseded_refs=
-fix/dns-dnstype-rule-preservation\nfix/source-policy-conflict-audit'
+          superseded_refs="fix/dns-dnstype-rule-preservation fix/source-policy-conflict-audit"
           deleted=0
           while IFS= read -r branch_name; do
             [[ -n "${branch_name}" ]] || continue
@@ -575,7 +574,7 @@ fix/dns-dnstype-rule-preservation\nfix/source-policy-conflict-audit'
               echo "Keeping ${branch_name}: an open PR still uses it."
               continue
             fi
-            if grep -Fxq "${branch_name}" <<< "${merged_refs}" || grep -Fxq "${branch_name}" <<< "${superseded_refs}"; then
+            if grep -Fxq "${branch_name}" <<< "${merged_refs}" || [[ " ${superseded_refs} " == *" ${branch_name} "* ]]; then
               gh api --method DELETE "repos/${REPOSITORY}/git/refs/heads/${branch_name}"
               echo "Deleted obsolete branch: ${branch_name}"
               deleted=$((deleted + 1))
