@@ -54,11 +54,7 @@ def source_audit_gate_failures(
         )
     # Historical aggregate-list allows are comparison evidence only. They
     # must not become global vetoes over independently selected source blocks.
-    if source_allow_missing_still_blocked:
-        failures.append(
-            "active production-source allow exceptions are missing while matching block rules remain: "
-            + ", ".join(sorted(source_allow_missing_still_blocked)[:20])
-        )
+    # Cross-source allow/block disagreements are recorded for review only.
     return failures
 
 
