@@ -229,7 +229,7 @@ def audit_one(rule, resolver, download):
                     else None
                 )
                 if pattern:
-                    action, _base_domain = pattern
+                    action, base_domain = pattern
                     if action == "allow":
                         dns_pattern_allows.add(filt[0])
                         # Pattern allows are tracked separately; their base
