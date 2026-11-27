@@ -1522,7 +1522,8 @@ def main():
                    if dns_pattern_matches_domain(rule, domain)]
             )
             report += f"| {domain} | {', '.join(matches)} |\n"
-    report += f"\n- 当前编译 DNS 输出无法归一化的规则行：{compiled_unparsed} 条；这些行另需结合原始语法审查。\n"
+    report += f"\n- 当前编译输出中通过生产解析器识别的 DNS 通配/类型限定规则：{compiled_dns_pattern_rules} 条；其中无类型限定、可用于主机覆盖判断的通配规则：{len(compiled_dns_pattern_block_rules) + len(compiled_dns_pattern_allow_rules)} 条。\n"
+    report += f"- 当前编译 DNS 输出无法归一化的规则行：{compiled_unparsed} 条；这些行另需结合原始语法审查。\n"
 
     report += "\n### 原作者 OISD 来源快照对基线差异的覆盖\n\n"
     report += "- 上游 README 标注为 OISD Basic 的 release 资产，实际 payload 标题为 OISD Small；本次与正式 OISD Small 快照共享 62,805/62,806 个可解析拦截域名（双方各有 1 个快照差异），不视为独立新增来源。\n"
