@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dns-upstream-diagnostic-${{ github.repository }}
+  group: smartdns-cnnic-forwarding-${{ github.repository }}
   cancel-in-progress: false
 
 env:
