@@ -674,6 +674,7 @@ class BlackList(object):
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
             self.__dns_validation_error_counts = {}
             self.__dns_validation_error_samples = {}
+            self.__dns_validation_error_samples = {}
             now = int(time.time())
             pending_domains = [
                 domain for domain in domainDict.values()
