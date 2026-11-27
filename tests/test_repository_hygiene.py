@@ -120,3 +120,29 @@ def test_git_attributes_enforce_lf_and_preserve_binary_build_outputs():
     assert "* text=auto eol=lf" in attributes
     for extension in ("dat", "mrs", "srs", "zip", "gz", "tar"):
         assert f"*.{extension} binary" in attributes
+
+
+def test_only_the_two_supported_adguard_product_adapters_are_registered():
+    import ast
+
+    app_directory = ROOT / "app"
+    expected_modules = {"__init__.py", "base.py", "adguard.py", "adguardhome.py"}
+    actual_modules = {path.name for path in app_directory.glob("*.py")}
+    assert actual_modules == expected_modules
+
+    filter_tree = ast.parse((ROOT / "filter.py").read_text(encoding="utf-8"))
+    registered = []
+    for node in ast.walk(filter_tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(target, ast.Name) and target.id == "generaterList" for target in node.targets):
+            continue
+        assert isinstance(node.value, ast.List)
+        registered = [
+            element.func.id
+            for element in node.value.elts
+            if isinstance(element, ast.Call) and isinstance(element.func, ast.Name)
+        ]
+        break
+
+    assert registered == ["AdGuard", "AdGuardHome"]
