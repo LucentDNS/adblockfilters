@@ -165,7 +165,7 @@ def test_original_upstream_pics_allow_exception_is_preserved_under_parent_block(
     assert "pics.porn300.com" in entries
 
     instance = Filter.__new__(Filter)
-    white_dict = parse_whitelist(entries)
+    white_dict = parse_whitelist({"pics.porn300.com"})
     assert instance._Filter__getWhiteExceptions(white_dict, ["porn300.com"]) == [
         "pics.porn300.com"
     ]
