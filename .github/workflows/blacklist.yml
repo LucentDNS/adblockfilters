@@ -214,12 +214,37 @@ jobs:
           echo "DNS validation checkpoint fingerprint: $fingerprint"
 
       - name: Restore latest compatible DNS validation checkpoint
+        id: restore_checkpoint
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: domain.db
           key: dns-validation-checkpoint-${{ steps.checkpoint_fingerprint.outputs.value }}-${{ github.run_id }}
           restore-keys: |
             dns-validation-checkpoint-${{ steps.checkpoint_fingerprint.outputs.value }}-
+
+      # One-time migration only: reuse the last failed run's DB, then policy v6
+      # resets every blocked/inconclusive row while retaining positive cache rows.
+      - name: Restore legacy DNS checkpoint for CNNIC resolver migration
+        id: restore_legacy_checkpoint
+        if: steps.restore_checkpoint.outputs.cache-matched-key == '' && hashFiles('dns-validation-cache-migration.json') != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: domain.db
+          key: dns-validation-checkpoint-607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad-migration-${{ github.run_id }}
+          restore-keys: |
+            dns-validation-checkpoint-607be62b395b21e84ac38fc65a70a13794f1b55090624f32b6c73e1d38c343ad-
+
+      - name: Verify one-time legacy DNS checkpoint restored
+        if: hashFiles('dns-validation-cache-migration.json') != ''
+        env:
+          MATCHED_KEY: ${{ steps.restore_legacy_checkpoint.outputs.cache-matched-key }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${MATCHED_KEY}" ]]; then
+            echo "::error::One-time resolver migration checkpoint was not restored; refusing a fresh unbounded scan."
+            exit 1
+          fi
+          echo "Restored compatible legacy checkpoint: ${MATCHED_KEY}"
 
       - name: Run DNS validation and generate independent blacklist
         id: generate
@@ -313,6 +338,19 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Remove one-time DNS checkpoint migration marker after successful publication
+        if: success() && hashFiles('dns-validation-cache-migration.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          marker_sha="$(gh api "repos/${REPOSITORY}/contents/dns-validation-cache-migration.json?ref=main" --jq .sha)"
+          gh api --method DELETE "repos/${REPOSITORY}/contents/dns-validation-cache-migration.json" \
+            -f message="Remove completed DNS checkpoint migration marker" \
+            -f sha="${marker_sha}" \
+            -f branch=main
 
       - name: Trigger production rule build after dns-validation-state publication
         env:
