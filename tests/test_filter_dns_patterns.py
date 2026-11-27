@@ -147,6 +147,12 @@ def test_pattern_allow_only_covers_compatible_modifier_scope():
     assert not _pattern_allow_covers_block(
         "@@||ads*.example.com^", "||ads.example.com^"
     )
+    assert _pattern_allow_covers_block(
+        "@@||*.example.com^", "||ads.example.com^"
+    )
+    assert not _pattern_allow_covers_block(
+        "@@||*.example.com^", "||example.com^"
+    )
 
 
 def test_get_filters_keeps_other_sources_block_after_source_local_allow(tmp_path):
