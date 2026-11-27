@@ -91,12 +91,14 @@ def main() -> int:
     }
     errors: dict[int, Counter[str]] = {port: Counter() for port in PORTS}
     error_samples: dict[int, list[str]] = {port: [] for port in PORTS}
+    per_domain_status: dict[str, list[tuple[int, str, str]]] = {domain: [] for domain in domains}
     with ThreadPoolExecutor(max_workers=60) as pool:
         futures = [pool.submit(inspect_one, domain, port) for domain, port in jobs]
         for future in as_completed(futures):
             domain, port, a_status, a_error, aaaa_status, aaaa_error = future.result()
             per_query[port]["A"][a_status] += 1
             per_query[port]["AAAA"][aaaa_status] += 1
+            per_domain_status[domain].append((port, a_status, aaaa_status))
             for rdtype, status, detail in (("A", a_status, a_error), ("AAAA", aaaa_status, aaaa_error)):
                 if detail:
                     errors[port][f"{rdtype}:{detail[:180]}"] += 1
@@ -111,6 +113,23 @@ def main() -> int:
             else:
                 pair = "inconclusive_or_mixed"
             per_port[port][pair] += 1
+
+    no_nameserver_fanout: Counter[int] = Counter()
+    cross_provider: Counter[str] = Counter()
+    for domain, results in per_domain_status.items():
+        no_nameserver_fanout[sum(a == "no_nameservers" or aaaa == "no_nameservers" for _, a, aaaa in results)] += 1
+        statuses = [status for _, a, aaaa in results for status in (a, aaaa)]
+        if "answer" in statuses:
+            cross_provider["has_address_from_any_provider"] += 1
+        elif all(status == "nxdomain" for status in statuses):
+            cross_provider["all_12_queries_nxdomain"] += 1
+        elif all(status == "nodata" for status in statuses):
+            cross_provider["all_12_queries_nodata"] += 1
+        else:
+            cross_provider["mixed_or_inconclusive"] += 1
+
+    print(f"\nCross-provider summary: {dict(sorted(cross_provider.items()))}")
+    print(f"Domains with NoNameservers from N providers: {dict(sorted(no_nameserver_fanout.items()))}")
 
     for port in PORTS:
         print(f"\nPORT {port}")
