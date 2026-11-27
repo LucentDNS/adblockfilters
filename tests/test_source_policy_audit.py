@@ -60,3 +60,17 @@ def test_targeted_source_support_is_reported_separately():
     )
     assert result["targeted_supported"] == {"ads.example.com"}
     assert result["strict_only_review"] == set()
+
+
+def test_other_reference_candidate_support_is_separate_from_targeted_support():
+    result = classify_strict_domains(
+        {"ads.example.com"},
+        set(),
+        set(),
+        set(),
+        set(),
+        {"example.com"},
+    )
+    assert result["other_reference_supported"] == {"ads.example.com"}
+    assert result["targeted_supported"] == set()
+    assert result["strict_only_review"] == set()
