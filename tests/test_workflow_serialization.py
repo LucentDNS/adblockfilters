@@ -121,3 +121,14 @@ def test_obsolete_branch_cleanup_runs_before_build_setup():
     assert workflow.index("Remove merged and superseded work branches") < workflow.index(
         "- name: Prepare deterministic domestic Lite inputs"
     )
+
+
+
+def test_source_allow_regression_report_is_published_and_closed_superseded_branches_are_pruned():
+    workflow = (WORKFLOWS / "update.yml").read_text(encoding="utf-8")
+    assert ".cache/audit/source-allow-conflicts-still-blocked.txt" in workflow
+    cleanup = workflow.split(
+        "- name: Remove merged and superseded work branches", 1
+    )[1].split("- name: Setup Python", 1)[0]
+    assert "audit-supported-dns-patterns-and-preserve-upstream-allow" in cleanup
+    assert "fix/verified-lite-scope-and-source-allow-audit" in cleanup
