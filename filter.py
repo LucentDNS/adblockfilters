@@ -99,6 +99,33 @@ def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklis
     )
 
 
+def _apply_source_local_allows(block_dict, allow_dict):
+    """Apply one upstream's explicit allows only to that same upstream's blocks.
+
+    An allow for example.com also protects its descendants within this source,
+    but must never veto a block contributed by another source.
+    """
+    allowed = set()
+    for suffix, subdomains in allow_dict.items():
+        for subdomain in subdomains:
+            domain = (f"{subdomain}.{suffix}" if subdomain else suffix).strip(".").lower()
+            if domain:
+                allowed.add(domain)
+
+    filtered = {}
+    for suffix, subdomains in block_dict.items():
+        kept = set()
+        for subdomain in subdomains:
+            domain = (f"{subdomain}.{suffix}" if subdomain else suffix).strip(".").lower()
+            labels = domain.split(".")
+            if any(".".join(labels[index:]) in allowed for index in range(len(labels))):
+                continue
+            kept.add(subdomain)
+        if kept:
+            filtered[suffix] = kept
+    return filtered
+
+
 class Filter(object):
     def __init__(self, ruleList:List[Rule], path:str, outPath:str=None, sourcePath:str=None):
         self.ruleList = ruleList
@@ -124,16 +151,16 @@ class Filter(object):
         for rule in self.ruleList:
             logger.info("resolve %s..."%(rule.name))
             if rule.type == "host":
-                taskList.append(("domain", thread_pool.submit(resolver.resolveHost, rule)))
+                taskList.append(("domain", rule, thread_pool.submit(resolver.resolveHost, rule)))
             if rule.type == "dns":
-                taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
+                taskList.append(("domain", rule, thread_pool.submit(resolver.resolveDNS, rule)))
             if rule.type == "dnsfilter":
-                taskList.append(("domain", thread_pool.submit(resolver.resolveFilter, rule)))
+                taskList.append(("domain", rule, thread_pool.submit(resolver.resolveFilter, rule)))
             if rule.type == "filter":
-                taskList.append(("filter", thread_pool.submit(resolver.resolveFilter, rule)))
-        # 添加用户维护的补充 DNS 规则
+                taskList.append(("filter", rule, thread_pool.submit(resolver.resolveFilter, rule)))
+        # 添加用户维护的补充 DNS 规则；它是独立来源，不继承任何上游 allow。
         rule = Rule("myblock", "dns", "", "")
-        taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
+        taskList.append(("domain", rule, thread_pool.submit(resolver.resolveDNS, rule)))
 
         # 获取解析结果
         blockDict:Dict[str,Set[str]] = dict()
@@ -141,11 +168,16 @@ class Filter(object):
         filterDict:Dict[str,str] = dict()
         dnsPatternBlockMap:Dict[str,str] = dict()
         dnsPatternAllowMap:Dict[str,str] = dict()
-        for source_type, future in taskList:
+        for source_type, rule, future in taskList:
             __blockDict,__unblockDict,__filterDict = future.result()
             if source_type == "domain":
+                # Upstream allows are scoped to their own source. Never merge them
+                # into the project-wide unblock set: doing so lets source A silently
+                # cancel source B's independent block decision.
+                if rule.type in {"dns", "dnsfilter"}:
+                    __blockDict = _apply_source_local_allows(__blockDict, __unblockDict)
+                    __unblockDict = {}
                 blockDict = dictadd(blockDict, __blockDict)
-                unblockDict = dictadd(unblockDict, __unblockDict)
                 for filter_rule, domain in __filterDict.items():
                     pattern = resolver.resolveDNSPattern(filter_rule)
                     if pattern:
