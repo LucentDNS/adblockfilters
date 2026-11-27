@@ -77,6 +77,13 @@
       "family": "awavenue",
       "role": "production",
       "rationale": "Advertising-focused source; evidence is reported separately from stability references."
+    },
+    {
+      "name": "CHN: AdRules DNS List (AdGuard Registry candidate only)",
+      "style": "other_reference",
+      "family": "chn-adrules",
+      "role": "candidate",
+      "rationale": "Chinese DNS-list benchmark only; kept separate from stability and strict-source evidence."
     }
   ]
 }
