@@ -125,7 +125,7 @@ def generate_china_list(domain_dir: str | Path) -> dict:
         "direct_rules_url": DIRECT_RULES_URL,
         "direct_rules_sha256": hashlib.sha256(direct_bytes).hexdigest(),
         "current_source_domain_count": len(domains),
-        "direct_classified_domain_count": len(direct),
+        "direct_classified_domain_count": len(china),
         "china_classified_domain_count": len(china),
         "china_file_sha256": hashlib.sha256(china_file.read_bytes()).hexdigest(),
     }
