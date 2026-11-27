@@ -16,14 +16,14 @@
       "rationale": "Strict-oriented upstream reference; unique coverage is isolated for review, not automatically promoted."
     },
     {
-      "name": "HaGeZi Pro",
+      "name": "HaGeZi Pro (AdGuard Registry benchmark against Pro Mini)",
       "style": "strict",
       "family": "hagezi",
       "role": "candidate",
       "rationale": "Same upstream family as HaGeZi DNS-Blocklists; never counted as independent corroboration."
     },
     {
-      "name": "HaGeZi Normal",
+      "name": "HaGeZi Normal (AdGuard Registry benchmark against Pro Mini)",
       "style": "strict",
       "family": "hagezi",
       "role": "candidate",
