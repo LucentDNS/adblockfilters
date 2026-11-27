@@ -70,7 +70,7 @@
     {
       "name": "anti-AD (AdGuard DNS rules)",
       "type": "dnsfilter",
-      "url": "https://anti-ad.net/adguard.txt",
+      "url": "https://anti-ad.net/easylist.txt",
       "latest": "2026/11/26"
     }
   ]
