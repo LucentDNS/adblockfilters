@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/diagnose-dns.yml"
       - "scripts/diagnose_dns_upstreams.py"
+      - "scripts/diagnose_smartdns_cnnic.py"
 
 permissions:
   contents: read
@@ -64,6 +65,18 @@ jobs:
           test -n "$SMARTDNS_BIN"
           chmod +x "$SMARTDNS_BIN"
           cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
+          sed -i 's/^log-num 0$/log-level debug\nlog-num 1000/' "$SMARTDNS_PATH/smartdns.conf"
+          cat >> "$SMARTDNS_PATH/smartdns.conf" <<'EOF'
+          # Diagnostic-only CNNIC forwarding variants; never used in production.
+          bind 127.0.0.1:5059 -group diagnostic_bootstrap -no-rule-addr -no-rule-nameserver -no-dualstack-selection -no-speed-check -no-cache
+          bind 127.0.0.1:5060 -group diagnostic_ecs -no-rule-addr -no-rule-nameserver -no-dualstack-selection -no-speed-check -no-cache
+          bind 127.0.0.1:5061 -group diagnostic_bootstrap_ecs -no-rule-addr -no-rule-nameserver -no-dualstack-selection -no-speed-check -no-cache
+          bind 127.0.0.1:5062 -group diagnostic_default_group -no-rule-addr -no-rule-nameserver -no-dualstack-selection -no-speed-check -no-cache
+          server 1.2.4.8 -group diagnostic_bootstrap -exclude-default-group -bootstrap-dns
+          server 1.2.4.8 -group diagnostic_ecs -exclude-default-group -subnet 222.66.251.8/32
+          server 1.2.4.8 -group diagnostic_bootstrap_ecs -exclude-default-group -bootstrap-dns -subnet 222.66.251.8/32
+          server 1.2.4.8 -group diagnostic_default_group
+          EOF
           cd "$(dirname "$SMARTDNS_BIN")"
           nohup ./smartdns -f -x -c "$SMARTDNS_PATH/smartdns.conf" > "$SMARTDNS_PATH/smartdns.log" 2>&1 &
           SMARTDNS_PID=$!
@@ -74,7 +87,7 @@ jobs:
               exit 1
             fi
             listeners_ready=1
-            for port in 5053 5054 5055 5056 5057 5058; do
+            for port in 5053 5054 5055 5056 5057 5058 5059 5060 5061 5062; do
               if ! ss -H -lun | grep -Eq "127\\.0\\.0\\.1:$port([[:space:]]|$)"; then
                 listeners_ready=0
                 break
@@ -85,17 +98,27 @@ jobs:
           done
           test "$ready" = "1" || { cat "$SMARTDNS_PATH/smartdns.log"; exit 1; }
 
-      - name: Diagnose response types per upstream
+      - name: Diagnose CNNIC forwarding variants through SmartDNS
         run: |
           set -euo pipefail
-          python -m py_compile scripts/diagnose_dns_upstreams.py
-          python scripts/diagnose_dns_upstreams.py --sample-size 500 2>&1 | tee dns-upstream-diagnostic.log
+          python -m py_compile scripts/diagnose_smartdns_cnnic.py
+          python scripts/diagnose_smartdns_cnnic.py 2>&1 | tee dns-cnnic-smartdns-diagnostic.log
+
+      - name: Capture SmartDNS debug log
+        if: always()
+        run: |
+          if [ -f "$SMARTDNS_PATH/smartdns.log" ]; then
+            cp "$SMARTDNS_PATH/smartdns.log" smartdns-debug.log
+            tail -n 300 "$SMARTDNS_PATH/smartdns.log"
+          fi
 
       - name: Upload diagnostic report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dns-upstream-diagnostic-${{ github.run_id }}
-          path: dns-upstream-diagnostic.log
+          path: |
+            dns-cnnic-smartdns-diagnostic.log
+            smartdns-debug.log
           if-no-files-found: warn
           retention-days: 30
