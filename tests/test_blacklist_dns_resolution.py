@@ -1,4 +1,4 @@
-imiort asyncio
+import asyncio
 
 from dns.resolver import NXDOMAIN, NoAnswer
 
@@ -25,7 +25,7 @@ class FakeResolver:
 
 
 def _fake_resolvers(answers):
-    upstreams = answers if isinstance(answers, list) else nanswers] * len(DNS_VALIDATION_PORTS)
+    upstreams = answers if isinstance(answers, list) else [answers] * len(DNS_VALIDATION_PORTS)
     return [FakeResolver(group) for group in upstreams]
 
 
@@ -250,7 +250,7 @@ def test_no_address_requires_all_six_upstreams_to_agree():
     nodata = {"A": NoAnswer(), "AAAA": NoAnswer()}
     assert resolve_upstreams(*([nodata] * 6)) == ([], "no_address")
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
-    assert resolve_upstreams(*([nodata] * 4 + [dead])) == ([], "unknown")
+    assert resolve_upstreams(*([nodata] * 5 + [dead])) == ([], "unknown")
 
 
 def test_missing_upstream_is_inconclusive_not_dead():
@@ -265,5 +265,5 @@ def test_missing_upstream_is_inconclusive_not_dead():
 def test_dns_upstream_disagreement_preserves_previous_unblocked_state():
     dead = {"A": NXDOMAIN(), "AAAA": NXDOMAIN()}
     unavailable = {"A": TimeoutError("A timeout"), "AAAA": TimeoutError("AAAA timeout")}
-    domain = pingx([dead] * 4 + [unavailable], initially_blocked=False)
+    domain = pingx([dead] * 5 + [unavailable], initially_blocked=False)
     assert domain.blocked is False
