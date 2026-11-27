@@ -83,7 +83,7 @@
 
 ### 官方列表基准审计（仅候选，不参与正式构建）
 
-项目会对 AdGuard [HostlistsRegistry](https://github.com/AdguardTeam/HostlistsRegistry) 中已收录的 AdRules DNS、OISD Small/Big、1Hosts Lite、HaGeZi Pro/Normal 等列表进行候选源贡献审计。它们目前仅用于比较解析覆盖、与现有来源的重合及潜在增量，不会自动并入正式规则；是否集成还需单独审查误报风险、DNS 验证证据、语法兼容性和许可条件。
+项目会参考 AdGuard [HostlistsRegistry](https://github.com/AdguardTeam/HostlistsRegistry) 的收录实践与成熟规则集，但不以其收录目录作为待集成清单。候选源（例如 AdRules DNS、OISD Small/Big、HaGeZi 不同强度版本等）只用于评估，不会因已被官方收录或规则数量庞大而自动进入正式构建。每个来源必须证明其目标明确、维护活跃、许可允许再分发，并能相对现有来源带来有意义且可解释的增量；还需审查来源内部的误报风险、规则语义、DNS 验证结果、与现有来源的重合及白名单冲突。若增量不足、质量证据不足或许可不清晰，就不集成。正式来源的选择以互补性和整体规则质量为准，而不是来源数量。
 
 ## 反馈与贡献
 
