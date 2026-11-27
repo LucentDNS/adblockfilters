@@ -485,6 +485,8 @@ class BlackList(object):
 
         if not hasattr(self, "_BlackList__dns_validation_error_counts"):
             self.__dns_validation_error_counts = {}
+        if not hasattr(self, "_BlackList__dns_validation_error_samples"):
+            self.__dns_validation_error_samples = {}
 
         async def resolve_one_upstream(dnsresolver):
             resolver_port = str(getattr(dnsresolver, "port", "unknown"))
@@ -673,7 +675,6 @@ class BlackList(object):
             semaphore = asyncio.Semaphore(self.__maxTask)
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
             self.__dns_validation_error_counts = {}
-            self.__dns_validation_error_samples = {}
             self.__dns_validation_error_samples = {}
             now = int(time.time())
             pending_domains = [
