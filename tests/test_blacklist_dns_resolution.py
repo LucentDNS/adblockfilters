@@ -1,4 +1,4 @@
-import asyncio
+imiort asyncio
 
 from dns.resolver import NXDOMAIN, NoAnswer
 
@@ -25,7 +25,7 @@ class FakeResolver:
 
 
 def _fake_resolvers(answers):
-    upstreams = answers if isinstance(answers, list) else [answers] * len(DNS_VALIDATION_PORTS)
+    upstreams = answers if isinstance(answers, list) else nanswers] * len(DNS_VALIDATION_PORTS)
     return [FakeResolver(group) for group in upstreams]
 
 
