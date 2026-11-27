@@ -151,26 +151,19 @@ jobs:
           python -m compileall -q app
           python -m pytest -q tests
 
-      - name: Prepare optional DNS classification inputs
+      - name: Prepare deterministic domestic Lite inputs
         run: |
           set -euo pipefail
           mkdir -p .cache/domain .cache/source
-          # DNS existence checks are auxiliary diagnostics, not production truth.
-          # Never remove upstream rules because a domain was temporarily NXDOMAIN.
+          # DNS liveness is not a production filter decision. Keep the obsolete
+          # negative list empty; do not delete upstream rules based on NXDOMAIN.
           : > .cache/domain/black.txt
-          # Reuse the latest successful domestic classification only to scope Lite.
-          # It cannot remove entries from Full and is never treated as a block decision.
-          if curl --fail --location --silent --show-error --retry 1 --retry-all-errors --connect-timeout 10 --max-time 60 \
-            -o .cache/domain/china.txt \
-            "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/china.txt"; then
-            echo "Using last published DNS-derived domestic classification for Lite scope only."
-          else
-            : > .cache/domain/china.txt
-            echo "::notice::No previous DNS-positive classification is available; the production build will derive a conservative Lite scope from .cn and domestic direct-domain rules."
-          fi
+          # ADBlock.refresh builds china.txt from current .cn and explicit
+          # domestic direct-domain rules after the normalized source domain set exists.
+          : > .cache/domain/china.txt
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
-          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tprevious successful DNS positives are optional enrichment; production rebuilds the baseline from .cn and direct-domain rules\n' > .cache/domain/input-provenance.txt
+          printf 'black.txt\tDNS liveness-based rule deletion disabled\nchina.txt\tgenerated from .cn and domestic direct-domain classification\n' > .cache/domain/input-provenance.txt
 
       - name: Restore previous upstream snapshots for anomaly checks
         env:
