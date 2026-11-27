@@ -6,7 +6,7 @@ def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
 
     config = Path(__file__).parents[1].joinpath("smartdns.conf").read_text(encoding="utf-8")
     groups = (
-        "domestic_dnspod", "domestic_baidu", "domestic_alidns",
+        "domestic_dnspod", "domestic_baidu", "domestic_114dns",
         "global_google", "global_quad9", "global_cloudflare",
     )
     server_prefixes = ("server ", "server-tls ", "server-https ")
@@ -20,7 +20,7 @@ def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
         assert "-exclude-default-group" in servers[0]
 
     for provider in (
-        "119.29.29.29", "180.76.76.76", "223.5.5.5",
+        "119.29.29.29", "180.76.76.76", "114.114.114.114",
         "8.8.8.8", "9.9.9.10", "1.1.1.1",
     ):
         assert provider in config
@@ -30,7 +30,6 @@ def test_dns_validation_uses_six_isolated_non_filtering_upstreams():
     assert "-force-aaaa-soa" not in config
     assert "9.9.9.11" not in config
     assert "101.226.4.6" not in config
-    assert "114.114.114.114" not in config
     assert "180.184.1.1" not in config
 
 def test_dns_validation_constructs_six_smartdns_resolvers(monkeypatch):
