@@ -93,22 +93,8 @@
 
 ## 许可与归属
 
-项目仓库级代码许可证为 [GPL-3.0](LICENSE)，与本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生的代码基础一致。该许可证声明不应被理解为把所有第三方规则数据统一改许可；上游规则及其原始归属、版权声明和许可条件仍须分别遵守。
+项目仓库级代码许可证为 [GPL-3.0](LICENSE)。这不意味着所有第三方规则数据都被统一改许可；每个上游来源仍保留其自身许可证、版权声明和再分发条件。
 
-当前来源清单中可核对的上游仓库/发布方许可信息如下。这里列出的是上游仓库或发布方公开声明，不代表对每一条规则的版权来源作出独立法律鉴定；如具体文件附有不同声明，应以该文件及其上游说明为准。
+**完整来源许可矩阵、上游证据链接和随发布产物提供的许可证副本，见 [第三方来源许可与归属说明](THIRD-PARTY-NOTICES.md) 及机器可读的 [source-licenses.json](source-licenses.json)。** 当前正式 DNS/Hosts 来源包括 GPL-3.0、MIT 与 MPL-2.0 来源；浏览器补充来源还包括 LGPL-3.0 与 EasyList 的双许可来源。候选源不会自动并入正式订阅；CHN AdRules 的生成规则包含混合上游许可，因此只保留比较统计，不公开分发其提取域名文件。
 
-| 上游来源 | 公开许可信息 |
-|---|---|
-| AdGuard Base / Chinese（FiltersRegistry） | [LGPL-3.0](https://github.com/AdguardTeam/FiltersRegistry/blob/master/LICENSE) |
-| AdGuard Mobile Ads（AdguardFilters） | [GPL-3.0](https://github.com/AdguardTeam/AdguardFilters/blob/master/LICENSE) |
-| AdGuard DNS filter | [GPL-3.0](https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE) |
-| CJX's Annoyance List | [LGPL-3.0](https://github.com/cjx82630/cjxlist)（以该仓库当前许可声明为准） |
-| EasyList / EasyPrivacy | [GPL-3.0-or-later 或 CC BY-SA 3.0-or-later](https://easylist.to/pages/licence.html) |
-| EasyList China | 独立托管的列表；不得仅凭名称推定与 EasyList 主列表许可完全相同，应核对发布方对该文件的具体条款 |
-| AWAvenue Ads Rule | [GPL-3.0](https://github.com/TG-Twilight/AWAvenue-Ads-Rule/blob/main/LICENSE) |
-| anti-AD | [MIT](https://github.com/privacy-protection-tools/anti-AD/blob/master/LICENSE) |
-| 1Hosts | [MPL-2.0](https://github.com/badmojr/1Hosts/blob/master/LICENSE) |
-| HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
-| StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |
-
-AdRules、Anti-AD、OISD 与 1Hosts 等候选列表当前不在本项目的 `sources.json` 中，因此不属于正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
+构建流程会把适用的许可证文本和第三方归属说明一并放入 `source` 快照 Release 与 `dist` 订阅分支。来源许可发生变化时，必须同步更新许可清单并通过审计；无法确认再分发条件的来源不得加入正式发布。许可说明用于归属和合规记录，不构成法律意见。

@@ -27,6 +27,10 @@ on:
       - "scripts/verify_critical_domains.py"
       - "scripts/audit_sources.py"
       - "source-policy.json"
+      - "source-licenses.json"
+      - "licenses/**"
+      - "THIRD-PARTY-NOTICES.md"
+      - "scripts/build_licenses.py"
       - ".github/workflows/update.yml"
   # DNS-state workflow validates and publishes fresh state before dispatching production builds.
   # README subscription validation accepts descriptive link labels; tests run in audit-sources.yml.
@@ -185,6 +189,9 @@ jobs:
           rm -rf __pycache__
           rm -rf app/__pycache__
           echo "message=$(date)" >> $GITHUB_OUTPUT
+
+      - name: Package third-party licenses with published artifacts
+        run: python scripts/build_licenses.py --out-dir .cache/out --source-dir .cache/source
 
       - name: Set up Node.js for AdGuard DNS syntax validation
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -393,9 +400,18 @@ jobs:
           }
           if not output.is_dir():
               raise SystemExit("Compiled output directory is missing")
+          license_artifacts = {
+              "LICENSE-GPL-3.0.txt",
+              "LICENSE-LGPL-3.0.txt",
+              "LICENSE-MIT-anti-AD.txt",
+              "LICENSE-MIT-StevenBlack.txt",
+              "LICENSE-MPL-2.0-1Hosts.txt",
+              "THIRD-PARTY-NOTICES.md",
+              "source-licenses.json",
+          }
           actual = {path.name for path in output.iterdir() if path.is_file()}
-          missing = sorted(expected - actual)
-          unexpected = sorted(actual - expected)
+          missing = sorted((expected | license_artifacts) - actual)
+          unexpected = sorted(actual - expected - license_artifacts)
           empty = sorted(name for name in expected & actual if (output / name).stat().st_size == 0)
           if missing or unexpected or empty:
               raise SystemExit(

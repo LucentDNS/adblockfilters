@@ -472,12 +472,28 @@ def main():
     production_names = {rule.name for rule in production_rules}
     browser_names = {rule.name for rule in browser_rules}
     candidate_names = {rule.name for rule in candidate_rules}
+    license_manifest = json.loads((ROOT / "source-licenses.json").read_text(encoding="utf-8"))
+    license_records = {item["name"]: item for item in license_manifest["sources"]}
+    if not candidate_names.issubset(license_records):
+        raise ValueError("source-licenses.json is missing candidate source records")
+    nonredistributable_candidate_names = {
+        name for name in candidate_names
+        if not license_records[name].get("redistribute_audit_data", False)
+    }
     downloads = asyncio.run(download_all(rules, candidate_names))
     resolver = Resolver(str(SOURCE_DIR))
     results, domain_sets, allow_sets = [], {}, {}
 
     for rule in rules:
         row, domains, allows = audit_one(rule, resolver, downloads.get(rule.name, {}))
+        if rule.name in nonredistributable_candidate_names:
+            # Keep aggregate counts and overlap metrics, but do not redistribute
+            # normalized domain data from mixed/unclear-license candidate lists.
+            source_path = Path(downloads.get(rule.name, {}).get("path", ""))
+            if source_path.is_file():
+                source_path.unlink()
+            for field in ("samples_unparsed", "samples_filter_domain_unresolved", "samples_dns_patterns"):
+                row[field] = []
         if rule.name in production_names:
             row["role"] = "正式 DNS/Hosts 来源"
         elif rule.name in browser_names:
@@ -665,6 +681,8 @@ def main():
     allow_dir.mkdir(parents=True, exist_ok=True)
     for row in results:
         name = row["name"]
+        if name in nonredistributable_candidate_names:
+            continue
         own = domain_sets.get(name, set())
         if name in production_names:
             other_sets = [domains for other, domains in production_sets.items() if other != name]
@@ -745,6 +763,7 @@ def main():
     report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\n"
     report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把重点复核来源候选并入正式规则。\n"
     report += "- 上游谱系证据按公开文档分级记录；致谢不等于当前实际集成，来源重合不构成独立投票。\n"
+    report += "- CHN AdRules 候选源含混合上游许可，本项目只保留汇总统计，不在公开审计产物中分发其提取域名文件。\n"
     for evidence in policy.get("lineage_evidence", []):
         report += f"- {evidence.get('source', 'Unknown')}: {evidence.get('relation', 'unspecified')} — {evidence.get('evidence_url', '')}。{evidence.get('interpretation', '')}\n"
     report += "\n## 项目白名单当前来源覆盖审计\n\n"
