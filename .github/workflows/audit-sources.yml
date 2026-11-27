@@ -97,7 +97,7 @@ jobs:
               passed = len(positive) >= 2 and len(negative) == 2
               print(f"RESOLVER_PROBE {name} {address} positive={positive} negative={negative} result={'PASS' if passed else 'FAIL'}")
           PY
-      - name: Compare candidate resolvers against a real DNS-validation sample
+      - name: Compare candidate resolvers against unresolved domains with detailed errors
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -119,17 +119,17 @@ jobs:
                   ).fetchall()
               ]
           if len(domains) < 50:
-              raise SystemExit(f"Insufficient DNS validation sample: {len(domains)}")
+              raise SystemExit(f"Insufficient unresolved DNS validation sample: {len(domains)}")
 
           candidates = {
-              "AliDNS-223.6.6.6": "223.6.6.6",
+              "AliDNS-primary-223.5.5.5": "223.5.5.5",
+              "AliDNS-secondary-223.6.6.6": "223.6.6.6",
               "114DNS-114.114.114.114": "114.114.114.114",
-              "ByteDance-180.184.1.1": "180.184.1.1",
-              "CNNIC-210.2.4.8": "210.2.4.8",
           }
 
           def inspect(address, domain):
               statuses = []
+              details = []
               for rdtype in ("A", "AAAA"):
                   resolver = dns.resolver.Resolver(configure=False)
                   resolver.nameservers = [address]
@@ -143,10 +143,12 @@ jobs:
                       statuses.append("nxdomain")
                   except NoAnswer:
                       statuses.append("no_answer")
-                  except NoNameservers:
+                  except NoNameservers as exc:
                       statuses.append("no_nameservers")
+                      details.append(f"{rdtype}:NoNameservers:{str(exc)[:220]}")
                   except Exception as exc:
                       statuses.append(type(exc).__name__)
+                      details.append(f"{rdtype}:{type(exc).__name__}:{str(exc)[:220]}")
               if "answer" in statuses:
                   outcome = "resolved"
               elif statuses == ["nxdomain", "nxdomain"]:
@@ -155,25 +157,30 @@ jobs:
                   outcome = "no_address"
               else:
                   outcome = "unknown"
-              return outcome, statuses
+              return outcome, statuses, details
 
           for name, address in candidates.items():
               outcomes = Counter()
               a_statuses = Counter()
               aaaa_statuses = Counter()
-              with ThreadPoolExecutor(max_workers=64) as pool:
+              error_examples = []
+              with ThreadPoolExecutor(max_workers=100) as pool:
                   futures = [pool.submit(inspect, address, domain) for domain in domains]
                   for future in as_completed(futures):
-                      outcome, statuses = future.result()
+                      outcome, statuses, details = future.result()
                       outcomes[outcome] += 1
                       a_statuses[statuses[0]] += 1
                       aaaa_statuses[statuses[1]] += 1
+                      if details and len(error_examples) < 8:
+                          error_examples.extend(details[: 8 - len(error_examples)])
               print(
                   f"REAL_SAMPLE {name} {address} n={len(domains)} "
                   f"outcomes={dict(sorted(outcomes.items()))} "
                   f"A={dict(sorted(a_statuses.items()))} "
                   f"AAAA={dict(sorted(aaaa_statuses.items()))}"
               )
+              for example in error_examples:
+                  print(f"  ERROR_SAMPLE {name} {example}")
           PY
       - name: Static analysis
         run: |
