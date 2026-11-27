@@ -37,6 +37,9 @@ on:
       - "sources.json"
       - "rules/myblock.txt"
       - "updater.py"
+      - "resolver.py"
+      - "readme.py"
+      - "requirements.txt"
   # DNS diagnostics never dispatch or gate production builds.
   workflow_dispatch:
 
