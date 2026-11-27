@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "strict_review_sources": [
+  "review_focus_sources": [
     "HaGeZi DNS-Blocklists"
   ],
   "comparison_sources": [
@@ -10,5 +10,45 @@
     "anti-AD (AdGuard DNS rules)",
     "1Hosts (Lite)"
   ],
-  "policy_note": "These are operational audit groups, not claims that all comparison sources share one philosophy or that source overlap proves independence. Strict-source-only domains remain review candidates and are never automatically added to production output. Upstream lineage and author intent require separate evidence-based review."
+  "policy_note": "The selected HaGeZi source is Pro Mini. HaGeZi describes the Pro tier as Balanced with low-to-moderate breakage risk; this project therefore treats it as a review-focus source, not as an author-defined strict/aggressive tier. Comparison memberships are descriptive only and are not independent votes.",
+  "lineage_evidence": [
+    {
+      "source": "HaGeZi DNS-Blocklists",
+      "relation": "declared_upstream_inputs",
+      "evidence_url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/sources.md",
+      "mentions": [
+        "AdGuard DNS filter",
+        "AWAvenue Ads Rule",
+        "1Hosts Lite",
+        "OISD Big",
+        "EasyList",
+        "EasyPrivacy"
+      ],
+      "interpretation": "The HaGeZi source catalogue lists these as build inputs; this does not mean every listed rule is copied into Pro Mini."
+    },
+    {
+      "source": "1Hosts (Lite)",
+      "relation": "contributor_input_catalogue",
+      "evidence_url": "https://raw.githubusercontent.com/badmojr/1Hosts/master/-data/lists/assets.txt",
+      "mentions": [
+        "HaGeZi Pro",
+        "AWAvenue Ads Rule",
+        "StevenBlack hosts",
+        "OISD Big"
+      ],
+      "interpretation": "The 1Hosts contributor/input catalogue contains these upstream URLs; the catalogue alone does not prove each entry survives into the Lite output."
+    },
+    {
+      "source": "anti-AD",
+      "relation": "acknowledgements_not_verified_active_inputs",
+      "evidence_url": "https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/README.md",
+      "mentions": [
+        "AWAvenue Ads Rule",
+        "AdGuard filters",
+        "EasyList",
+        "notracking"
+      ],
+      "interpretation": "These appear in the project's acknowledgements; do not treat acknowledgements as proof of current active ingestion."
+    }
+  ]
 }
