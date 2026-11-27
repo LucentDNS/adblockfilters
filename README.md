@@ -12,19 +12,19 @@
 
 ## 订阅
 
-提供 **Full** 与 **Lite** 两种版本，共 35 个订阅文件。建议使用下表中的 Raw 链接。
+提供 **Full** 与 **Lite** 两种版本，共 4 个正式订阅文件。建议使用下表中的 Raw 链接。
 
 | 目标产品 | Full | Lite |
 |---|---|---|
 | AdGuard DNS / AdGuard Home | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdns.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockdnslite.txt) |
 | AdGuard 浏览器扩展（补充规则） | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockfilters.txt) | [订阅](https://raw.githubusercontent.com/LucentDNS/adblockfilters/dist/adblockfilterslite.txt) |
 
-本项目不会仅因某一次 DNS 查询失败就删除上游规则中的域名。DNS 验证由国内 3 个、国际 3 个共 6 个独立上游共同完成：只有当 6 个上游对域名的 A、AAAA 查询均返回 NXDOMAIN 时，才将该域名判定为不存在并从有效规则中排除。只要任一上游返回有效地址，域名就保留；NODATA、超时、SERVFAIL 或上游结果不一致均视为证据不足，不据此删除域名。这一步只做 DNS 存活性清理：它只识别有充分 DNS 证据表明已经不存在的域名，**不检测、不判断、也不自动修复误拦截**。个别域名确认死亡时只剔除该域名，其余规则继续处理；若验证结果显示 DNS 基础设施整体退化（例如大量查询持续出现不确定结果），则阻断本轮 DNS 状态发布及后续正式构建，而不是把服务故障当成域名死亡。验证使用国内 3 个、国际 3 个共 6 个独立上游，六组上游并行验证，并发上限为 100；每轮会保存 DNS 查询摘要、输入来源信息和分类结果为 GitHub Actions artifact，保留 30 天，便于追查清理依据。
+正式规则构建不执行全量 DNS 存活性筛选，也不会因 NXDOMAIN、NODATA、超时或 SERVFAIL 自动删除上游作者维护的规则。Full 保留经来源解析、语法兼容、冲突与白名单治理后的规则；Lite 只按明确的国内分类数据选择已有 DNS 规则。DNS 解析状态不等于规则价值：域名暂时不可解析，不代表它不再需要拦截；语法校验也不等于误报判断。
 
-- **Full**：包含通过上述 DNS 有效性验证、并经规则处理流程保留的完整规则范围。
-- **Lite**：在域名规则基础上，进一步依据国内域名识别数据筛选；识别依据包括国内直连域名规则及中国 IPv4 地址段。它不是简单按数量截短规则，也不是随意删减规则。对于浏览器过滤规则，Lite 按规则关联域名及规则自身的匹配范围筛选，并保留原有匹配语义。
+- **Full**：包含所选上游 DNS/Hosts 来源经解析、规范化、冲突处理与白名单治理后保留的完整规则范围，不按 DNS 存活状态删减上游规则。
+- **Lite**：DNS 域名规则按 `.cn` 域名及国内直连域名规则（`full:`、`domain:`）进行保守分类，不依赖全量 DNS 存活验证。分类数据来自 [217heidai RoutingRules direct.txt](https://raw.githubusercontent.com/217heidai/RoutingRules/main/rules/direct.txt)，仅作国内范围识别，不作为广告拦截规则来源。未被分类为国内的域名不会自动当作失效规则删除。浏览器过滤规则按规则关联域名及规则自身匹配范围筛选，并保留原有匹配语义。
 
-浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。DNS Full/Lite 使用 AdGuard Home 的 Adblock-style 域名语法（例如 `||example.com^`、`@@||example.com^`），每次构建都会使用 AdGuard 官方 [Hostlist Compiler](https://github.com/AdguardTeam/HostlistCompiler) v2.1.1 对两个 DNS 产物执行 `Validate` 与 `Deduplicate` 独立校验；如果编译器删除、改写规则，或发现重复规则，校验就会失败，阻止本轮正式发布。**这项检查验证的是 DNS 列表语法和编译器兼容性，不代表自动判断了域名是否真是广告/跟踪，也不代表已经排除了误拦截。** 请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。规则编写参考 [AdGuard 官方指南](https://adguard.com/kb/general/ad-filtering/create-own-filters/)。DNS 主机名规则只保留作用范围固定在已知注册域名之下的模式；通配注册域/TLD 的宽泛模式、正则规则，以及需要特殊上下文或规则集级处理的修饰符不进入 DNS 输出。对于 AdGuard Home 支持且可原样保留的 `$dnstype`，项目保留原始规则及其记录类型限制，不将其改写成无条件拦截。通配模式不是可直接查询的完整域名，因此不做 A/AAAA 存活性探测，只接受语法校验；Lite 仅保留其固定注册域名命中国内域名集合的模式。通配模式只输出到 AdGuard DNS Full/Lite 订阅；浏览器补充规则则保留其自身支持的过滤语法。
+浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。DNS Full/Lite 使用 AdGuard Home 的 Adblock-style 域名语法（例如 `||example.com^`、`@@||example.com^`），每次构建都会使用 AdGuard 官方 [Hostlist Compiler](https://github.com/AdguardTeam/HostlistCompiler) v2.1.1 对两个 DNS 产物执行 `Validate` 与 `Deduplicate` 独立校验；如果编译器移除或改写拦截规则，或发现重复规则，校验就会失败，阻止本轮正式发布；独立且在当前列表内冗余的放行例外可被编译器规范化移除，但正式订阅仍保留原始放行规则。**这项检查验证的是 DNS 列表语法和编译器兼容性，不代表自动判断了域名是否真是广告/跟踪，也不代表已经排除了误拦截。** 请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。规则编写参考 [AdGuard 官方指南](https://adguard.com/kb/general/ad-filtering/create-own-filters/)。DNS 主机名规则只保留作用范围固定在已知注册域名之下的模式；通配注册域/TLD 的宽泛模式、正则规则，以及需要特殊上下文或规则集级处理的修饰符不进入 DNS 输出。对于 AdGuard Home 支持且可原样保留的 `$dnstype`，项目保留原始规则及其记录类型限制，不将其改写成无条件拦截。通配模式不是可直接查询的完整域名，因此不做 A/AAAA 存活性探测，只接受语法校验；Lite 仅保留其固定注册域名命中国内分类集合的模式。通配模式只输出到 AdGuard DNS Full/Lite 订阅；浏览器补充规则则保留其自身支持的过滤语法。
 
 ## 白名单与误报处理
 

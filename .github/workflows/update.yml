@@ -23,6 +23,7 @@ on:
       - "rules/filter-exclude.txt"
       - "rules/white.txt"
       - "scripts/compare_baseline.py"
+      - "scripts/generate_china_list.py"
       - "scripts/check_source_anomalies.py"
       - "scripts/verify_hostlist_compiler.py"
       - "scripts/verify_critical_domains.py"
@@ -146,30 +147,23 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/generate_china_list.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py
           python -m compileall -q app
           python -m pytest -q tests
 
-      - name: Prepare optional DNS classification inputs
+      - name: Prepare deterministic domestic Lite inputs
         run: |
           set -euo pipefail
           mkdir -p .cache/domain .cache/source
-          # DNS existence checks are auxiliary diagnostics, not production truth.
-          # Never remove upstream rules because a domain was temporarily NXDOMAIN.
+          # DNS liveness is not a production filter decision. Keep the obsolete
+          # negative list empty; do not delete upstream rules based on NXDOMAIN.
           : > .cache/domain/black.txt
-          # Reuse the latest successful domestic classification only to scope Lite.
-          # It cannot remove entries from Full and is never treated as a block decision.
-          if curl --fail --location --silent --show-error --retry 1 --retry-all-errors --connect-timeout 10 --max-time 60 \
-            -o .cache/domain/china.txt \
-            "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/china.txt"; then
-            echo "Using last published DNS-derived domestic classification for Lite scope only."
-          else
-            : > .cache/domain/china.txt
-            echo "::warning::No previous domestic classification is available; Lite will use an empty DNS-derived China scope for this build."
-          fi
+          # ADBlock.refresh builds china.txt from current .cn and explicit
+          # domestic direct-domain rules after the normalized source domain set exists.
+          : > .cache/domain/china.txt
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
-          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tlast-known auxiliary Lite classification only\n' > .cache/domain/input-provenance.txt
+          printf 'black.txt\tDNS liveness-based rule deletion disabled\nchina.txt\tgenerated from .cn and domestic direct-domain classification\n' > .cache/domain/input-provenance.txt
 
       - name: Restore previous upstream snapshots for anomaly checks
         env:
@@ -453,11 +447,8 @@ jobs:
             .cache/audit/lite-scope-china-domains-missing.txt
             .cache/audit/lite-scope-rules-not-classified-china.txt
             .cache/audit/lite-scope-unvalidated-source-domains.txt
-            .cache/audit/lite-scope-invizible-known-non-china-covered.txt
-            .cache/audit/lite-scope-invizible-china-domains-missing.txt
-            .cache/audit/lite-scope-invizible-rules-not-classified-china.txt
-            .cache/audit/invizible-allowlist-audit.json
-            .cache/audit/invizible-allowlist-missing.txt
+            .cache/audit/lite-scope-pattern-block-rules.txt
+            .cache/domain/china-classification.json
             .cache/audit/baseline-browser-analysis.json
             .cache/audit/baseline-only-browser-overlap.txt
             .cache/audit/baseline-only-allow-exceptions-still-blocked.txt

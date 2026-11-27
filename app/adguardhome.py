@@ -53,13 +53,13 @@ class AdGuardHome(APPBase):
             if os.path.exists(fileName):
                 os.remove(fileName)
             
-            # Keep the subscription expiry aligned with blacklist.yml's daily 16:43 Beijing-time schedule.
+            # Keep the subscription expiry aligned with update.yml's daily 16:43 Beijing-time build schedule.
             # 生成规则文件
             with open(fileName, 'a') as f:
                 f.write("!\n")
                 if isLite:
                     f.write("! Title: AdBlock DNS Lite\n")
-                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按国内 DNS 识别结果筛选；AdGuard DNS 规则按标准语法匹配该域名及其子域名。\n"%(self.sourceRule))
+                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按 .cn 域名及国内直连域名规则进行保守分类；AdGuard DNS 规则按标准语法匹配该域名及其子域名。\n"%(self.sourceRule))
                     f.write("! Expires: 1 day\n")
                 else:
                     f.write("! Title: AdBlock DNS\n")
