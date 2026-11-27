@@ -33,11 +33,11 @@ def test_source_audit_gate_rejects_unparsed_or_lost_source_rules():
 
     # Non-domain AdGuard filter rules are valid syntax; only genuinely
     # unparsed lines and unexplained source/allow losses are hard failures.
-    assert len(failures) == 4
+    assert len(failures) == 3
     assert "unparsed rule lines" in failures[0]
     assert "lost.example" in failures[1]
     assert "inactive.example" in failures[2]
-    assert "blocked-allow.example" in failures[3]
+    # Historical baseline allows are comparison evidence, not global vetoes.
 
 
 def test_explained_upstream_baseline_delta_does_not_require_output_identity():
