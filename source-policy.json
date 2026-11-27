@@ -12,7 +12,7 @@
     "OISD Blocklist Small (AdGuard Registry candidate only)",
     "OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)"
   ],
-  "policy_note": "The selected HaGeZi source is Pro Mini. HaGeZi describes the Pro tier as Balanced with low-to-moderate breakage risk; this project therefore treats it as a review-focus source, not as an author-defined strict/aggressive tier. Comparison memberships are descriptive only and are not independent votes. OISD Small and Big are included as comparison-only sources because the user's source-philosophy concern explicitly includes OISD; they remain candidate-only and are not production inputs. Their presence is a comparison, not an independent vote.",
+  "policy_note": "The selected HaGeZi source is Pro Mini. HaGeZi describes the Pro tier as Balanced with low-to-moderate breakage risk; this project therefore treats it as a review-focus source, not as an author-defined strict/aggressive tier. Comparison memberships are descriptive only and are not independent votes. OISD Small and Big are included as comparison-only sources because the user's source-philosophy concern explicitly includes OISD; they remain candidate-only and are not production inputs. Their presence is a comparison, not an independent vote. Active production-source explicit allow rules are global compatibility vetoes over conflicting production-source blocks; this favors low false-positive risk over maximum blocking. Candidate-only source allows are audit signals only and never alter production output.",
   "lineage_evidence": [
     {
       "source": "HaGeZi DNS-Blocklists",
@@ -79,5 +79,13 @@
       "philosophy": "Published filtering policy requires sufficient site traffic for site-specific rules and documents exceptions and limitations, including contextual advertising and paywall-related behavior. Absence from the list is not an explicit allow.",
       "evidence_url": "https://adguard.com/kb/general/ad-filtering/filter-policy/"
     }
-  ]
+  ],
+  "conflict_resolution": {
+    "active_production_source_allow": "global_compatibility_veto",
+    "candidate_only_source_allow": "audit_only_no_effect_on_production",
+    "rationale": "An explicit allow published by an active production DNS/Hosts maintainer is treated as a compatibility exception across the merged output. It overrides overlapping block rules from other active production sources. This intentionally favors avoiding false positives over maximum ad/tracker coverage.",
+    "audit_requirement": "Every active production-source allow that overlaps a compiled block must remain effective in the compiled Full output; any missing effective allow is a hard build failure.",
+    "project_whitelist": "Project-maintained whitelist remains an additional global compatibility exception.",
+    "non_claim": "This policy does not treat source absence as an allow decision and does not claim upstream source independence."
+  }
 }
