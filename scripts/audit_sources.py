@@ -419,22 +419,22 @@ def domains_overlap(left, right):
     return left == right or left.endswith("." + right) or right.endswith("." + left)
 
 
-def classify_strict_source_candidates(strict_blocks, comparison_blocks, comparison_allows, whitelist):
-    """Separate strict-only candidates from explicit cross-source allow conflicts.
+def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, comparison_allows, whitelist):
+    """Separate review-focus-unshared candidates from explicit cross-source allow conflicts.
 
     A parent block or parent allow covers its subdomains. Absence from a
     comparison source is not treated as an allow decision.
     """
-    strict_blocks = {domain.lower() for domain in strict_blocks}
+    review_focus_blocks = {domain.lower() for domain in review_focus_blocks}
     comparison_blocks = {domain.lower() for domain in comparison_blocks}
     comparison_allows = {domain.lower() for domain in comparison_allows}
 
     allow_conflicts = sorted(
-        domain for domain in strict_blocks
+        domain for domain in review_focus_blocks
         if any(domains_overlap(domain, allowed) for allowed in comparison_allows)
     )
     strict_only = sorted(
-        domain for domain in strict_blocks
+        domain for domain in review_focus_blocks
         if not covered_by_rule_domain(domain, comparison_blocks)
         and not any(domains_overlap(domain, allowed) for allowed in comparison_allows)
         and not covered_by_whitelist(domain, whitelist)
@@ -602,22 +602,22 @@ def main():
     policy = json.loads(policy_path.read_text(encoding="utf-8"))
     if not isinstance(policy, dict) or policy.get("version") != 1:
         raise ValueError("Unsupported source-policy.json version")
-    strict_names = set(policy.get("strict_review_sources", []))
+    review_focus_names = set(policy.get("review_focus_sources", []))
     comparison_names = set(policy.get("comparison_sources", []))
-    if strict_names & comparison_names:
+    if review_focus_names & comparison_names:
         raise ValueError("Strict-review and comparison source groups must be disjoint")
-    if strict_names | comparison_names != production_names:
+    if review_focus_names | comparison_names != production_names:
         raise ValueError(
             "source-policy.json must classify every active production DNS/Hosts source exactly once"
         )
-    strict_blocks = set().union(*(production_sets[name] for name in strict_names))
+    review_focus_blocks = set().union(*(production_sets[name] for name in review_focus_names))
     comparison_blocks = set().union(*(production_sets[name] for name in comparison_names))
     comparison_allows = set().union(*(allow_sets[name] for name in comparison_names))
-    strict_only_candidates, strict_allow_conflicts = classify_strict_source_candidates(
-        strict_blocks, comparison_blocks, comparison_allows, project_whitelist
+    review_focus_unshared_candidates, review_focus_allow_conflicts = classify_review_focus_candidates(
+        review_focus_blocks, comparison_blocks, comparison_allows, project_whitelist
     )
     allow_conflict_details = []
-    for domain in strict_allow_conflicts:
+    for domain in review_focus_allow_conflicts:
         allow_sources = []
         for source_name in sorted(comparison_names):
             matched = sorted(
@@ -629,26 +629,26 @@ def main():
         allow_conflict_details.append({
             "domain": domain,
             "strict_block_sources": sorted(
-                name for name in strict_names if domain in production_sets[name]
+                name for name in review_focus_names if domain in production_sets[name]
             ),
             "explicit_allow_sources": allow_sources,
         })
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     write_domain_list(
-        OUT_DIR / "strict-only-candidates.txt",
-        strict_only_candidates,
-        "No strict-source-only domains after comparison-source block/allow coverage and project whitelist."
+        OUT_DIR / "review-focus-unshared-candidates.txt",
+        review_focus_unshared_candidates,
+        "No review-focus-source-only domains after comparison-source block/allow coverage and project whitelist."
     )
     (OUT_DIR / "source-policy-conflicts.json").write_text(
         json.dumps({
             "policy_version": policy["version"],
-            "strict_review_sources": sorted(strict_names),
+            "review_focus_sources": sorted(review_focus_names),
             "comparison_sources": sorted(comparison_names),
-            "strict_only_candidate_count": len(strict_only_candidates),
+            "strict_only_candidate_count": len(review_focus_unshared_candidates),
             "strict_vs_explicit_allow_conflict_count": len(allow_conflict_details),
             "strict_vs_explicit_allow_conflicts": allow_conflict_details,
-            "strict_only_candidates_file": "strict-only-candidates.txt",
+            "review_focus_unshared_candidates_file": "review-focus-unshared-candidates.txt",
             "upstream_lineage_status": "not_verified",
             "source_independence_claimed": False,
             "policy_note": policy.get("policy_note", ""),
@@ -737,12 +737,12 @@ def main():
         results, production_names, browser_names, candidate_names,
         overlap, unique_total, pairwise, candidate_overlaps, candidate_pairwise_overlaps
     )
-    report += "\\n## 严格来源策略冲突审计（仅供人工复核）\\n\\n"
-    report += f"- 严格审查来源：{', '.join(sorted(strict_names))}。\\n"
+    report += "\\n## 重点复核来源策略冲突审计（仅供人工复核）\\n\\n"
+    report += f"- 严格审查来源：{', '.join(sorted(review_focus_names))}。\\n"
     report += f"- 对照来源：{', '.join(sorted(comparison_names))}。\\n"
-    report += f"- 严格来源独有候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(strict_only_candidates)} 条，详见 strict-only-candidates.txt。\\n"
+    report += f"- 重点复核来源独有候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(review_focus_unshared_candidates)} 条，详见 review-focus-unshared-candidates.txt。\\n"
     report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\\n"
-    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把严格来源候选并入正式规则。\\n"
+    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把重点复核来源候选并入正式规则。\\n"
     report += "- 上游谱系仍未完成核实，本报告不对来源独立性作任何断言。\\n"
     report += "\n## 项目白名单当前来源覆盖审计\n\n"
     report += f"- 可解析的项目白名单域名：{len(project_whitelist)} 条。\n"
