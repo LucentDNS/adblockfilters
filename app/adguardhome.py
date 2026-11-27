@@ -71,8 +71,8 @@ class AdGuardHome(APPBase):
                 f.write("! Last modified: %s\n"%(self.time))
                 f.write("! Blocked domains: %s\n"%(len(blockList)))
                 f.write("! Allowed domains: %s\n"%(len(unblockList)))
-                f.write("! Wildcard block rules: %s\n"%(len(patternBlockList)))
-                f.write("! Wildcard allow rules: %s\n"%(len(patternAllowList)))
+                f.write("! Pattern block rules: %s\n"%(len(patternBlockList)))
+                f.write("! Pattern allow rules: %s\n"%(len(patternAllowList)))
                 f.write("!\n")
                 for domain in blockList:
                     f.write("||%s^\n" % (domain))
@@ -86,7 +86,7 @@ class AdGuardHome(APPBase):
             logger.info(
                 f"adblock AdGuardHome{' Lite' if isLite else ''}: "
                 f"block={len(blockList)}, allow={len(unblockList)}, "
-                f"wildcard_block={len(patternBlockList)}, wildcard_allow={len(patternAllowList)}"
+                f"pattern_block={len(patternBlockList)}, pattern_allow={len(patternAllowList)}"
             )
         except Exception as e:
             logger.exception("%s"%(e))
