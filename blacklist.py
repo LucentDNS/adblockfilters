@@ -41,9 +41,9 @@ def _blacklist_abnormal(black_count:int, total:int) -> bool:
 
 DNS_POSITIVE_REFRESH_SECONDS = 36 * 24 * 60 * 60
 DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
-# Bump when the evidence required to classify a domain as NXDOMAIN changes.
+# Bump when the independent resolver set or NXDOMAIN evidence policy changes.
 DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
-DNS_BLOCK_POLICY_VERSION = "5"
+DNS_BLOCK_POLICY_VERSION = "6"
 DNS_VALIDATION_MAX_CONCURRENCY = 100
 # Keep the event loop bounded: never create one asyncio task per input domain.
 DNS_VALIDATION_BATCH_SIZE = 500
@@ -159,11 +159,11 @@ class DomainDatabase(object):
         )
         self.__conn.commit()
 
-    def resetBlockedForRevalidation(self) -> int:
-        """Clear cached negative decisions so a new policy can re-evaluate them."""
+    def resetUnresolvedForRevalidation(self) -> int:
+        """Recheck cached NXDOMAIN and inconclusive rows after a resolver-set change."""
         cursor = self.__conn.execute(
             "UPDATE T_DOMAIN SET isBlock = 0, isChina = 0, timeStamp = 0, ipList = NULL "
-            "WHERE isBlock = 1"
+            "WHERE isBlock = 1 OR ipList IS NULL OR ipList = ''"
         )
         self.__conn.commit()
         return cursor.rowcount
@@ -209,7 +209,7 @@ def _apply_dns_block_policy_version(database: DomainDatabase) -> int:
     stored_version = database.getMeta("dns_block_policy_version")
     if stored_version == DNS_BLOCK_POLICY_VERSION:
         return 0
-    reset_count = database.resetBlockedForRevalidation()
+    reset_count = database.resetUnresolvedForRevalidation()
     database.setMeta("dns_block_policy_version", DNS_BLOCK_POLICY_VERSION)
     return reset_count
 
