@@ -59,7 +59,7 @@ class AdGuardHome(APPBase):
                 f.write("!\n")
                 if isLite:
                     f.write("! Title: AdBlock DNS Lite\n")
-                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按 .cn 域名及国内直连域名规则进行保守分类，最近一次成功 DNS 正向分类仅作补充；AdGuard DNS 规则按标准语法匹配该域名及其子域名。\n"%(self.sourceRule))
+                    f.write("! Description: 适用于 AdGuard、AdGuardHome 的去广告合并规则，每日自动更新一次。规则源：%s。Lite 版按 .cn 域名及国内直连域名规则进行保守分类；AdGuard DNS 规则按标准语法匹配该域名及其子域名。\n"%(self.sourceRule))
                     f.write("! Expires: 1 day\n")
                 else:
                     f.write("! Title: AdBlock DNS\n")
