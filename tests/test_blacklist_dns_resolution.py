@@ -281,6 +281,10 @@ def test_dns_failures_are_aggregated_by_upstream_rrtype_and_exception():
         (str(port), "A", "TimeoutError"): 1
         for port in DNS_VALIDATION_PORTS
     }
+    assert instance._BlackList__dns_validation_error_samples == {
+        (str(port), "A", "TimeoutError"): "A timeout"
+        for port in DNS_VALIDATION_PORTS
+    }
 
 
 def test_missing_upstream_is_inconclusive_not_dead():
