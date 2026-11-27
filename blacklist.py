@@ -160,11 +160,11 @@ class DomainDatabase(object):
         )
         self.__conn.commit()
 
-    def resetBlockedForRevalidation(self) -> int:
-        """Clear cached negative decisions so a new policy can re-evaluate them."""
+    def resetUnresolvedForRevalidation(self) -> int:
+        """Recheck cached NXDOMAIN and inconclusive rows after a resolver-set change."""
         cursor = self.__conn.execute(
             "UPDATE T_DOMAIN SET isBlock = 0, isChina = 0, timeStamp = 0, ipList = NULL "
-            "WHERE isBlock = 1"
+            "WHERE isBlock = 1 OR ipList IS NULL OR ipList = ''"
         )
         self.__conn.commit()
         return cursor.rowcount
@@ -210,7 +210,7 @@ def _apply_dns_block_policy_version(database: DomainDatabase) -> int:
     stored_version = database.getMeta("dns_block_policy_version")
     if stored_version == DNS_BLOCK_POLICY_VERSION:
         return 0
-    reset_count = database.resetBlockedForRevalidation()
+    reset_count = database.resetUnresolvedForRevalidation()
     database.setMeta("dns_block_policy_version", DNS_BLOCK_POLICY_VERSION)
     return reset_count
 
