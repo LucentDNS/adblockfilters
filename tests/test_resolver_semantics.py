@@ -76,6 +76,8 @@ def test_non_adblock_wildcard_is_not_promoted_to_dns_pattern():
     assert block is None
     assert unblock is None
     assert filt == (rule, None)
+    assert resolver.resolveDNSPattern(rule) is None
+
 
 def test_scoped_dns_wildcard_block_is_recognized_for_adguard_output():
     resolver = Resolver(".")
