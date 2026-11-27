@@ -55,6 +55,10 @@ def test_source_policy_classifies_every_enabled_dns_source_once():
         and "sufficient site traffic" in item["philosophy"]
         for item in profiles
     )
+    conflict_resolution = policy["conflict_resolution"]
+    assert conflict_resolution["active_production_source_allow"] == "global_compatibility_veto"
+    assert conflict_resolution["candidate_only_source_allow"] == "audit_only_no_effect_on_production"
+    assert "false positives" in conflict_resolution["rationale"]
 
 
 def test_review_focus_unshared_candidates_are_not_treated_as_explicit_allows():

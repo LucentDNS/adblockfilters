@@ -96,7 +96,7 @@ jobs:
           merged_refs="$(gh api --paginate "repos/${REPOSITORY}/pulls?state=closed&per_page=100" | jq -r --arg repo "${REPOSITORY}" '.[] | select(.merged_at != null and .head.repo.full_name == $repo) | .head.ref')"
           # These closed, unmerged branches are explicitly superseded:
           # PR #22 by merged PR #23; PR #29 by merged PRs #31 and #33. DNS/CNNIC experiments are superseded by the validated main-branch resolver and cache policy.
-          superseded_refs="fix/dns-dnstype-rule-preservation fix/source-policy-conflict-audit diagnostics/domestic-resolver-shortlist fix/cnnic-dns-upstream-and-cache-migration fix/cnnic-dns-upstream-and-cache-migration-v2 diagnostics/cnnic-secondary-endpoint qa/independent-dns-group-regression fix/dns-checkpoint-cache-compatibility"
+          superseded_refs="fix/dns-dnstype-rule-preservation fix/source-policy-conflict-audit diagnostics/domestic-resolver-shortlist fix/cnnic-dns-upstream-and-cache-migration fix/cnnic-dns-upstream-and-cache-migration-v2 diagnostics/cnnic-secondary-endpoint qa/independent-dns-group-regression fix/dns-checkpoint-cache-compatibility audit-supported-dns-patterns-and-preserve-upstream-allow fix/verified-lite-scope-and-source-allow-audit"
           deleted=0
           while IFS= read -r branch_name; do
             [[ -n "${branch_name}" ]] || continue
@@ -439,6 +439,8 @@ jobs:
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
             .cache/audit/source-policy-conflicts.json
+            .cache/audit/source-allow-conflicts-still-blocked.txt
+            .cache/audit/source-allow-output-audit.json
             .cache/audit/review-focus-unshared-candidates.txt
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt

@@ -4,11 +4,13 @@
 
 本项目基于 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 派生，独立维护规则来源、DNS 验证、审计与构建流程。
 
-## 项目状态与使用提示
+## 项目说明
 
-本项目是新建的持续验证项目，仍处于早期完善阶段。现有上游来源检查、规则解析与清洗、DNS 有效性验证、异常熔断、白名单回归和AdGuard DNS 与浏览器扩展产物校验只能降低部分风险，不能保证所有网站、应用和设备均无误拦截或漏拦截。**上游规则源的接入不代表逐条人工预审，也不代表已对每条规则完成独立质量背书；项目没有覆盖所有域名的前置自动误报扫描。** 自动化检查侧重来源可用性、规则处理、DNS 有效性与产物回归，不能证明每条规则都不会影响正常业务，也不能替代真实设备与实际使用场景验证。误报主要依赖用户提供可复现证据后逐项核实。
+本项目面向 AdGuard DNS、AdGuard Home 与 AdGuard 浏览器扩展，提供 Full、Lite 两种正式规则订阅。项目独立维护上游来源管理、规则规范化、冲突处理、白名单治理、语法校验、构建与发布流程。
 
-项目没有预先批量添加通用放行域名。首次使用或用于重要设备时，建议先观察一段时间，并确认所用客户端支持相应规则格式。遇到网站、应用或系统功能异常，请提交可复现的反馈；项目不承诺零误报或零漏报，也不会仅凭未经验证的单次反馈直接放行域名。
+每日自动构建会检查上游来源及数据完整性，执行规则解析、规范化、去重、来源策略与白名单检查，并使用 AdGuard 官方 Hostlist Compiler 校验 DNS Full/Lite 产物。每周 DNS 诊断独立观察域名解析状态，不参与规则取舍；解析失败不会直接作为删除上游规则的依据。
+
+项目遵循来源策略与证据驱动的白名单治理原则：保留各正式来源的规则语义，优先处理来源明确发布的放行例外；不以规则数量作为唯一目标，也不因单次异常直接修改规则。遇到网站、应用或系统功能异常，欢迎通过反馈渠道提交可复现信息，以便核实并持续维护。
 
 ## 订阅
 
@@ -28,20 +30,20 @@
 
 ## 白名单与误报处理
 
-项目维护的独立白名单位于 [rules/white.txt](rules/white.txt)，用于排除有证据支持的正常业务域名误拦截。白名单会参与规则处理，并对 Full 与 Lite 产物执行回归检查；它不是广告规则源，也不应被当作通用放行列表。
+项目维护的独立白名单位于 [rules/white.txt](rules/white.txt)，用于排除有证据支持的正常业务域名误拦截。白名单会参与规则处理，并对 Full 与 Lite 产物执行一致性检查；它不是广告规则源，也不应被当作通用放行列表。
 
 白名单采用证据驱动策略：没有足以核实误拦截的有效证据，不添加放行规则。新增或修改条目时，应记录证据链接或脱敏日志摘要、受影响应用/网站与客户端、复现条件、核实日期及放行范围；优先使用精确主机名，避免无必要地放行整个主域名。仅有“网站打不开”或单次解析失败，不足以证明是本项目规则误拦截。详细材料要求见 [反馈与贡献指南](CONTRIBUTING.md)。
 
 ## 规则与审计
 
-不同作者规则集的差异不会通过简单并集或多数表决自动解决。当前将 HaGeZi Pro Mini 单独列为重点复核对象，但不把它擅自标成作者定义的“严格型”：HaGeZi 官方将 Pro 档描述为 Balanced、低至中等破坏风险；Pro Mini 是该档的精简变体。其 [来源目录](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/sources.md) 明确列出 AdGuard DNS、AWAvenue、1Hosts Lite、OISD Big、EasyList、EasyPrivacy 等构建输入。1Hosts 的 [输入/贡献目录](https://raw.githubusercontent.com/badmojr/1Hosts/master/-data/lists/assets.txt) 又列有 HaGeZi Pro、AWAvenue、StevenBlack、OISD Big；anti-AD 的 [README 致谢](https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/README.md) 提及 AWAvenue、AdGuard、EasyList 等项目，但致谢不等于当前实际集成。由此可见，来源之间存在交叉谱系，不能把来源数量或重合数量当成独立证据票数。构建审计输出重点复核来源未共享候选及其与其他来源明确放行规则的冲突。**来源未收录不等于明确放行；来源重合也不等于独立确认。** 报告只用于人工复核，不会自动把候选加入正式规则；公开资料未能证明的上游关系会明确标注为未核实。
+不同作者规则集的差异不会通过简单并集或多数表决自动解决。当前正式 DNS/Hosts 来源的显式 allow 是跨来源兼容例外：某个正式来源明确放行的域名，即使被另一个正式来源拦截，也会在合并后的 Full/Lite 结果中优先保留放行；这是有意偏向降低误杀风险的策略，代价是可能少拦截一部分广告或跟踪域名。候选来源的 allow 只用于对照审计，不改变正式产物；某来源没有收录某域名，也不等于它明确放行。构建审计会检查与编译拦截规则冲突的正式来源 allow 是否仍在 Full 输出中有效，缺失时阻止发布。当前将 HaGeZi Pro Mini 单独列为重点复核对象，但不把它擅自标成作者定义的“严格型”：HaGeZi 官方将 Pro 档描述为 Balanced、低至中等破坏风险；Pro Mini 是该档的精简变体。其 [来源目录](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/sources.md) 明确列出 AdGuard DNS、AWAvenue、1Hosts Lite、OISD Big、EasyList、EasyPrivacy 等构建输入。1Hosts 的 [输入/贡献目录](https://raw.githubusercontent.com/badmojr/1Hosts/master/-data/lists/assets.txt) 又列有 HaGeZi Pro、AWAvenue、StevenBlack、OISD Big；anti-AD 的 [README 致谢](https://raw.githubusercontent.com/privacy-protection-tools/anti-AD/master/README.md) 提及 AWAvenue、AdGuard、EasyList 等项目，但致谢不等于当前实际集成。由此可见，来源之间存在交叉谱系，不能把来源数量或重合数量当成独立证据票数。构建审计输出重点复核来源未共享候选及其与其他来源明确放行规则的冲突。**来源未收录不等于明确放行；来源重合也不等于独立确认。** 报告只用于人工复核，不会自动把候选加入正式规则；公开资料未能证明的上游关系会明确标注为未核实。
 
-规则源由 `sources.json` 统一维护。构建流程执行来源检查、去重、DNS 验证、关键域名与白名单回归，并编译客户端格式。验证结果不确定时，不会仅凭一次解析失败删除规则。
+规则源由 `sources.json` 统一维护。每日生产构建执行来源检查、去重、来源异常检查、关键域名与白名单回归，并使用 AdGuard 官方 Hostlist Compiler 校验 DNS Full/Lite 语法与规则保留情况。每周 DNS 诊断独立运行；NXDOMAIN、NODATA、超时或 SERVFAIL 不会被当作删除上游规则的依据，也不会阻塞每日正式构建。与 217heidai 基线的差异只用于覆盖范围对照，不代表误报率或整体质量等价；未被当前来源解释的差异会保留在审计报告中，不能仅凭编译成功就宣称与任何主流规则集质量相当。
 
 - [正式规则 Release](https://github.com/LucentDNS/adblockfilters/releases/tag/rule)
 - [审计报告 Release](https://github.com/LucentDNS/adblockfilters/releases/tag/audit)
 - [dist 订阅目录](https://github.com/LucentDNS/adblockfilters/tree/dist)
-- [上游来源清单](sources.json)（单个来源可通过设置 `"enabled": false` 临时停用；省略该字段时默认启用，恢复时删除该字段或设为 `true`）
+- [上游来源清单](sources.json)（单个来源可通过设置 `"enabled": false` 停用；省略该字段时默认启用，启用时删除该字段或设为 `true`）
 
 ## 集成的上游规则源
 
