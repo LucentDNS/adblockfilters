@@ -513,7 +513,10 @@ class BlackList(object):
                 return ip_list, "resolved"
             if nxdomain_count == 2:
                 return [], "not_found"
-            if no_answer_count == 2:
+            # Both NXDOMAIN and NOERROR/NODATA are valid DNS outcomes.
+            # Their combination across A/AAAA is inconclusive, not an
+            # infrastructure failure and never sufficient to block.
+            if nxdomain_count + no_answer_count == 2:
                 return [], "no_address"
             return [], "unknown"
 
