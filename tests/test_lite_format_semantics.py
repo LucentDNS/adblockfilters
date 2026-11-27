@@ -81,8 +81,8 @@ def test_adguard_home_emits_scoped_dns_wildcards_in_full_and_lite(tmp_path):
     assert second_block_pattern in full
     assert allow_pattern in full
     assert "@@||ads123.example.com^" in full
-    assert "! Wildcard block rules: 2" in full
-    assert "! Wildcard allow rules: 1" in full
+    assert "! Pattern block rules: 2" in full
+    assert "! Pattern allow rules: 1" in full
 
     generator.generate(isLite=True)
     lite = Path(generator.fileNameLite).read_text(encoding="utf-8")
@@ -90,8 +90,8 @@ def test_adguard_home_emits_scoped_dns_wildcards_in_full_and_lite(tmp_path):
     assert allow_pattern in lite
     assert "@@||ads123.example.com^" in lite
     assert second_block_pattern not in lite
-    assert "! Wildcard block rules: 1" in lite
-    assert "! Wildcard allow rules: 1" in lite
+    assert "! Pattern block rules: 1" in lite
+    assert "! Pattern allow rules: 1" in lite
 
 
 def test_dnsmasq_lite_uses_exact_host_record(tmp_path):
