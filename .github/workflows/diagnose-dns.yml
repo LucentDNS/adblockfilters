@@ -65,7 +65,7 @@ jobs:
           test -n "$SMARTDNS_BIN"
           chmod +x "$SMARTDNS_BIN"
           cp smartdns.conf "$SMARTDNS_PATH/smartdns.conf"
-          sed -i 's/^log-num 0$/log-level debug\\nlog-num 1000/' "$SMARTDNS_PATH/smartdns.conf"
+          sed -i 's/^log-num 0$/log-level debug\nlog-num 1000/' "$SMARTDNS_PATH/smartdns.conf"
           cat >> "$SMARTDNS_PATH/smartdns.conf" <<'EOF'
           # Diagnostic-only CNNIC forwarding variants; never used in production.
           bind 127.0.0.1:5059 -group diagnostic_bootstrap -no-rule-addr -no-rule-nameserver -no-dualstack-selection -no-speed-check -no-cache
