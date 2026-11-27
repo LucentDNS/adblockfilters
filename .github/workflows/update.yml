@@ -394,6 +394,31 @@ jobs:
             exit 1
           fi
 
+      - name: Remove unsupported legacy client assets from rule release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          release_id="$(gh api "repos/${REPOSITORY}/releases/tags/rule" --jq '.id')"
+          if [[ -z "${release_id}" || "${release_id}" == "null" ]]; then
+            echo "::error::The existing rule release could not be identified; refusing an unscoped cleanup."
+            exit 1
+          fi
+
+          asset_rows="$(gh api --paginate "repos/${REPOSITORY}/releases/${release_id}/assets?per_page=100" --jq '.[] | [.name, (.id | tostring)] | @tsv')"
+          while read -r asset_name asset_id; do
+            [[ -n "${asset_name}" ]] || continue
+            case "${asset_name}" in
+              adblockdns.txt|adblockdnslite.txt|adblockfilters.txt|adblockfilterslite.txt|LICENSE-GPL-3.0.txt|LICENSE-LGPL-3.0.txt|LICENSE-MIT-anti-AD.txt|LICENSE-MIT-StevenBlack.txt|LICENSE-MPL-2.0-1Hosts.txt|THIRD-PARTY-NOTICES.md|source-licenses.json)
+                ;;
+              *)
+                echo "Removing unsupported legacy release asset: ${asset_name}"
+                gh api --method DELETE "repos/${REPOSITORY}/releases/assets/${asset_id}"
+                ;;
+            esac
+          done <<< "${asset_rows}"
+
       - name: Upload rules to release
         uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3
         with:
