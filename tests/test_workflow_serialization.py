@@ -156,7 +156,11 @@ def test_one_time_dns_checkpoint_migration_is_scoped_and_removed_after_publish()
     after_verify = workflow.split(
         "- name: Verify dns-validation-state release assets", 1
     )[1]
+    fingerprint = workflow.split(
+        "- name: Fingerprint DNS validation inputs", 1
+    )[1].split("- name: Restore latest compatible DNS validation checkpoint", 1)[0]
 
+    assert "dns-validation-cache-migration.json" not in fingerprint
     assert "id: restore_checkpoint" in restore
     assert "Restore legacy DNS checkpoint for CNNIC resolver migration" in restore
     assert "steps.restore_checkpoint.outputs.cache-matched-key == ''" in restore
