@@ -24,7 +24,7 @@ def test_hostlist_compiler_validation_rejects_removed_or_changed_rules(tmp_path)
     source.write_text("||ads.example.com^\n||tracker.example.net^\n", encoding="utf-8")
     validated.write_text("||ads.example.com^\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="removed or changed by compiler"):
+    with pytest.raises(ValueError, match="removed or changed blocking rules"):
         compare_rules(source, validated)
 
 
