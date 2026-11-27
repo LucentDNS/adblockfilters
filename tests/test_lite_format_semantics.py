@@ -38,7 +38,7 @@ def test_adguard_home_lite_uses_upstream_compatible_domain_suffix_rule(tmp_path)
 def test_adguard_home_lite_keeps_upstream_block_and_allow_syntax(tmp_path):
     generator = AdGuardHome(
         ["blocked.example.com"],
-        ["safe.example.com"],
+        ["safe.example.com", "ads123.example.com"],
         {},
         [],
         [],
@@ -72,6 +72,7 @@ def test_adguard_home_emits_scoped_dns_wildcards_in_full_and_lite(tmp_path):
         dnsPatternAllowList=[allow_pattern],
         dnsPatternBlockListLite=[block_pattern],
         dnsPatternAllowListLite=[allow_pattern],
+        wildcardWhiteExceptionsLite=["ads123.example.com"],
     )
 
     generator.generate()
@@ -79,6 +80,7 @@ def test_adguard_home_emits_scoped_dns_wildcards_in_full_and_lite(tmp_path):
     assert block_pattern in full
     assert second_block_pattern in full
     assert allow_pattern in full
+    assert "@@||ads123.example.com^" in full
     assert "! Wildcard block rules: 2" in full
     assert "! Wildcard allow rules: 1" in full
 
@@ -86,6 +88,7 @@ def test_adguard_home_emits_scoped_dns_wildcards_in_full_and_lite(tmp_path):
     lite = Path(generator.fileNameLite).read_text(encoding="utf-8")
     assert block_pattern in lite
     assert allow_pattern in lite
+    assert "@@||ads123.example.com^" in lite
     assert second_block_pattern not in lite
     assert "! Wildcard block rules: 1" in lite
     assert "! Wildcard allow rules: 1" in lite
