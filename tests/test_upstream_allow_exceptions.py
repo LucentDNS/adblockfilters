@@ -21,27 +21,15 @@ def test_curated_dns_supplement_rules_are_present():
         if line.strip() and not line.lstrip().startswith("!")
     }
 
-    assert "||fb_servpub-a.akamaihd.net^" in entries
+    assert "||fb_servpub-a.akamaihd.net^" not in entries
     assert "||oth.str.mdt.qq.com^" in entries
-
-
-def test_dns_resolver_accepts_underscore_label_in_known_tracking_domain():
-    from resolver import Resolver
-
-    block, unblock, filter_rule = Resolver("unused")._Resolver__resolveDNS(
-        "||fb_servpub-a.akamaihd.net^"
-    )
-
-    assert block is not None
-    assert unblock is None
-    assert filter_rule is None
 
 
 def test_manual_dns_supplement_rules_use_dns_label_syntax():
     import re
 
     path = Path(__file__).parents[1] / "rules" / "myblock.txt"
-    pattern = re.compile(r"^[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?$")
+    pattern = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
 
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
