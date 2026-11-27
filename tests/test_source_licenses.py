@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 from scripts.build_licenses import ROOT, load_and_validate, package
 
