@@ -6,8 +6,28 @@ from loguru import logger
 from app.base import APPBase
 
 class AdGuardHome(APPBase):
-    def __init__(self, blockList:List[str], unblockList:List[str], filterDict:Dict[str,str], filterList:List[str], filterList_var:List[str], ChinaSet:Set[str], fileName:str, sourceRule:str):
-        super(AdGuardHome, self).__init__(blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, fileName, sourceRule)
+    def __init__(
+        self,
+        blockList:List[str],
+        unblockList:List[str],
+        filterDict:Dict[str,str],
+        filterList:List[str],
+        filterList_var:List[str],
+        ChinaSet:Set[str],
+        fileName:str,
+        sourceRule:str,
+        dnsPatternBlockList=None,
+        dnsPatternAllowList=None,
+        dnsPatternBlockListLite=None,
+        dnsPatternAllowListLite=None,
+    ):
+        super(AdGuardHome, self).__init__(
+            blockList, unblockList, filterDict, filterList, filterList_var, ChinaSet, fileName, sourceRule
+        )
+        self.dnsPatternBlockList = sorted(set(dnsPatternBlockList or []))
+        self.dnsPatternAllowList = sorted(set(dnsPatternAllowList or []))
+        self.dnsPatternBlockListLite = sorted(set(dnsPatternBlockListLite or []))
+        self.dnsPatternAllowListLite = sorted(set(dnsPatternAllowListLite or []))
 
     def generate(self, isLite=False):
         try:
@@ -16,11 +36,15 @@ class AdGuardHome(APPBase):
                 fileName = self.fileNameLite
                 blockList = self.blockListLite
                 unblockList = self.unblockListLite
+                patternBlockList = self.dnsPatternBlockListLite
+                patternAllowList = self.dnsPatternAllowListLite
             else:
                 logger.info("generate adblock AdGuardHome...")
                 fileName = self.fileName
                 blockList = self.blockList
                 unblockList = self.unblockList
+                patternBlockList = self.dnsPatternBlockList
+                patternAllowList = self.dnsPatternAllowList
             
             if os.path.exists(fileName):
                 os.remove(fileName)
@@ -43,11 +67,17 @@ class AdGuardHome(APPBase):
                 f.write("! Last modified: %s\n"%(self.time))
                 f.write("! Blocked domains: %s\n"%(len(blockList)))
                 f.write("! unBlocked domains: %s\n"%(len(unblockList)))
+                f.write("! Wildcard block rules: %s\n"%(len(patternBlockList)))
+                f.write("! Wildcard allow rules: %s\n"%(len(patternAllowList)))
                 f.write("!\n")
                 for domain in blockList:
                     f.write("||%s^\n" % (domain))
+                for rule in patternBlockList:
+                    f.write("%s\n" % (rule))
                 for domain in unblockList:
                     f.write("@@||%s^\n" % (domain))
+                for rule in patternAllowList:
+                    f.write("%s\n" % (rule))
             
             if isLite:
                 logger.info("adblock AdGuardHome Lite: block=%d, unblock=%d"%(len(blockList), len(unblockList)))
