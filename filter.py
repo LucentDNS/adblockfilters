@@ -149,6 +149,9 @@ def _pattern_allow_covers_block(allow_rule, block_rule):
         return False
     allow_host = allow_pattern[:-1].lower()
     block_host = block_pattern[:-1].lower()
+    if allow_host.startswith("*.") and allow_host.count("*") == 1:
+        suffix = allow_host[2:]
+        return block_host.endswith("." + suffix) and block_host != suffix
     if "*" in allow_host:
         return allow_host == block_host
     return (
