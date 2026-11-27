@@ -33,11 +33,11 @@ def test_source_audit_gate_rejects_unparsed_or_lost_source_rules():
 
     # Non-domain AdGuard filter rules are valid syntax; only genuinely
     # unparsed lines and unexplained source/allow losses are hard failures.
-    assert len(failures) == 4
+    assert len(failures) == 3
     assert "unparsed rule lines" in failures[0]
     assert "lost.example" in failures[1]
     assert "inactive.example" in failures[2]
-    assert "blocked-allow.example" in failures[3]
+    # Historical baseline allows are comparison evidence, not global vetoes.
 
 
 def test_explained_upstream_baseline_delta_does_not_require_output_identity():
@@ -53,25 +53,16 @@ def test_source_audit_gate_does_not_reject_supported_non_domain_filter_rules():
 
 
 
-def test_source_audit_gate_rejects_missing_active_production_source_allow():
-    failures = audit_sources.source_audit_gate_failures(
+def test_source_audit_does_not_require_global_upstream_allows():
+    # Cross-source allow/block disagreements are audit events, not hard
+    # failures: source A's allow must not cancel source B's block.
+    assert audit_sources.source_audit_gate_failures(
         0, 0, set(), set(), set(),
         {"ads.microsoft.com", "360.cn"},
-    )
-
-    assert len(failures) == 1
-    assert "active production-source allow exceptions" in failures[0]
-    assert "ads.microsoft.com" in failures[0]
-
-
-def test_source_audit_gate_accepts_preserved_active_production_source_allow():
-    assert audit_sources.source_audit_gate_failures(
-        0, 0, set(), set(), set(), set()
     ) == []
 
 
-
-def test_source_allow_output_audit_checks_parent_and_child_conflicts():
+def test_source_allow_output_audit_reports_disagreements_without_global_veto():
     conflicts, missing = audit_sources.audit_source_allow_output(
         {"360.cn", "ads.microsoft.com", "safe.example.org"},
         {"ad.dev.360.cn", "microsoft.com", "sub.safe.example.org"},
@@ -79,4 +70,18 @@ def test_source_allow_output_audit_checks_parent_and_child_conflicts():
     )
 
     assert conflicts == {"360.cn", "ads.microsoft.com", "safe.example.org"}
-    assert missing == {"safe.example.org"}
+    assert missing == set()
+
+
+def test_source_audit_applies_allows_only_to_same_source_blocks():
+    effective_a = audit_sources.source_local_effective_blocks(
+        {"ads.example.com", "tracker.other.net"},
+        {"example.com"},
+    )
+    source_b_blocks = audit_sources.source_local_effective_blocks(
+        {"ads.example.com", "tracker.other.net"},
+        set(),
+    )
+
+    assert effective_a == {"tracker.other.net"}
+    assert source_b_blocks == {"ads.example.com", "tracker.other.net"}

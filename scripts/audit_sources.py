@@ -34,7 +34,7 @@ def source_audit_gate_failures(
     baseline_allow_missing_still_blocked: set[str],
     source_allow_missing_still_blocked: set[str] | None = None,
 ) -> list[str]:
-    """Fail on active source loss and upstream allow regressions, not historical baseline-only deltas."""
+    """Fail on unparsed output or unexplained active-source loss; allows are audit evidence only."""
     failures = []
     if compiled_unparsed:
         failures.append(f"compiled DNS output has {compiled_unparsed} unparsed rule lines")
@@ -52,16 +52,9 @@ def source_audit_gate_failures(
             "baseline rules have inactive current-source parents without a valid exclusion: "
             + ", ".join(sorted(current_source_parent_inactive_unexplained)[:20])
         )
-    if baseline_allow_missing_still_blocked:
-        failures.append(
-            "upstream baseline allow exceptions are missing while domains remain blocked: "
-            + ", ".join(sorted(baseline_allow_missing_still_blocked)[:20])
-        )
-    if source_allow_missing_still_blocked:
-        failures.append(
-            "active production-source allow exceptions are missing while matching block rules remain: "
-            + ", ".join(sorted(source_allow_missing_still_blocked)[:20])
-        )
+    # Historical aggregate-list allows are comparison evidence only. They
+    # must not become global vetoes over independently selected source blocks.
+    # Cross-source allow/block disagreements are recorded for review only.
     return failures
 
 
@@ -232,10 +225,8 @@ def audit_one(rule, resolver, download):
                     action, base_domain = pattern
                     if action == "allow":
                         dns_pattern_allows.add(filt[0])
-                        # Preserve the effective base domain for cross-source
-                        # explicit-allow conflict analysis.
-                        allows.add(base_domain)
-                        result["dns_pattern_allow_entries"] += 1
+                        # Pattern allows are tracked separately; their base
+                        # domain is not a blanket explicit allow for the apex.
                     else:
                         dns_pattern_blocks.add(filt[0])
                         result["dns_pattern_block_entries"] += 1
@@ -468,18 +459,31 @@ def domains_overlap(left, right):
     return left == right or left.endswith("." + right) or right.endswith("." + left)
 
 
+def source_local_effective_blocks(block_domains, allow_domains):
+    """Apply explicit allows to the originating source's blocks only."""
+    allowed = {domain.lower().strip(".") for domain in allow_domains if domain}
+    effective = set()
+    for domain in block_domains:
+        candidate = domain.lower().strip(".")
+        labels = candidate.split(".")
+        if any(".".join(labels[index:]) in allowed for index in range(len(labels))):
+            continue
+        effective.add(candidate)
+    return effective
+
 
 def audit_source_allow_output(source_allow_domains, compiled_block_domains, compiled_allow_domains):
-    """Return production-source allows that conflict with blocks and those not effective in output."""
+    """Report cross-source allow/block disagreements without making allows global vetoes.
+
+    Source-local exceptions are resolved before sources are merged. A comparison
+    source's allow must never cancel another source's block, and the project
+    compiler must not re-publish upstream allows as global exceptions.
+    """
     conflicts = {
         allow_domain for allow_domain in source_allow_domains
         if any(domains_overlap(allow_domain, block_domain) for block_domain in compiled_block_domains)
     }
-    missing = {
-        allow_domain for allow_domain in conflicts
-        if not covered_by_rule_domain(allow_domain, compiled_allow_domains)
-    }
-    return conflicts, missing
+    return conflicts, set()
 
 
 def validate_source_policy(policy, production_names, candidate_names):
@@ -501,15 +505,17 @@ def validate_source_policy(policy, production_names, candidate_names):
 
 
 def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, comparison_allows, whitelist):
-    """Separate review-focus-unshared candidates from explicit cross-source allow conflicts.
+    """Report unshared blocks and cross-source allow/block disagreements.
 
-    A parent block or parent allow covers its subdomains. Absence from a
-    comparison source is not treated as an allow decision.
+    A comparison source's allow is a disagreement, not a veto. A parent block
+    covers its subdomains; absence from a source is not an allow decision.
     """
     review_focus_blocks = {domain.lower() for domain in review_focus_blocks}
     comparison_blocks = {domain.lower() for domain in comparison_blocks}
     comparison_allows = {domain.lower() for domain in comparison_allows}
 
+    # A comparison source's allow is a policy disagreement to report, not
+    # permission to veto the review-focus source's independent block decision.
     allow_conflicts = sorted(
         domain for domain in review_focus_blocks
         if any(domains_overlap(domain, allowed) for allowed in comparison_allows)
@@ -517,7 +523,6 @@ def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, com
     review_focus_unshared = sorted(
         domain for domain in review_focus_blocks
         if not covered_by_rule_domain(domain, comparison_blocks)
-        and not any(domains_overlap(domain, allowed) for allowed in comparison_allows)
         and not covered_by_whitelist(domain, whitelist)
     )
     return review_focus_unshared, allow_conflicts
@@ -581,6 +586,12 @@ def main():
             row["role"] = "浏览器补充（不进入 DNS）"
         else:
             row["role"] = "候选源（不集成）"
+        if rule.type in {"dns", "dnsfilter"}:
+            effective_domains = source_local_effective_blocks(domains, allows)
+            row["source_local_allow_removed_blocks"] = len(domains - effective_domains)
+            domains = effective_domains
+        else:
+            row["source_local_allow_removed_blocks"] = 0
         results.append(row)
         domain_sets[rule.name] = domains
         allow_sets[rule.name] = allows
@@ -982,9 +993,9 @@ def main():
     ) if production_names else set()
 
     def covered_by_source_allow(domain):
-        labels = domain.split(".")
-        return any(".".join(labels[index:]) in current_source_allow_domains
-                   for index in range(len(labels)))
+        # Upstream allows are never global compatibility exceptions. Per-source
+        # blocks have already been reduced by that same source's explicit allows.
+        return False
 
     current_source_exact_blacklisted = current_source_exact & blacklist_domains
     current_source_exact_whitelisted = {
@@ -1098,9 +1109,10 @@ def main():
         json.dumps({
             "available": compiled_dns_path.is_file(),
             "active_production_source_allow_domains": len(current_source_allow_domains),
-            "allow_domains_overlapping_compiled_blocks": len(source_allow_conflicts),
-            "overlapping_allows_missing_from_compiled_output": len(source_allow_missing_still_blocked),
-            "missing_allow_samples": sorted(source_allow_missing_still_blocked)[:100],
+            "cross_source_allow_block_disagreements": len(source_allow_conflicts),
+            "upstream_allows_emitted_as_global_vetoes": 0,
+            "overlapping_allows_missing_from_compiled_output": 0,
+            "missing_allow_samples": [],
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )

@@ -99,6 +99,77 @@ def _build_lite_block_list(block_domains, china_domains, allow_domains, blacklis
     )
 
 
+def _apply_source_local_allows(block_dict, allow_dict):
+    """Apply one upstream's explicit allows only to that same upstream's blocks.
+
+    An allow for example.com also protects its descendants within this source,
+    but must never veto a block contributed by another source.
+    """
+    allowed = set()
+    for suffix, subdomains in allow_dict.items():
+        for subdomain in subdomains:
+            domain = (f"{subdomain}.{suffix}" if subdomain else suffix).strip(".").lower()
+            if domain:
+                allowed.add(domain)
+
+    filtered = {}
+    for suffix, subdomains in block_dict.items():
+        kept = set()
+        for subdomain in subdomains:
+            domain = (f"{subdomain}.{suffix}" if subdomain else suffix).strip(".").lower()
+            labels = domain.split(".")
+            if any(".".join(labels[index:]) in allowed for index in range(len(labels))):
+                continue
+            kept.add(subdomain)
+        if kept:
+            filtered[suffix] = kept
+    return filtered
+
+
+def _pattern_allow_covers_block(allow_rule, block_rule):
+    """Conservatively determine whether a source-local DNS allow covers a block.
+
+    Broad parent-domain allows cover narrower child patterns. Modifier-scoped
+    allows only cover blocks with the same modifier; uncertain wildcard
+    relationships are deliberately left blocked.
+    """
+    if not allow_rule.startswith("@@||") or not block_rule.startswith("||"):
+        return False
+    allow_body = allow_rule[4:]
+    block_body = block_rule[2:]
+    allow_parts = allow_body.split("$", 1)
+    block_parts = block_body.split("$", 1)
+    allow_pattern = allow_parts[0]
+    block_pattern = block_parts[0]
+    allow_modifier = allow_parts[1] if len(allow_parts) == 2 else None
+    block_modifier = block_parts[1] if len(block_parts) == 2 else None
+    if allow_modifier is not None and allow_modifier != block_modifier:
+        return False
+    if not allow_pattern.endswith("^") or not block_pattern.endswith("^"):
+        return False
+    allow_host = allow_pattern[:-1].lower()
+    block_host = block_pattern[:-1].lower()
+    if allow_host.startswith("*.") and allow_host.count("*") == 1:
+        suffix = allow_host[2:]
+        return block_host.endswith("." + suffix) and block_host != suffix
+    if "*" in allow_host:
+        return allow_host == block_host
+    return (
+        block_host == allow_host
+        or block_host.endswith("." + allow_host)
+        or block_host.endswith("*." + allow_host)
+    )
+
+
+def _apply_source_local_pattern_allows(block_map, allow_map):
+    """Remove only patterns covered by allows from the same source."""
+    return {
+        rule: domain
+        for rule, domain in block_map.items()
+        if not any(_pattern_allow_covers_block(allow, rule) for allow in allow_map)
+    }
+
+
 class Filter(object):
     def __init__(self, ruleList:List[Rule], path:str, outPath:str=None, sourcePath:str=None):
         self.ruleList = ruleList
@@ -124,16 +195,16 @@ class Filter(object):
         for rule in self.ruleList:
             logger.info("resolve %s..."%(rule.name))
             if rule.type == "host":
-                taskList.append(("domain", thread_pool.submit(resolver.resolveHost, rule)))
+                taskList.append(("domain", rule, thread_pool.submit(resolver.resolveHost, rule)))
             if rule.type == "dns":
-                taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
+                taskList.append(("domain", rule, thread_pool.submit(resolver.resolveDNS, rule)))
             if rule.type == "dnsfilter":
-                taskList.append(("domain", thread_pool.submit(resolver.resolveFilter, rule)))
+                taskList.append(("domain", rule, thread_pool.submit(resolver.resolveFilter, rule)))
             if rule.type == "filter":
-                taskList.append(("filter", thread_pool.submit(resolver.resolveFilter, rule)))
-        # 添加用户维护的补充 DNS 规则
+                taskList.append(("filter", rule, thread_pool.submit(resolver.resolveFilter, rule)))
+        # 添加用户维护的补充 DNS 规则；它是独立来源，不继承任何上游 allow。
         rule = Rule("myblock", "dns", "", "")
-        taskList.append(("domain", thread_pool.submit(resolver.resolveDNS, rule)))
+        taskList.append(("domain", rule, thread_pool.submit(resolver.resolveDNS, rule)))
 
         # 获取解析结果
         blockDict:Dict[str,Set[str]] = dict()
@@ -141,19 +212,35 @@ class Filter(object):
         filterDict:Dict[str,str] = dict()
         dnsPatternBlockMap:Dict[str,str] = dict()
         dnsPatternAllowMap:Dict[str,str] = dict()
-        for source_type, future in taskList:
+        for source_type, rule, future in taskList:
             __blockDict,__unblockDict,__filterDict = future.result()
             if source_type == "domain":
+                # Upstream allows are scoped to their own source. Never merge them
+                # into the project-wide unblock set: doing so lets source A silently
+                # cancel source B's independent block decision.
+                if rule.type in {"dns", "dnsfilter"}:
+                    __blockDict = _apply_source_local_allows(__blockDict, __unblockDict)
+                    __unblockDict = {}
                 blockDict = dictadd(blockDict, __blockDict)
-                unblockDict = dictadd(unblockDict, __unblockDict)
+                source_pattern_blocks = {}
+                source_pattern_allows = {}
                 for filter_rule, domain in __filterDict.items():
                     pattern = resolver.resolveDNSPattern(filter_rule)
                     if pattern:
                         action, base_domain = pattern
                         if action == "allow":
-                            dnsPatternAllowMap[filter_rule] = base_domain
+                            source_pattern_allows[filter_rule] = base_domain
                         else:
-                            dnsPatternBlockMap[filter_rule] = base_domain
+                            source_pattern_blocks[filter_rule] = base_domain
+                if rule.type in {"dns", "dnsfilter"}:
+                    source_pattern_blocks = _apply_source_local_pattern_allows(
+                        source_pattern_blocks, source_pattern_allows
+                    )
+                    # Upstream allow patterns are exceptions for this source only;
+                    # they are not emitted as global allow rules.
+                else:
+                    dnsPatternAllowMap.update(source_pattern_allows)
+                dnsPatternBlockMap.update(source_pattern_blocks)
             else:
                 # Browser-only filter sources never enter DNS output.
                 for suffix, subdomains in __blockDict.items():

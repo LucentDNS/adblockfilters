@@ -56,8 +56,8 @@ def test_source_policy_classifies_every_enabled_dns_source_once():
         for item in profiles
     )
     conflict_resolution = policy["conflict_resolution"]
-    assert conflict_resolution["active_production_source_allow"] == "global_compatibility_veto"
-    assert conflict_resolution["candidate_only_source_allow"] == "audit_only_no_effect_on_production"
+    assert conflict_resolution["active_production_source_allow"] == "source_local_only"
+    assert conflict_resolution["candidate_only_source_allow"] == "source_local_only_for_candidate_analysis"
     assert "false positives" in conflict_resolution["rationale"]
 
 
@@ -68,7 +68,7 @@ def test_review_focus_unshared_candidates_are_not_treated_as_explicit_allows():
         comparison_allows={"allowed.example"},
         whitelist=set(),
     )
-    assert review_focus_unshared == ["unique.example"]
+    assert review_focus_unshared == ["allowed.example", "unique.example"]
     assert conflicts == ["allowed.example"]
 
 
@@ -90,7 +90,7 @@ def test_parent_allow_conflicts_cover_review_focus_subdomains():
         comparison_allows={"allowed.example"},
         whitelist=set(),
     )
-    assert review_focus_unshared == []
+    assert review_focus_unshared == ["child.allowed.example"]
     assert conflicts == ["child.allowed.example"]
 
 
@@ -101,7 +101,7 @@ def test_parent_block_and_child_allow_are_reported_as_conflict():
         comparison_allows={"app.example.com"},
         whitelist=set(),
     )
-    assert review_focus_unshared == []
+    assert review_focus_unshared == ["example.com"]
     assert conflicts == ["example.com"]
 
 
