@@ -29,13 +29,16 @@ def query_status(resolver: dns.resolver.Resolver, domain: str, rdtype: str) -> t
         return "nodata", ""
     except Timeout:
         return "timeout", ""
-    except NoNameservers:
-        return "no_nameservers", ""
+    except NoNameservers as exc:
+        # dnspython retains per-server failures here; preserve response codes
+        # and exception classes so SERVFAIL/REFUSED can be distinguished.
+        details = getattr(exc, "errors", None)
+        return "no_nameservers", repr(details if details else exc)[:1000]
     except Exception as exc:  # Keep the exception class for diagnosis, not policy.
         return "other_error", type(exc).__name__
 
 
-def inspect_one(domain: str, port: int) -> tuple[str, int, str, str, str]:
+def inspect_one(domain: str, port: int) -> tuple[str, int, str, str, str, str]:
     resolver = dns.resolver.Resolver(configure=False)
     resolver.nameservers = ["127.0.0.1"]
     resolver.port = port
@@ -43,7 +46,7 @@ def inspect_one(domain: str, port: int) -> tuple[str, int, str, str, str]:
     resolver.lifetime = 4.0
     a_status, a_error = query_status(resolver, domain, "A")
     aaaa_status, aaaa_error = query_status(resolver, domain, "AAAA")
-    return domain, port, a_status, aaaa_status, ";".join(x for x in (a_error, aaaa_error) if x)
+    return domain, port, a_status, a_error, aaaa_status, aaaa_error
 
 
 def load_sample(db_path: Path, sample_size: int) -> list[str]:
@@ -87,14 +90,18 @@ def main() -> int:
         port: {"A": Counter(), "AAAA": Counter()} for port in PORTS
     }
     errors: dict[int, Counter[str]] = {port: Counter() for port in PORTS}
+    error_samples: dict[int, list[str]] = {port: [] for port in PORTS}
     with ThreadPoolExecutor(max_workers=60) as pool:
         futures = [pool.submit(inspect_one, domain, port) for domain, port in jobs]
         for future in as_completed(futures):
-            domain, port, a_status, aaaa_status, error = future.result()
+            domain, port, a_status, a_error, aaaa_status, aaaa_error = future.result()
             per_query[port]["A"][a_status] += 1
             per_query[port]["AAAA"][aaaa_status] += 1
-            if error:
-                errors[port][error] += 1
+            for rdtype, status, detail in (("A", a_status, a_error), ("AAAA", aaaa_status, aaaa_error)):
+                if detail:
+                    errors[port][f"{rdtype}:{detail[:180]}"] += 1
+                if status == "no_nameservers" and len(error_samples[port]) < 8:
+                    error_samples[port].append(f"{domain} {rdtype}: {detail[:500]}")
             if "answer" in (a_status, aaaa_status):
                 pair = "has_address"
             elif a_status == aaaa_status == "nxdomain":
@@ -111,7 +118,9 @@ def main() -> int:
         print(f"  AAAA: {dict(sorted(per_query[port]['AAAA'].items()))}")
         print(f"  pair: {dict(sorted(per_port[port].items()))}")
         if errors[port]:
-            print(f"  exception_types: {dict(sorted(errors[port].items()))}")
+            print(f"  error_details_top5: {errors[port].most_common(5)}")
+        if error_samples[port]:
+            print(f"  no_nameserver_examples: {error_samples[port]}")
 
     print("\nDiagnostic complete. This is evidence gathering only; no DNS state was modified.")
     return 0
