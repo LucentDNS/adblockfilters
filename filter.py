@@ -445,7 +445,7 @@ class Filter(object):
             filterDict, set(blockList), set(unblockList), blackSet, whiteSet, whiteDict
         )
 
-        # 生成合并规则 AdGuard, AdGuardHome, DNSMasq, InviZible, SmartDNS等
+        # 仅生成两个正式产品：AdGuard 浏览器扩展补充规则与 AdGuard DNS / AdGuard Home 规则
         generaterList:List[APPBase] = [
             AdGuard(
                 blockList, unblockList, filterDict, filterList, filterList_var,
