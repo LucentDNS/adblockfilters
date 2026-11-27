@@ -56,7 +56,7 @@ def classify_strict_domains(strict_domains, stability_blocks, stability_allows, 
                 "project_whitelist_excluded" if white else
                 "explicit_stability_allow_conflict" if stable_allow_roots else
                 "stability_source_block_covered" if stable_block_roots else
-                "strict_only_review" 
+                "strict_only_review"
             )
         }
     return {
