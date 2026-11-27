@@ -141,6 +141,50 @@ def main() -> int:
         if error_samples[port]:
             print(f"  no_nameserver_examples: {error_samples[port]}")
 
+    # Probe alternative domestic resolvers directly. These results are diagnostic
+    # only and do not replace any production upstream without a reviewed change.
+    candidates = {
+        "ByteDance 180.184.1.1": "180.184.1.1",
+        "114DNS 114.114.114.114": "114.114.114.114",
+    }
+    probe_domains = ("baidu.com", "qq.com", "example.com", "cloudflare.com", "google.com")
+    print("\\nCandidate resolver positive probes:")
+    for label, address in candidates.items():
+        resolver = dns.resolver.Resolver(configure=False)
+        resolver.nameservers = [address]
+        resolver.port = 53
+        resolver.timeout = 2.0
+        resolver.lifetime = 5.0
+        probe_results = {}
+        for domain in probe_domains:
+            status, detail = query_status(resolver, domain, "A")
+            probe_results[domain] = status if not detail else f"{status}:{detail[:120]}"
+        print(f"  {label} ({address}): {probe_results}")
+
+    candidate_domains = domains[:200]
+    for label, address in candidates.items():
+        counts: dict[str, Counter[str]] = {"A": Counter(), "AAAA": Counter()}
+        resolver = dns.resolver.Resolver(configure=False)
+        resolver.nameservers = [address]
+        resolver.port = 53
+        resolver.timeout = 2.0
+        resolver.lifetime = 5.0
+
+        def inspect_candidate(domain: str) -> tuple[str, str, str, str]:
+            a_status, a_error = query_status(resolver, domain, "A")
+            aaaa_status, aaaa_error = query_status(resolver, domain, "AAAA")
+            return a_status, a_error, aaaa_status, aaaa_error
+
+        with ThreadPoolExecutor(max_workers=20) as pool:
+            futures = [pool.submit(inspect_candidate, domain) for domain in candidate_domains]
+            for future in as_completed(futures):
+                a_status, a_error, aaaa_status, aaaa_error = future.result()
+                counts["A"][a_status] += 1
+                counts["AAAA"][aaaa_status] += 1
+        print(f"\\nCandidate {label} ({address}) sample={len(candidate_domains)}")
+        print(f"  A:    {dict(sorted(counts['A'].items()))}")
+        print(f"  AAAA: {dict(sorted(counts['AAAA'].items()))}")
+
     print("\nDiagnostic complete. This is evidence gathering only; no DNS state was modified.")
     return 0
 
