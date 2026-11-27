@@ -41,7 +41,7 @@
 - **Full**：包含通过上述 DNS 有效性验证、并经规则处理流程保留的完整规则范围。
 - **Lite**：在域名规则基础上，进一步依据国内域名识别数据筛选；识别依据包括国内直连域名规则及中国 IPv4 地址段。它不是简单按数量截短规则，也不是随意删减规则。对于浏览器过滤规则，Lite 按规则关联域名及规则自身的匹配范围筛选，并保留原有匹配语义。
 
-浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。**本项目不会对所有上游规则中的网页修饰符进行通用、无差别清洗；DNS 格式产物以现有解析与转换流程实际识别、输出的内容为准。** 如果上游混合语法或客户端不支持的规则进入某个产物，DNS 网关/客户端可能忽略该规则、显示警告，或拒绝加载订阅。请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。
+浏览器过滤规则中的元素隐藏、脚本注入、修饰符等语法不等同于 DNS 拦截规则。本项目将浏览器过滤规则与 DNS 域名规则分开处理；请勿把浏览器订阅导入仅支持 DNS 域名的网关，也不要期待 DNS 订阅执行网页元素或脚本过滤。DNS Full/Lite 使用 AdGuard Home 的 Adblock-style 域名语法（例如 `||example.com^`、`@@||example.com^`），每次构建都会使用 AdGuard 官方 [Hostlist Compiler](https://github.com/AdguardTeam/HostlistCompiler) v2.1.1 对两个 DNS 产物执行 `Validate` 与 `Deduplicate` 独立校验；如果编译器删除、改写规则，或发现重复规则，校验就会失败，阻止本轮正式发布。**这项检查验证的是 DNS 列表语法和编译器兼容性，不代表自动判断了域名是否真是广告/跟踪，也不代表已经排除了误拦截。** 请按客户端支持的格式导入；不同客户端的匹配行为以其自身文档为准。规则编写参考 [AdGuard 官方指南](https://adguard.com/kb/general/ad-filtering/create-own-filters/)。
 
 ## 白名单与误报处理
 
@@ -60,19 +60,28 @@
 
 ## 集成的上游规则源
 
-以下来源参与正式构建；订阅地址以 `sources.json` 为准。
+以下来源参与正式构建；订阅地址以 `sources.json` 为准。DNS 来源与浏览器补充来源分开处理，不把浏览器规则提取出的域名混入 DNS 规则。
+
+### DNS/Hosts 正式来源（进入 DNS Full/Lite）
+
+- AdGuard DNS filter — [来源](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)
+- AWAvenue Ads Rule (Only.Ads) — [来源](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)
+- HaGeZi DNS-Blocklists (Pro Mini) — [来源](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)
+- StevenBlack hosts — [来源](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)
+
+### 浏览器补充来源（只进入浏览器过滤产物，不进入 DNS）
 
 - AdGuard Base filter — [来源](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt)
 - AdGuard Chinese filter — [来源](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt)
 - AdGuard Mobile Ads filter — [来源](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt)
-- AdGuard DNS filter — [来源](https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt)
 - CJX's Annoyance List — [来源](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt)
 - EasyList — [来源](https://easylist-downloads.adblockplus.org/easylist.txt)
 - EasyList China — [来源](https://easylist-downloads.adblockplus.org/easylistchina.txt)
 - EasyPrivacy — [来源](https://easylist-downloads.adblockplus.org/easyprivacy.txt)
-- AWAvenue Ads Rule (Only.Ads) — [来源](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Adguard-Only.Ads.txt)
-- HaGeZi DNS-Blocklists (Pro Mini) — [来源](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.mini.txt)
-- StevenBlack hosts — [来源](https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts)
+
+### 官方列表基准审计（仅候选，不参与正式构建）
+
+项目会对 AdGuard [HostlistsRegistry](https://github.com/AdguardTeam/HostlistsRegistry) 中已收录的 Anti-AD、AdRules DNS、OISD Small/Big、1Hosts Lite、HaGeZi Pro/Normal 等列表进行候选源贡献审计。它们目前仅用于比较解析覆盖、与现有来源的重合及潜在增量，不会自动并入正式规则；是否集成还需单独审查误报风险、DNS 验证证据、语法兼容性和许可条件。
 
 ## 反馈与贡献
 
@@ -96,4 +105,4 @@
 | HaGeZi DNS-Blocklists | [GPL-3.0](https://github.com/hagezi/dns-blocklists/blob/main/LICENSE) |
 | StevenBlack hosts | [MIT](https://github.com/StevenBlack/hosts/blob/master/license.txt) |
 
-AdRules 当前不在本项目的 `sources.json` 中，因此不属于当前正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
+AdRules、Anti-AD、OISD 与 1Hosts 等候选列表当前不在本项目的 `sources.json` 中，因此不属于正式构建来源，也不在上表中。来源清单发生变化时，应同步复核其具体许可与再分发条件。无法确认再分发条件的来源不纳入正式构建。
