@@ -32,6 +32,7 @@ def source_audit_gate_failures(
     source_presence_unexplained: set[str],
     current_source_parent_inactive_unexplained: set[str],
     baseline_allow_missing_still_blocked: set[str],
+    source_allow_missing_still_blocked: set[str] | None = None,
 ) -> list[str]:
     """Fail on active source loss and upstream allow regressions, not historical baseline-only deltas."""
     failures = []
@@ -41,6 +42,11 @@ def source_audit_gate_failures(
     # Wildcards, regex-like patterns and other supported filter directives may
     # not expose a single domain to this audit's coverage model. Keep their
     # count in the report, but do not misclassify them as invalid or lost rules.
+    if source_allow_missing_still_blocked:
+        failures.append(
+            "active production source allow exceptions are missing while matching block rules remain: "
+            + ", ".join(sorted(source_allow_missing_still_blocked)[:20])
+        )
     if source_presence_unexplained:
         failures.append(
             "active baseline DNS source rules are missing from compiled output: "
@@ -680,6 +686,7 @@ def main():
             "policy_note": policy.get("policy_note", ""),
             "lineage_evidence": policy.get("lineage_evidence", []),
             "policy_profiles": policy.get("policy_profiles", []),
+            "conflict_resolution": policy.get("conflict_resolution", {}),
             "decision": "audit_only_no_automatic_production_inclusion"
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8"
@@ -770,9 +777,10 @@ def main():
     report += "\n## 重点复核来源与上游谱系审计（仅供人工复核）\n\n"
     report += f"- 重点复核来源：{', '.join(sorted(review_focus_names))}。\n"
     report += f"- 对照来源：{', '.join(sorted(comparison_names))}。\n"
-    report += f"- 重点复核来源未共享候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(review_focus_unshared_candidates)} 条，详见 review-focus-unshared-candidates.txt。\n"
+    report += f"- 重点复核来源未共享候选（已排除对照来源父级/精确拦截、明确放行及项目白名单）：{len(review_focus_unshared_candidates)} 条；这些域名目前已随正式来源 {', '.join(sorted(review_focus_names))} 纳入构建，清单用于风险复核，不是额外自动导入。\n"
     report += f"- 与对照来源明确放行规则冲突：{len(allow_conflict_details)} 条，详见 source-policy-conflicts.json。\n"
-    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立；本报告不自动把重点复核来源候选并入正式规则。\n"
+    report += "- 来源未收录不视为明确放行；来源重合不证明上游独立。重点复核来源本身属于正式输入，其未共享域名已随该来源进入构建。\n"
+    report += "- 当前冲突策略：任一正式 DNS/Hosts 来源的明确 allow 作为全局兼容性例外，优先于其他正式来源的 block；候选来源的 allow 仅作评估，不影响正式输出。此策略优先降低误杀风险，可能牺牲部分拦截覆盖。\n"
     report += "- 上游谱系证据按公开文档分级记录；致谢不等于当前实际集成，来源重合不构成独立投票。\n"
     report += "- CHN AdRules 候选源含混合上游许可，本项目只保留汇总统计，不在公开审计产物中分发其提取域名文件。\n"
     for evidence in policy.get("lineage_evidence", []):
@@ -1008,6 +1016,20 @@ def main():
                 else:
                     compiled_non_domain_filters += 1
 
+    source_allow_conflicts = {
+        allow_domain for allow_domain in current_source_allow_domains
+        if any(domains_overlap(allow_domain, block_domain) for block_domain in compiled_block_domains)
+    }
+    source_allow_missing_still_blocked = {
+        allow_domain for allow_domain in source_allow_conflicts
+        if not covered_by_rule_domain(allow_domain, compiled_allow_domains)
+    }
+    write_domain_list(
+        OUT_DIR / "source-allow-conflicts-still-blocked.txt",
+        source_allow_missing_still_blocked,
+        "All active production-source allow rules that overlap block rules remain effective in compiled output."
+    )
+
     def covered_by_compiled_output(domain):
         return (
             compiled_dns_path.exists()
@@ -1124,6 +1146,8 @@ def main():
         "baseline_candidate_analysis": baseline_candidate_analysis,
         "current_dns_source_unique_domains": len(current_dns_domains),
         "current_dns_source_allow_domains": len(current_source_allow_domains),
+        "current_source_allow_block_conflicts": len(source_allow_conflicts),
+        "current_source_allow_conflicts_missing_from_output": len(source_allow_missing_still_blocked),
         "baseline_only_exactly_present_in_current_dns_sources": len(current_source_exact),
         "baseline_only_exact_source_rules_excluded_by_blacklist": len(current_source_exact_blacklisted),
         "baseline_only_exact_source_rules_excluded_by_whitelist": len(current_source_exact_whitelisted),
@@ -1150,6 +1174,7 @@ def main():
     })
     report += "\n## 原作者基线差异与当前 DNS 来源、黑名单、白名单及来源放行的关系\n\n"
     report += f"- 当前六个 DNS/Hosts 来源合并的精确域名数：{len(current_dns_domains)}；来源放行域名：{len(current_source_allow_domains)}。\n"
+    report += f"- 与当前 block 规则存在匹配冲突的来源 allow：{len(source_allow_conflicts)} 条；编译输出未保留有效放行的冲突：{len(source_allow_missing_still_blocked)} 条。\n"
     report += f"- 基线独有 block 中，精确存在于当前 DNS 来源：{len(current_source_exact)} 条；另有父域名来源覆盖：{len(current_source_parent_present)} 条。\n"
     report += f"- 精确来源规则中，被当前黑名单排除：{len(current_source_exact_blacklisted)} 条；被项目白名单覆盖：{len(current_source_exact_whitelisted)} 条；被上游来源 allow 规则覆盖：{len(current_source_exact_upstream_allowed)} 条。\n"
     report += f"- 基线 block 被当前来源 allow 精确或父域名覆盖：{len(baseline_only_source_allow_covered)} 条。\n"
@@ -1199,9 +1224,20 @@ def main():
     )
 
     lite_scope = {"available": False, "reason": "validated-domain input, china.txt, or Lite output is unavailable"}
-    validation_input_path = ROOT / ".cache" / "domain" / "validated-domain-input.txt"
+    # domain.txt is the exact candidate set sealed with china.txt by DNS validation.
+    # The old validated-domain-input.txt name is obsolete and must not silently skip Lite audit.
+    validation_input_path = ROOT / ".cache" / "domain" / "domain.txt"
     china_input_path = ROOT / ".cache" / "domain" / "china.txt"
     lite_dns_path = ROOT / ".cache" / "out" / "adblockdnslite.txt"
+    missing_lite_inputs = [
+        str(path.relative_to(ROOT)) for path in
+        (validation_input_path, china_input_path, lite_dns_path) if not path.is_file()
+    ]
+    if missing_lite_inputs:
+        raise SystemExit(
+            "Lite scope audit is required and cannot be skipped; missing inputs: "
+            + ", ".join(missing_lite_inputs)
+        )
     if validation_input_path.exists() and china_input_path.exists() and lite_dns_path.exists():
         validated_domains = {
             line.strip().lower()
@@ -1213,6 +1249,14 @@ def main():
             for line in china_input_path.read_text(encoding="utf-8", errors="replace").splitlines()
             if line.strip() and not line.lstrip().startswith(("#", "!"))
         }
+        if not validated_domains:
+            raise SystemExit("Lite scope audit has an empty validated domain input")
+        if not china_domains <= validated_domains:
+            unexpected_china = sorted(china_domains - validated_domains)
+            raise SystemExit(
+                "DNS validation state is inconsistent: china.txt contains domains "
+                "outside domain.txt: " + ", ".join(unexpected_china[:20])
+            )
         lite_blocks_exact, lite_blocks_suffix, lite_allows = set(), set(), set()
         for raw in lite_dns_path.read_text(encoding="utf-8", errors="replace").splitlines():
             line = raw.strip()
@@ -1594,6 +1638,7 @@ def main():
         source_presence_unexplained,
         current_source_parent_inactive_unexplained,
         baseline_allow_missing_still_blocked,
+        source_allow_missing_still_blocked,
     )
     if gate_failures:
         raise SystemExit("Source/output consistency gate failed:\n- " + "\n- ".join(gate_failures))
