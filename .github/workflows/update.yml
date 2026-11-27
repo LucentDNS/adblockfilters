@@ -403,8 +403,35 @@ jobs:
                           json.loads(path.read_text(encoding="utf-8"))
                       except Exception as exc:
                           raise SystemExit(f"Invalid JSON report {path}: {exc}")
-          print("Audit report assets are present, non-empty, and valid.")
+          lite_path = Path(".cache/audit/lite-scope-audit.json")
+          lite = json.loads(lite_path.read_text(encoding="utf-8"))
+          if not lite.get("available"):
+              raise SystemExit("Lite domestic-scope audit did not run")
+          if lite.get("validated_domain_input_count", 0) <= 0:
+              raise SystemExit("Lite audit has no validated domain input")
+          if lite.get("china_classified_domain_count", 0) <= 0:
+              raise SystemExit("Lite audit has no validated China-classified domains")
+          allow_conflicts = Path(".cache/audit/source-allow-conflicts-still-blocked.txt")
+          if not allow_conflicts.is_file():
+              raise SystemExit("Production source-allow conflict audit is missing")
+          print("Audit report assets are present, non-empty, valid, and include a completed Lite-scope audit.")
           PY
+
+      - name: Upload build quality evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-quality-evidence-${{ github.run_id }}
+          path: |
+            .cache/audit/**
+            .cache/report/**
+            .cache/out/adblockdns.txt
+            .cache/out/adblockdnslite.txt
+            .cache/out/adblockfilters.txt
+            .cache/out/adblockfilterslite.txt
+          if-no-files-found: warn
+          retention-days: 30
+          include-hidden-files: true
 
       - name: Refuse to publish if main advanced during the build
         run: |
@@ -448,6 +475,7 @@ jobs:
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
             .cache/audit/source-policy-conflicts.json
+            .cache/audit/source-allow-conflicts-still-blocked.txt
             .cache/audit/review-focus-unshared-candidates.txt
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt
