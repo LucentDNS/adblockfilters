@@ -85,7 +85,7 @@ def test_dns_state_and_direct_build_push_triggers_are_disjoint():
     assert len(dns_paths) == len(set(dns_paths))
     assert set(update_paths).isdisjoint(dns_paths)
     assert all(not path.startswith("tests/") for path in update_paths)
-    assert all(not path.startswith("tests/") for path in dns_paths)
+    assert "tests/**" in dns_paths
 
     assert {
         "blacklist.py",
