@@ -179,6 +179,7 @@ def test_obsolete_branch_cleanup_runs_before_dns_state_wait():
     assert "pulls?state=closed" in cleanup
     assert '[[ "${branch_name}" == "main" || "${branch_name}" == "dist" ]]' in cleanup
     assert "diagnostics/cnnic-secondary-endpoint" in cleanup
+    assert "fix/dns-checkpoint-cache-compatibility" in cleanup
     assert workflow.index("Remove merged and superseded work branches") < workflow.index(
         "- name: Wait for a complete DNS state matching current inputs"
     )
