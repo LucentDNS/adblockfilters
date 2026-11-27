@@ -83,9 +83,9 @@ def main():
              "https://small.oisd.nl/", "live upstream"),
         Rule("OISD Blocklist Big (AdGuard Registry benchmark only; higher FP risk)", "dns",
              "https://big.oisd.nl/", "live upstream"),
-        Rule("HaGeZi Pro", "dns",
+        Rule("HaGeZi Pro (AdGuard Registry benchmark against Pro Mini)", "dns",
              "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt", "live upstream"),
-        Rule("HaGeZi Normal", "dns",
+        Rule("HaGeZi Normal (AdGuard Registry benchmark against Pro Mini)", "dns",
              "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/multi.txt", "live upstream"),
     ]
     rules = [rule for rule in all_rules if rule.type in {"host", "dns", "dnsfilter"}] + candidate_rules
