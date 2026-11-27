@@ -45,12 +45,22 @@ DNS_NEGATIVE_RECHECK_SECONDS = 6 * 60 * 60
 DNS_VALIDATION_PORTS = (5053, 5054, 5055, 5056, 5057, 5058)
 DNS_BLOCK_POLICY_VERSION = "5"
 DNS_VALIDATION_MAX_CONCURRENCY = 100
+# Keep the event loop bounded: never create one asyncio task per input domain.
+DNS_VALIDATION_BATCH_SIZE = 500
 DNS_UNKNOWN_FAILURE_MIN_SAMPLES = 20
 DNS_UNKNOWN_FAILURE_MAX_RATIO = 0.20
 
 
 def _dns_validation_infrastructure_unhealthy(total: int, unknown: int) -> bool:
     return total >= DNS_UNKNOWN_FAILURE_MIN_SAMPLES and unknown / total > DNS_UNKNOWN_FAILURE_MAX_RATIO
+
+
+def _iter_batches(items, batch_size: int):
+    """Yield bounded slices without scheduling one coroutine per input item."""
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    for offset in range(0, len(items), batch_size):
+        yield items[offset:offset + batch_size]
 
 
 
@@ -637,18 +647,40 @@ class BlackList(object):
                 dnsresolvers.append(dnsresolver)
             semaphore = asyncio.Semaphore(self.__maxTask)
             self.__dns_validation_stats = {"checked": 0, "resolved": 0, "not_found": 0, "no_address": 0, "unknown": 0}
-            tasks = []
             now = int(time.time())
-            for _,v in domainDict.items():
-                ipList = v.getIPList()
-                if _needs_dns_validation(ipList, v.getTimeStamp(), now, v.getUpdate()):
-                    tasks.append(self.__pingx(dnsresolvers, v, semaphore))
-            total = len(tasks)
-            for completed, task in enumerate(asyncio.as_completed(tasks), 1):
-                domain = await task
-                domainDict[domain.domain] = domain
-                if completed % 5000 == 0 or completed == total:
-                    logger.info(f"DNS validation progress: {completed}/{total}")
+            pending_domains = [
+                domain for domain in domainDict.values()
+                if _needs_dns_validation(
+                    domain.getIPList(), domain.getTimeStamp(), now, domain.getUpdate()
+                )
+            ]
+            total = len(pending_domains)
+            completed = 0
+            logger.info(
+                f"DNS validation queued: {total}; batch_size={DNS_VALIDATION_BATCH_SIZE}; "
+                f"concurrency={self.__maxTask}"
+            )
+
+            # Process bounded batches rather than creating hundreds of thousands
+            # of coroutine/task objects at once. Persist each completed batch to
+            # SQLite so an interrupted run does not lose all completed lookups
+            # on the runner. Only completed domain records are checkpointed.
+            for batch in _iter_batches(pending_domains, DNS_VALIDATION_BATCH_SIZE):
+                results = await asyncio.gather(
+                    *(self.__pingx(dnsresolvers, domain, semaphore) for domain in batch)
+                )
+                updates = []
+                for domain in results:
+                    domainDict[domain.domain] = domain
+                    if domain.getUpdate():
+                        updates.append(domain.toTuple())
+                if updates:
+                    self.__db.updateALL(updates)
+                completed += len(results)
+                logger.info(
+                    f"DNS validation progress: {completed}/{total}; "
+                    f"checkpointed={len(updates)}"
+                )
 
             resolved = sum(1 for item in domainDict.values() if item.getIPList())
             nxdomain = sum(1 for item in domainDict.values() if item.getBlock())
