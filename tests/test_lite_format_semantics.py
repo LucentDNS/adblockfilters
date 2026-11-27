@@ -85,8 +85,8 @@ def test_adguard_browser_generator_preserves_full_and_lite_outputs(tmp_path):
     generator = AdGuard(
         ["blocked.example.com"],
         ["safe.example.com"],
-        {},
-        [],
+        {"||blocked.example.com^": "blocked.example.com"},
+        ["||blocked.example.com^"],
         [],
         {"blocked.example.com"},
         str(tmp_path / "adblockfilters.txt"),
