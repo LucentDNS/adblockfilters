@@ -150,26 +150,29 @@ jobs:
           python -m compileall -q app
           python -m pytest -q tests
 
-      - name: Prepare optional DNS classification inputs
+      - name: Prepare verified DNS classification inputs for Lite
         run: |
           set -euo pipefail
           mkdir -p .cache/domain .cache/source
-          # DNS existence checks are auxiliary diagnostics, not production truth.
-          # Never remove upstream rules because a domain was temporarily NXDOMAIN.
-          : > .cache/domain/black.txt
-          # Reuse the latest successful domestic classification only to scope Lite.
-          # It cannot remove entries from Full and is never treated as a block decision.
-          if curl --fail --location --silent --show-error --retry 1 --retry-all-errors --connect-timeout 10 --max-time 60 \
-            -o .cache/domain/china.txt \
-            "https://github.com/${{ github.repository }}/releases/download/dns-validation-state/china.txt"; then
-            echo "Using last published DNS-derived domestic classification for Lite scope only."
-          else
-            : > .cache/domain/china.txt
-            echo "::warning::No previous domestic classification is available; Lite will use an empty DNS-derived China scope for this build."
-          fi
+          state_url="https://github.com/${{ github.repository }}/releases/download/dns-validation-state"
+          # Consume the last successfully sealed DNS state; do not wait for the
+          # independent weekly DNS workflow and never fall back to an empty Lite.
+          for asset in black.txt china.txt domain.txt domain-input-provenance.json \
+            validated-dns-sources.tar.gz dns-validation-bootstrap-complete-v2.txt; do
+            curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
+              --connect-timeout 15 --max-time 180 \
+              -o ".cache/domain/$asset" "$state_url/$asset"
+          done
+          # Verify that all classification files belong to one sealed run and
+          # that its source manifest, myblock input, and validation logic still match.
+          python scripts/validated_sources.py check-current
+          # Keep the validated candidate input and China classification for Lite
+          # auditing/building, but DNS NXDOMAIN remains diagnostic-only for Full.
+          mv .cache/domain/black.txt .cache/domain/validated-black.txt
+          printf '! DNS NXDOMAIN is diagnostic only; do not delete upstream rules.\n' > .cache/domain/black.txt
           cp rules/white.txt .cache/domain/
           cp rules/myblock.txt .cache/source/
-          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tlast-known auxiliary Lite classification only\n' > .cache/domain/input-provenance.txt
+          printf 'black.txt\tdisabled: DNS NXDOMAIN is not used to delete upstream rules\nchina.txt\tverified sealed DNS classification for Lite only\ndomain.txt\tmatching sealed DNS validation candidate input\n' > .cache/domain/input-provenance.txt
 
       - name: Restore previous upstream snapshots for anomaly checks
         env:
