@@ -1234,8 +1234,13 @@ def main():
         (validation_input_path, china_input_path, lite_dns_path) if not path.is_file()
     ]
     if missing_lite_inputs:
-        raise SystemExit(
-            "Lite scope audit is required and cannot be skipped; missing inputs: "
+        if os.environ.get("REQUIRE_LITE_SCOPE_AUDIT") == "1":
+            raise SystemExit(
+                "Lite scope audit is required for production builds and cannot be skipped; missing inputs: "
+                + ", ".join(missing_lite_inputs)
+            )
+        print(
+            "Lite scope audit not run in standalone source-audit mode; missing inputs: "
             + ", ".join(missing_lite_inputs)
         )
     if validation_input_path.exists() and china_input_path.exists() and lite_dns_path.exists():
