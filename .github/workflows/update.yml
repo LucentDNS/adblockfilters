@@ -90,7 +90,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py
+          python -m py_compile adblock.py blacklist.py updater.py readme.py scripts/audit_sources.py scripts/generate_domain_input.py scripts/verify_critical_domains.py scripts/validated_sources.py scripts/compare_baseline.py scripts/check_source_anomalies.py scripts/verify_hostlist_compiler.py scripts/source_policy_audit.py
           python -m compileall -q app
           python -m pytest -q tests
 
@@ -248,6 +248,10 @@ jobs:
       - name: Audit upstream source contribution (whitelist-aware)
         run: |
           python scripts/audit_sources.py
+
+      - name: Audit source philosophy conflicts (strict vs stability)
+        run: |
+          python scripts/source_policy_audit.py
 
       - name: Check whitelist regression (Full and Lite)
         run: |
@@ -482,6 +486,13 @@ jobs:
           files: |
             .cache/audit/source-audit.md
             .cache/audit/source-audit.json
+            .cache/audit/source-policy/source-policy-audit.md
+            .cache/audit/source-policy/source-policy-audit.json
+            .cache/audit/source-policy/strict-only-review.txt
+            .cache/audit/source-policy/strict-stability-supported.txt
+            .cache/audit/source-policy/strict-explicit-allow-conflicts.txt
+            .cache/audit/source-policy/strict-targeted-source-supported.txt
+            .cache/audit/source-policy/strict-project-whitelist-excluded.txt
             .cache/audit/whitelist-coverage.json
             .cache/audit/whitelist-unused.txt
             .cache/audit/lite-scope-audit.json
