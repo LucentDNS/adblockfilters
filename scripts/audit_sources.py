@@ -229,7 +229,7 @@ def audit_one(rule, resolver, download):
                     else None
                 )
                 if pattern:
-                    action, base_domain = pattern
+                    action, _base_domain = pattern
                     if action == "allow":
                         dns_pattern_allows.add(filt[0])
                         # Pattern allows are tracked separately; their base
@@ -512,10 +512,10 @@ def validate_source_policy(policy, production_names, candidate_names):
 
 
 def classify_review_focus_candidates(review_focus_blocks, comparison_blocks, comparison_allows, whitelist):
-    """Separate review-focus-unshared candidates from explicit cross-source allow conflicts.
+    """Report unshared blocks and cross-source allow/block disagreements.
 
-    A parent block or parent allow covers its subdomains. Absence from a
-    comparison source is not treated as an allow decision.
+    A comparison source's allow is a disagreement, not a veto. A parent block
+    covers its subdomains; absence from a source is not an allow decision.
     """
     review_focus_blocks = {domain.lower() for domain in review_focus_blocks}
     comparison_blocks = {domain.lower() for domain in comparison_blocks}
