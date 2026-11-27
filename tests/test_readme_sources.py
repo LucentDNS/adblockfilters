@@ -111,7 +111,7 @@ def test_readme_upstream_attribution_matches_the_source_manifest():
     readme = (root / "README.md").read_text(encoding="utf-8")
     manifest = json.loads((root / "sources.json").read_text(encoding="utf-8"))
     section = readme.split("## 集成的上游规则源", 1)[1].split("## 许可与归属", 1)[0]
-    linked_urls = re.findall(r"\]\((https://[^)]+)\)", section)
+    linked_urls = re.findall(r"— \[来源\]\((https://[^)]+)\)", section)
     expected_urls = [source["url"] for source in manifest["sources"]]
 
     assert len(linked_urls) == len(expected_urls) == len(manifest["sources"])
