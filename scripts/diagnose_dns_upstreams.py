@@ -164,13 +164,12 @@ def main() -> int:
     candidate_domains = domains[:200]
     for label, address in candidates.items():
         counts: dict[str, Counter[str]] = {"A": Counter(), "AAAA": Counter()}
-        resolver = dns.resolver.Resolver(configure=False)
-        resolver.nameservers = [address]
-        resolver.port = 53
-        resolver.timeout = 2.0
-        resolver.lifetime = 5.0
-
         def inspect_candidate(domain: str) -> tuple[str, str, str, str]:
+            resolver = dns.resolver.Resolver(configure=False)
+            resolver.nameservers = [address]
+            resolver.port = 53
+            resolver.timeout = 2.0
+            resolver.lifetime = 5.0
             a_status, a_error = query_status(resolver, domain, "A")
             aaaa_status, aaaa_error = query_status(resolver, domain, "AAAA")
             return a_status, a_error, aaaa_status, aaaa_error
